@@ -3,7 +3,7 @@
 
 ## Description
 
-**Pyseistr** is a python package for structural denoising and interpolation of multi-channel seismic data. 
+**Pyseistr** is a python package for structural denoising and interpolation of multi-channel seismic data. This package has a variety of applications in both exploration and earthquake seismology.
 
 ## Reference
 Chen et al., 2022, Pyseistr: a python package for structural denoising and interpolation of multi-channel seismic data, under review. 
@@ -47,21 +47,16 @@ or using Pypi
     The "demo" directory contains all runable scripts to demonstrate different applications of pyseistr. 
 
 -----------
+## Gallery
+The gallery figures of the pydrr package can be found at
+    https://github.com/aaspip/gallery/tree/main/pyseistr
+Each figure in the gallery directory corresponds to a DEMO script in the "demo" directory with the exactly the same file name.
+
+-----------
 ## Dependence Packages
 * scipy 
 * numpy 
 * matplotlib
-
------------
-## Development
-    The development team welcomes voluntary contributions from any open-source enthusiast. 
-    If you want to make contribution to this project, feel free to contact the development team. 
-
------------
-## Contact
-    Regarding any questions, bugs, developments, collaborations, please contact  
-    Yangkang Chen
-    chenyk2016@gmail.com
 
 -----------
 ## Modules
@@ -80,14 +75,13 @@ or using Pypi
     plot.py		-> seismic plotting functions
     
 -----------
-## Counting lines
-Counting lines of the Package:
-
-    port install cloc
-
-Using the following comman in src/Pyseistr/ or in the main directory to get a report
-
-    cloc ./
+## Development
+    The development team welcomes voluntary contributions from any open-source enthusiast. 
+    If you want to make contribution to this project, feel free to contact the development team. 
 
 -----------
+## Contact
+    Regarding any questions, bugs, developments, collaborations, please contact  
+    Yangkang Chen
+    chenyk2016@gmail.com
 
