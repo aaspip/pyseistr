@@ -22,8 +22,7 @@ BibTeX:
 
 -----------
 ## Copyright
-    Initial version: Yangkang Chen (chenyk2016@gmail.com), 2021-2022
-	Later version: pyseistr developing team, 2022-present
+    The pyseistr developing team, 2021-present
 -----------
 
 ## License
