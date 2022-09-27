@@ -1,3 +1,5 @@
+## This is a DEMO script for 3D structure-oriented interpolation
+
 import numpy as np
 
 

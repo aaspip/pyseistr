@@ -1,3 +1,5 @@
+## This is a DEMO script for structure-oriented distributed acoustic sensing (DAS) data processing
+
 import os
 import numpy as np
 
@@ -18,7 +20,7 @@ from segysak.segy import segy_loader, well_known_byte_locs
 ## test data 2
 #P arrival: 24811
 #window f1=24811 | window f2=200 n2=960 n1=2000
-# os.system("wget -q https://pando-rgw01.chpc.utah.edu/silixa_das_apr_26_2019/FORGE_78-32_iDASv3-P11_UTC190426070723.sgy")
+os.system("wget -q https://pando-rgw01.chpc.utah.edu/silixa_das_apr_26_2019/FORGE_78-32_iDASv3-P11_UTC190426070723.sgy")
 segydata = segy_loader("FORGE_78-32_iDASv3-P11_UTC190426070723.sgy")
 data=np.zeros([1280,30000])
 data[:,:]=segydata.data

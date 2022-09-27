@@ -1,3 +1,5 @@
+## This is a DEMO script for receiver function data enhancement
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
