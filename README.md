@@ -47,7 +47,7 @@ or using Pypi
 
 -----------
 ## Gallery
-The gallery figures of the pydrr package can be found at
+The gallery figures of the pyseistr package can be found at
     https://github.com/aaspip/gallery/tree/main/pyseistr
 Each figure in the gallery directory corresponds to a DEMO script in the "demo" directory with the exactly the same file name.
 
