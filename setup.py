@@ -18,6 +18,12 @@ def read(*names, **kwargs):
         os.path.join(os.path.dirname(__file__), *names),
         encoding=kwargs.get("encoding", "utf8")).read()
 
+from distutils.core import Extension
+
+dipc_module = Extension('dipcfun', sources=['pyseistr/src/dip_cfuns.c'])
+
+from numpy.distutils.core import setup 
+
 setup(
     name="pyseistr",
     version="0.0.2",
@@ -27,6 +33,7 @@ setup(
     author="pyseistr developing team",
     author_email="chenyk2016@gmail.com",
     url="https://github.com/aaspip/pyseistr",
+    ext_modules=[dipc_module],
     packages=['pyseistr'],
     include_package_data=True,
     zip_safe=False,

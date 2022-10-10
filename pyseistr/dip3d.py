@@ -50,6 +50,58 @@ def dip3d(din,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 
 	return dip_i,dip_x
 
+def dip3dc(din,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[5,5,5],verb=1):
+	#dip3d: 3D dip estimation based on shaping regularized PWD algorithm
+	#(independent implementation)
+	#
+	#Ported to Python by Yangkang Chen, 2022, verified to be exactly the same as the Matlab version
+	#
+	#INPUT
+	#din: input data (nt*nx)
+	#niter: number of nonlinear iterations
+	#liter: number of linear iterations (in divn)
+	#order: accuracy order
+	#eps_dv: eps for divn  (default: 0.01)
+	#eps_cg: eps for CG	(default: 1)
+	#tol_cg: tolerence for CG (default: 0.000001)
+	#rect:  smoothing radius (ndim*1)
+	#verb: verbosity flag
+	#
+	#OUTPUT
+	#dipi:  inline 3D slope
+	#dipx:  xline 3D slope
+	from .divne import divne
+	
+	dim = 3;
+	n = np.zeros(dim,dtype='int');
+	n1 = din.shape[0];
+	n2 = din.shape[1];
+	n3 = din.shape[2];
+	n[0] = n1;
+	n[1] = n2;
+	n[2] = n3;
+
+	n123 = din.size;
+
+	dip_i=np.zeros([n1,n2,n3]);
+	dip_x=np.zeros([n1,n2,n3]);
+
+	for iter in range(0,niter):
+
+		#corresponding to the eq.21 in the paper
+		u1_i,u2_i = conv_allpass_i(din,dip_i,order); 	#inline linearization using the updated dip	
+		ratio_i  = divne(-u2_i, u1_i, liter, rect, n, eps_dv, eps_cg, tol_cg,verb);
+
+		#corresponding to the eq.21 in the paper
+		u1_x,u2_x = conv_allpass_x(din,dip_x,order); 	#xline linearization using the updated dip
+		ratio_x  = divne(-u2_x, u1_x, liter, rect, n, eps_dv, eps_cg, tol_cg,verb);
+	
+		dip_i=dip_i+ratio_i;
+		dip_x=dip_x+ratio_x;
+
+	return dip_i,dip_x
+
+
 def conv_allpass_i(din,dip,order):
 	# conv_allpass_i: Convolutional operator implemented by an allpass filter (iline direction)
 	# 

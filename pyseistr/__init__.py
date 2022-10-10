@@ -58,7 +58,12 @@ from .plot import cseis
 
 
 
+## C versions
+from .dip2d import dip2dc
+from .dip3d import dip3dc
+from .somean2d import somean2dc
 
+from dipcfun import *
 
 
 

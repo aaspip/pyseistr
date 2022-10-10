@@ -1,4 +1,6 @@
 import numpy as np
+from dipcfun import *
+
 def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
 	# dip2d: dip estimation based on shaping regularized PWD algorithm 
 	# (independent implementation)
@@ -43,6 +45,58 @@ def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 
 	return dip
 
+def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
+	# dip2d: dip estimation based on shaping regularized PWD algorithm 
+	# (independent implementation)
+	#
+	# INPUT
+	# din: input data (nt*nx)
+	# niter: number of nonlinear iterations
+	# liter: number of linear iterations (in divn)
+	# order: accuracy order
+	# eps_dv: eps for divn  (default: 0.01)
+	# eps_cg: eps for CG    (default: 1)
+	# tol_cg: tolerence for CG (default: 0.000001)
+	# rect:  smoothing radius (ndim*1)
+	# verb: verbosity flag
+	#
+	# OUTPUT
+	# dip:  2D slope
+	from .divne import divne
+	
+	p0 = 0.0;
+	nj1 = 1;
+	nj2 = 1;
+	dim = 3;
+	
+# 	n = np.zeros(dim,dtype='int');
+	n1 = din.shape[0];
+	n2 = din.shape[1];
+# 	n[0] = n1;
+# 	n[1] = n2;
+# 	n[2] = 1;
+	n3 = 1;
+	
+	r1=rect[0]
+	r2=rect[1]
+	r3=rect[2]
+# 	n123 = din.size;
+# 
+# 	ratio=np.zeros([n1,n2,1]);
+# 	dip=np.zeros([n1,n2,1]);
+# 
+# 	for iter in range(0,niter):
+# 		"""corresponding to the eq.21 in the paper  (Wang et al., 2022)"""
+# 		[u1,u2] = conv_allpass(din,dip,order); 
+# 		ratio = divne(-u2, u1, liter, rect, n, eps_dv, eps_cg, tol_cg,verb);
+# 		dip=dip+ratio;
+	
+	din=np.float32(din.flatten(order='F'));
+	dip=dipc(din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb);
+	dip=dip.reshape(n1,n2,order='F');
+		
+	return dip
+	
 def conv_allpass(din,dip,order):
 	#conv_allpass: Convolutional operator implemented by an allpass filter
 	#
