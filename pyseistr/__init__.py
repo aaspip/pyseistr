@@ -64,7 +64,7 @@ from .dip3d import dip3dc
 from .somean2d import somean2dc
 
 from dipcfun import *
-
+from sofcfun import *
 
 
 
