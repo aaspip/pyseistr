@@ -1966,7 +1966,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 // 		}
 // 	    } else {
 		for(i=0; i < n123; i++) {
-		    p[i] = q0;
+		    p[i+n123] = q0;
 		}
 // 	    }	
 	    

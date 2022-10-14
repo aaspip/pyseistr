@@ -22,7 +22,7 @@ from distutils.core import Extension
 
 dipc_module = Extension('dipcfun', sources=['pyseistr/src/dip_cfuns.c'])
 sofc_module = Extension('sofcfun', sources=['pyseistr/src/sof_cfuns.c'])
-
+sofc3d_module = Extension('sof3dcfun', sources=['pyseistr/src/sof3d_cfuns.c'])
 
 from numpy.distutils.core import setup 
 
@@ -35,7 +35,7 @@ setup(
     author="pyseistr developing team",
     author_email="chenyk2016@gmail.com",
     url="https://github.com/aaspip/pyseistr",
-    ext_modules=[dipc_module,sofc_module],
+    ext_modules=[dipc_module,sofc_module,sofc3d_module],
     packages=['pyseistr'],
     include_package_data=True,
     zip_safe=False,

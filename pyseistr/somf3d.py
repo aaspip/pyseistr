@@ -1,3 +1,5 @@
+from sof3dcfun import *
+
 def somf3d(dn,dipi,dipx,r1,r2,eps,order,option=1):
 	# somf3d: 3D structure-oriented median filter
 	# 
@@ -47,5 +49,49 @@ def somf3d(dn,dipi,dipx,r1,r2,eps,order,option=1):
 	return ds
 
 
+def somf3dc(dn,dipi,dipx,r1,r2,eps,order,option=1,verb=1):
+	# somf3d: 3D structure-oriented median filter implemented in C
+	# 
+	# by Yangkang Chen, 2022
+	#
+	# INPUT:
+	# dn: model  noisy data
+	# dipi: inline slope
+	# dipx: xline slope
+	# r1,r2:    spray radius
+	# order:    PWD order
+	# eps: regularization (default:0.01);
+	# 
+	# OUTPUT:
+	# ds: filtered data
+	#  
+	# References
+	# Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
+	# Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
+	# Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
+	# Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	#
+	# Demo
+	# demos/test_xxx_somf3d.py
+	import numpy as np
+	nnp=(2*r1+1)*(2*r2+1);
 
+	if dn.ndim==2:
+		[n1,n2]=dn.shape;
+		n3=1;
+	else: #assuming ndim=3;
+		[n1,n2,n3]=dn.shape;
+		
+	dn=np.float32(dn).flatten(order='F');
+	dipi=np.float32(dipi).flatten(order='F');
+	dipx=np.float32(dipx).flatten(order='F');
+	
+	rmf=2*r1*r2+1; #median filter length
+	print(dn.max(),dn.min(),dn.var())
+	print('option=',option)
+	ds=csomf3d(dn,dipi,dipx,n1,n2,n3,r1,r2,rmf,option,order,eps,verb);
+	ds=ds.reshape([n1,n2,n3],order='F');
+	print(ds.max(),ds.min(),ds.var())
+
+	return ds
 

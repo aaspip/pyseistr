@@ -242,49 +242,6 @@ void sf_banded_const_define_eps (sf_bands slv,
     }
 }
 
-
-void sf_banded_const_define_reflect (sf_bands slv, 
-				     float diag        /* diagonal */, 
-				     const float* offd /* off-diagonal [band] */)
-/*< define matrix with constant diagonal coefficients  
-  and reflecting b.c. >*/
-{
-    int k, m, n, b, i;
-    float t;
-    
-    b = slv->band;
-    
-    slv->d[0] = diag+offd[0];
-    for (k = 0; k < b-1; k++) {
-	for (m = k; m >= 0; m--) {
-	    i = 2*k-m+1;
-	    t = (i < b)? offd[m]+offd[i]: offd[m];
-	    for (n = m+1; n < k-1; n++) 
-		t -= (slv->o[n][k-n])*(slv->o[n-m-1][k-n])*(slv->d[k-n]);
-	    slv->o[m][k-m] = t/slv->d[k-m];
-	}
-	i = 2*(k+1);
-	t = (i < b)? diag + offd[i]: diag;
-	for (m = 0; m <= k; m++)
-	    t -= (slv->o[m][k-m])*(slv->o[m][k-m])*(slv->d[k-m]);
-	slv->d[k+1] = t;
-    }
-    for (k = b-1; k < slv->n-1; k++) {
-	for (m = b-1; m >= 0; m--) {
-	    i = 2*k-m+1;
-	    t = (i < b)? offd[m]+offd[i]: offd[m];
-	    for (n = m+1; n < b; n++) 
-		t -= (slv->o[n][k-n])*(slv->o[n-m-1][k-n])*(slv->d[k-n]);
-	    slv->o[m][k-m] = t/(slv->d[k-m]);
-	}
-	i = 2*(k+1);
-	t = (i < b)? diag + offd[i]: diag;
-	for (m = 0; m < b; m++) 
-	    t -= (slv->o[m][k-m])*(slv->o[m][k-m])*slv->d[k-m];
-	slv->d[k+1] = t;
-    }
-}
-
 void sf_banded_solve (const sf_bands slv, float* b)
 /*< invert (in place) >*/
 {
@@ -320,7 +277,7 @@ void sf_banded_close (sf_bands slv)
     free (slv);
 }
 
-/*apfilt.c*/
+
 static int nf; /*size of filter, nf=nw*2*/
 static double *b;
 
@@ -401,15 +358,6 @@ void aderfilter (float p  /* slope */,
     }
 }
 
-
-
-/*apfilt.c*/
-
-static int n1, n2, ns, ns2, n12;
-static float ***u, *w, **w1, *t;
-static float *trace, **pspr;
-
-/*pwd.c*/
 
 #ifndef _pwd_h
 
@@ -551,26 +499,23 @@ void pwd_set (bool adj   /* adjoint flag */,
 }
 
 
-
-
-/*predict */
-/* Trace prediction with plane-wave destruction */
-
-static int nb, k2;
+static int n1, n2, nb, k2;
 static sf_bands slv;
 static float *diag, **offd, eps, eps2, **dip, *tt;
-static pwd W1, W2;
+static pwd w1, w2;
 
 static void stepper(bool adj /* adjoint flag */,
 		    int i2   /* trace number */);
 
-void predict_init (float e        /* regularization parameter */,
+void predict_init (int nx, int ny /* data size */, 
+		   float e        /* regularization parameter */,
 		   int nw         /* accuracy order */,
 		   int k          /* radius */,
 		   bool two       /* if two predictions */)
 /*< initialize >*/
 {
-
+    n1 = nx;
+    n2 = ny;
     nb = 2*nw;
 
     eps = e;
@@ -580,8 +525,8 @@ void predict_init (float e        /* regularization parameter */,
     diag = ps_floatalloc (n1);
     offd = ps_floatalloc2 (n1,nb);
 
-    W1 = pwd_init (n1, nw);
-    W2 = two? pwd_init(n1,nw): NULL;
+    w1 = pwd_init (n1, nw);
+    w2 = two? pwd_init(n1,nw): NULL;
 
     tt = NULL;
 
@@ -596,8 +541,8 @@ void predict_close (void)
     free (diag);
     free (*offd);
     free (offd);
-    pwd_close (W1);
-    if (NULL != W2) pwd_close (W2);
+    pwd_close (w1);
+    if (NULL != w2) pwd_close (w2);
     if (NULL != tt) free(tt);
 }
 
@@ -629,7 +574,7 @@ void predict_step(bool adj            /* adjoint flag */,
     float t0, t1, t2, t3;
     
     regularization();
-    pwd_define (forw, W1, pp, diag, offd);
+    pwd_define (forw, w1, pp, diag, offd);
     sf_banded_define (slv, diag, offd);
 
     if (adj) sf_banded_solve (slv, trace);
@@ -639,7 +584,7 @@ void predict_step(bool adj            /* adjoint flag */,
     t2 = trace[n1-2];
     t3 = trace[n1-1];
 
-    pwd_set (adj, W1, trace, trace, diag);
+    pwd_set (adj, w1, trace, trace, diag);
 
     trace[0] += eps2*t0;
     trace[1] += eps2*t1;
@@ -659,7 +604,7 @@ void predict1_step(bool forw      /* forward or backward */,
     
     regularization();
 
-    pwd_define (forw, W1, pp, diag, offd);
+    pwd_define (forw, w1, pp, diag, offd);
     sf_banded_define (slv, diag, offd);
 
     t0 = trace1[0];
@@ -667,7 +612,7 @@ void predict1_step(bool forw      /* forward or backward */,
     t2 = trace1[n1-2];
     t3 = trace1[n1-1];
 
-    pwd_set (false, W1, trace1, trace, diag);
+    pwd_set (false, w1, trace1, trace, diag);
 
     trace[0] += eps2*t0;
     trace[1] += eps2*t1;
@@ -691,8 +636,8 @@ void predict2_step(bool forw1        /* forward or backward */,
     
     regularization();
 
-    pwd_define (forw1, W1, pp1, diag, offd);
-    pwd_define (forw2, W2, pp2, diag, offd);
+    pwd_define (forw1, w1, pp1, diag, offd);
+    pwd_define (forw2, w2, pp2, diag, offd);
 
     sf_banded_define (slv, diag, offd);
 
@@ -701,8 +646,8 @@ void predict2_step(bool forw1        /* forward or backward */,
     t2 = 0.5*(trace1[n1-2]+trace2[n1-2]);
     t3 = 0.5*(trace1[n1-1]+trace2[n1-1]);
 
-    pwd_set (false, W1, trace1, offd[0], trace);
-    pwd_set (false, W2, trace2, offd[1], trace);
+    pwd_set (false, w1, trace1, offd[0], trace);
+    pwd_set (false, w2, trace2, offd[1], trace);
 
     for (i1=0; i1 < n1; i1++) {
 	trace[i1] = offd[0][i1]+offd[1][i1];
@@ -776,7 +721,7 @@ void predicter_lop(bool adj, bool add, int nx, int ny, float *xx, float *yy)
 {
     int i1, i2;
 
-//     if (nx != ny || nx != n1*(n2+2*k2)) 
+    if (nx != ny || nx != n1*(n2+2*k2)) 
 // 	sf_error("%s: Wrong dimensions",__FILE__);
 
     ps_adjnull(adj,add,nx,ny,xx,yy);
@@ -813,8 +758,8 @@ void subtracter_lop(bool adj, bool add, int nx, int ny, float *xx, float *yy)
 {
     int i1, i2, j2, m2;
 
-//     if (nx != ny || nx != n1*(n2+2*k2)) 
-// 	sf_error("%s: Wrong dimensions",__FILE__);
+    if (nx != ny || nx != n1*(n2+2*k2)) 
+	// sf_error("%s: Wrong dimensions",__FILE__);
 
     ps_adjnull(adj,add,nx,ny,xx,yy);
 
@@ -910,9 +855,9 @@ void subtract_lop(bool adj, bool add, int nx, int ny, float *xx, float *yy)
 }
 
 
+static int n1, n2, ns, ns2;
+static float *trace, **p;
 
-/*pwspray.c*/
-    
 int pwspray_init(int nr      /* spray radius */, 
 		 int nt      /* trace length */, 
 		 int n       /* number of traces */,
@@ -926,7 +871,7 @@ int pwspray_init(int nr      /* spray radius */,
     ns=nr;
     ns2=2*ns+1;
 
-    predict_init (eps*eps, order, 1, false);
+    predict_init (n1, n2, eps*eps, order, 1, false);
     trace = ps_floatalloc(n1);
 
     return ns2;
@@ -935,7 +880,7 @@ int pwspray_init(int nr      /* spray radius */,
 void pwspray_set(float **dip /* local slope */)
 /*< set local slope >*/
 {
-    pspr = dip;
+    p = dip;
 }
 
 
@@ -951,7 +896,7 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 {
     int i, is, ip, j, i1;
 
-//     if (n  != n1*n2) sf_error("%s: wrong size %d != %d*%d",__FILE__,n, n1,n2);
+//    if (n  != n1*n2) sf_error("%s: wrong size %d != %d*%d",__FILE__,n, n1,n2);
 //     if (nu != n*ns2) sf_error("%s: wrong size %d != %d*%d",__FILE__,nu,n,ns2);
 
     ps_adjnull(adj,add,n,nu,u1,u);
@@ -970,7 +915,7 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 		for (i1=0; i1 < n1; i1++) {
 		    trace[i1] += u[j*n1+i1];
 		}
-		predict_step(true,true,trace,pspr[ip-1]);
+		predict_step(true,true,trace,p[ip-1]);
 	    }
 
 	    for (i1=0; i1 < n1; i1++) {
@@ -986,7 +931,7 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 		for (i1=0; i1 < n1; i1++) {
 		    trace[i1] += u[j*n1+i1];
 		}
-		predict_step(true,false,trace,pspr[ip]);
+		predict_step(true,false,trace,p[ip]);
 	    }
 	    
 	    for (i1=0; i1 < n1; i1++) {
@@ -1007,7 +952,7 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 		ip = i-is-1;
 		if (ip < 0) break;
 		j = ip*ns2+ns-is-1;
-		predict_step(false,false,trace,pspr[ip]);
+		predict_step(false,false,trace,p[ip]);
 		for (i1=0; i1 < n1; i1++) {
 		    u[j*n1+i1] += trace[i1];
 		}
@@ -1022,7 +967,7 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 		ip = i+is+1;
 		if (ip >= n2) break;
 		j = ip*ns2+ns+is+1;
-		predict_step(false,true,trace,pspr[ip-1]);
+		predict_step(false,true,trace,p[ip-1]);
 		for (i1=0; i1 < n1; i1++) {
 		    u[j*n1+i1] += trace[i1];
 		}
@@ -1033,107 +978,83 @@ void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
 
 
 
+static float *t0;
+static int *visit, upn1, upn2;
 
-void pwsmooth_init(int nr      /* spray radius */,
-		   int m1      /* trace length */,
-		   int m2      /* number of traces */,
-		   int order   /* PWD order */,
-		   float eps   /* regularization */)
+static int fermat(const void *a, const void *b)
+/* comparison for traveltime sorting from small to large */
+{
+    float ta, tb;
+
+    ta = t0[*(int *)a];
+    tb = t0[*(int *)b];
+
+    if (ta >  tb) return 1;
+    if (ta == tb) return 0;
+    return -1;
+}
+
+
+void update_init(int m1, int m2 /* dimensions */,
+		 float *t       /* [m1,m2] traveltime */)
 /*< initialize >*/
 {
-    int is;
+    int i, n12;
 
-	ns=nr;
-    n1 = m1;
-    n2 = m2;
-    n12 = n1*n2;
+    upn1 = m1;
+    upn2 = m2;
+    n12 = upn1*upn2;
+    t0 = t;
 
-    ns2 = pwspray_init(nr,n1,n2,order,eps);
-
-    u = ps_floatalloc3(n1,ns2,n2);
-    w = ps_floatalloc(ns2);
-    w1 = ps_floatalloc2(n1,n2);
-
-    for (is=0; is < ns2; is++) {
-	w[is]=ns+1-SF_ABS(is-ns);
+    /* sort from small to large traveltime */
+    visit = ps_intalloc(n12);
+    for (i = 0; i < n12; i++) {
+	visit[i] = i;
     }
-
-    /* Normalization */
-    t = ps_floatalloc(n12);
+    qsort(visit, n12, sizeof(int), fermat);
 }
 
-void pwsmooth_lop(bool adj, bool add, 
-		  int nin, int nout, float* trace, float *smooth)
-/*< linear operator >*/
-{
-    int i1, i2, is;
-    float ws;
-
-//     if (nin != nout || nin != n1*n2) 
-// 	sf_error("%s: wrong size %d != %d",__FILE__,nin,nout);
-    
-    ps_adjnull(adj,add,nin,nout,trace,smooth);
-
-    if (adj) {
-	for (i2=0; i2 < n2; i2++) {
-	    for (i1=0; i1 < n1; i1++) {
-		ws=w1[i2][i1]; 
-		for (is=0; is < ns2; is++) {
-		    u[i2][is][i1] = smooth[i2*n1+i1]*w[is]*ws;
-		}
-	    }
-	}
-
-	pwspray_lop(true,  true,  nin, nin*ns2, trace, u[0][0]);
-    } else {
-	pwspray_lop(false, false, nin, nin*ns2, trace, u[0][0]);
-
-	for (i2=0; i2 < n2; i2++) {
-	    for (i1=0; i1 < n1; i1++) {
-		ws=w1[i2][i1]; 
-		for (is=0; is < ns2; is++) {
-		    smooth[i2*n1+i1] += u[i2][is][i1]*w[is]*ws;
-		}
-	    }
-	}
-    }
-}
-
-
-void pwsmooth_set(float **dip /* local slope */)
-/*< set local slope >*/
-{
-    int i1;
-    
-    pwspray_set(dip);
-
-    for (i1=0; i1 < n12; i1++) {
-	w1[0][i1]=1.0f;
-    }
-
-    pwsmooth_lop(false,false,n12,n12,w1[0],t);
-
-    for (i1=0; i1 < n12; i1++) {
-	if (0.0f != t[i1]) {
-	    w1[0][i1]=1.0/t[i1];
-	} else {
-	    w1[0][i1]=0.0f;
-	}
-    }
-}
-
-void pwsmooth_close(void)
+void update_close(void)
 /*< free allocated storage >*/
 {
-    free(**u);
-    free(*u);
-    free(u);
-    free(w);
-    free(*w1);
-    free(w1);
-    free(t);
-    pwspray_close();
+    free(visit);
 }
+
+unsigned char get_update(int i, bool *up1, bool *up2, int *j)
+/*< next update step >*/
+{
+    float t1;
+    int i1, i2, a1, a2, b1, b2, c1, c2;
+    unsigned char update;
+
+    *j = visit[i];
+    t1 = t0[*j];
+
+    i1 = *j%upn1;
+    i2 = *j/upn1;
+    
+    update = 0;
+
+    if (upn1 > 1) {
+	a1 = *j-1;
+	b1 = *j+1;
+	*up1 = (bool) (i1 && (i1 == upn1-1 || 1 != fermat(&a1,&b1)));
+	c1 = *up1? a1:b1;
+	if (t1 > t0[c1]) update |= 1;
+    }
+
+    if (upn2 > 1) {
+	a2 = *j-upn1;
+	b2 = *j+upn1;
+	*up2 = (bool) (i2 && (i2 == upn2-1 || 1 != fermat(&a2,&b2)));
+	c2 = *up2? a2:b2;
+	if (t1 > t0[c2]) update |= 2;
+    }
+    
+    return update;
+}
+
+
 
 float sf_quantile(int q    /* quantile */, 
 		  int n    /* array length */, 
@@ -1167,7 +1088,6 @@ static float *extendt, *temp1, *trace2, *win_len;
 static int mfn1, mfn2;
 static int nfilter2, nfilter, nfilter0, axis, ifbound;
 static int l1,l2,l3,l4;
-
 void mf_init(int n1, int n2, int nfw, int axis0, bool ifbound0)
 {
 	mfn1=n1;
@@ -1336,6 +1256,7 @@ void mf(float *trace)
 void svmf(float *trace)
 {
 
+
 	int n1,n2,k,i,j;
 	n1=mfn1;
 	n2=mfn2;
@@ -1433,61 +1354,81 @@ void svmf(float *trace)
 // 	printf("nfilter=%d,nfilter2=%d,n1=%d,n2=%d,axis=%d\n",nfilter,nfilter2,n1,n2,axis);
 }
 
-static PyObject *csomean2d(PyObject *self, PyObject *args){
-	
-	
+
+static PyObject *csomean3d(PyObject *self, PyObject *args){
 // 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
 	
     /*Below is the input part*/
-    int f3,f4,f5,f6,f7,f8;
-    float f9;
-    int f10;
+    int f4,f5,f6,f7,f8,f9;
+    float f10;
+    int f11;
     
 	/**initialize data input**/
     int nd, nd2;
     
     PyObject *f1=NULL;
     PyObject *f2=NULL;
+    PyObject *f3=NULL;
     PyObject *arrf1=NULL;
     PyObject *arrf2=NULL;
+    PyObject *arrf3=NULL;
     
-	PyArg_ParseTuple(args, "OOiiiiiifi", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10);
+	PyArg_ParseTuple(args, "OOOiiiiiifi", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10, &f11);
 
-//     int ndim;
+    bool verb, up2, up3;
+    unsigned char update;
+    int n1,n2,n3, i1,i2,i3, ns2, ns3, ip, np2, np3, n23, n123;
+    int order, np, i4, n4, k2, k3, j2, j3, i, jp, j;
+    float eps, *din, ***u, **p1, **p2, **cost, *trace, *q2=NULL, *q3=NULL;
     
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 	
-    int i1,i2,i3;
-    int n123, niter, order, nj1,nj2, i,j, liter, dim;
-    int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
-    float p0, q0, *u, *p, *pi=NULL, *qi=NULL;
-    float pmin, pmax, qmin, qmax, eps;
-    char key[4];
-    bool verb, both, adj;
-//     sf_file in, out, mask, idip0, xdip0;
+//     ps_file inp, out, dip;
+// 
+//     ps_init(argc,argv);
+//     inp = ps_input("in");
+//     dip = ps_input("dip");
+//     out = ps_output("out");
+// 
+//     if (!ps_histint(inp,"n1",&n1)) ps_error("No n1= in input");
+//     if (!ps_histint(inp,"n2",&n2)) ps_error("No n2= in input");
+//     if (!ps_histint(inp,"n3",&n3)) ps_error("No n3= in input");
+//     n23 = n2*n3;
+//     n4 = ps_leftsize(inp,3);
 
-    int n1, n2, n3, ns;
-    float *input, *smooth, ***slope;
+//     if (!ps_getbool("verb",&verb)) verb=false;
+    /* verbosity */
+//     if (!ps_getfloat("eps",&eps)) eps=0.01;
+    /* regularization */
     
-	n1=f3;
-	n2=f4;
-	n3=f5;
+//     if (!ps_getint("order",&order)) order=1;
+    /* accuracy order */
+
+//     if (!ps_getint("ns2",&ns2)) ps_error("Need ns1=");
+//     if (!ps_getint("ns3",&ns3)) ps_error("Need ns2=");
+    /* spray radius */
+    
+	n1=f4;
+	n2=f5;
+	n3=f6;
 	n123=n1*n2*n3;
+	n23=n2*n3;
 	
-	ns=f6;
-	order=f7;/*default order=1*/
-	adj=f8; /*adjoint flag*/
-	eps=f9; /*regularization*/
-	verb=f10;
+	ns2=f7;
+	ns3=f8;
+	
+	order=f9;/*default order=1*/
+	eps=f10; /*regularization*/
+	verb=f11;
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
+	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
+	printf("n123=%d\n",n123);
+	printf("eps=%f\n",eps);
+	eps=0.01;
 //     ndata=nt0*nh0;
 //     nmod=nt0*nv0;
 // 
@@ -1502,44 +1443,171 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
     	return NULL;
     }
 
-    input = ps_floatalloc(n123);
-    smooth = ps_floatalloc(n123);
-    slope = ps_floatalloc3(n1,n2,n3);
+
     
+    
+    np2 = 2*ns2+1;
+    np3 = 2*ns3+1;
+    np = np2*np3;
+
+//     ps_putint(out,"n2",np);
+//     ps_shiftdim(inp, out, 2);
+
+    cost = ps_floatalloc2(np2,np3);
+    for (i3=0; i3 < np3; i3++) {
+	for (i2=0; i2 < np2; i2++) {
+	    cost[i3][i2] = hypotf(i2-ns2,i3-ns3);
+	}
+    }
+
+    predict_init (n1, n2, eps*eps, order, 1, true);
+    update_init(np2,np3,*cost);
+
+    u = ps_floatalloc3(n1,np,n23);
+    for (i3=0; i3 < n23; i3++) {
+	for (ip=0; ip < np; ip++) {
+	    for (i1=0; i1 < n1; i1++) {
+		u[i3][ip][i1] = 0.;
+	    }
+	}
+    }
+
+    p1 = ps_floatalloc2(n1,n23);
+    p2 = ps_floatalloc2(n1,n23);
+    
+    din = ps_floatalloc(n123);
     /*reading data*/
     for (i=0; i<n123; i++)
     {
-        input[i]=*((float*)PyArray_GETPTR1(arrf1,i));
-        smooth[i]=0.0;
+        din[i]=*((float*)PyArray_GETPTR1(arrf1,i));
     }
-
-	for (i1=0;i1<n1;i1++)
-	for (i2=0;i2<n2;i2++)
-	for (i3=0;i3<n3;i3++)
-	{
-		i=i3*n2*n1+i2*n1+i1;
-		slope[i3][i2][i1] = *((float*)PyArray_GETPTR1(arrf2,i));
-	}
-
-    pwsmooth_init(ns, n1, n2, order, eps);
-
-    for (i3=0; i3 < n3; i3++) {
-	if (verb) printf("slice %d of %d;\n",i3+1,n3);
-
-	pwsmooth_set(slope[i3]);
-
-	if (adj) {
-	    pwsmooth_lop(true,false,n1*n2,n1*n2,smooth+i3*n1*n2,input+i3*n1*n2);
-	} else {
-	    pwsmooth_lop(false,false,n1*n2,n1*n2,input+i3*n1*n2,smooth+i3*n1*n2);
-	}
-
-// 	sf_floatwrite(smooth,n12,out);
+    
+    for (i=0; i<n123; i++)
+    {
+        p1[0][i]=*((float*)PyArray_GETPTR1(arrf2,i));
     }
-//     if (verb) sf_warning(".");
+    for (i=0; i<n123; i++)
+    {
+        p2[0][i]=*((float*)PyArray_GETPTR1(arrf3,i));
+    }
     
-    
+//     for (i=0; i < n23; i++) { 
+// 	ps_floatread(p1[i],n1,dip);
+//     }
 
+//     for (i=0; i < n23; i++) { 
+// 	ps_floatread(p2[i],n1,dip);
+//     }
+
+//     for (i4=0; i4 < n4; i4++) {
+// int k;float sum;
+//     for(i=0;i<n23;i++)
+//     {
+//     	
+//     	
+//     	for(k=0;k<n1;k++)
+//     	{	
+//     	sum=0;
+//     	for(j=0;j<np;j++)
+//     		sum=sum+u[i][j][k];
+//     	sum=sum/np;
+//     	din[i*n1+k]=sum;
+//     	printf("sum=%g\n",u[i][0][k]);
+//     	}
+//     }
+    
+	for (i=0; i < n23; i++) { 
+// 	    ps_floatread(u[i][ns3*np2+ns2],n1,inp);
+	    for(j=0;j<n1;j++)
+	    	u[i][ns3*np2+ns2][j]=din[i*n1+j];
+	    
+	    i2 = i%n2;
+	    i3 = i/n2;
+
+	    for (ip=0; ip < np; ip++) {
+		update = get_update(ip,&up2,&up3,&jp);
+		
+		/* from jp to j */
+		k2 = jp%np2;
+		k3 = jp/np2;
+		
+		j2 = i2+k2-ns2;
+		j3 = i3+k3-ns3;
+
+		if (j2 < 0 || j2 >= n2 || 
+		    j3 < 0 || j3 >= n3) continue;
+
+		j = j2+j3*n2;
+		trace = u[j][jp];
+
+		if (update & 1) {		
+		    if (up2) {
+			if (j2==0) continue;
+			j2 = j-1;
+			q2 = p1[j2];
+			k2 = jp-1;
+		    } else {
+			if (j2==n2-1) continue;
+			j2 = j+1;
+			q2 = p1[j];
+			k2 = jp+1;
+		    }
+		}
+		if (update & 2) {
+		    if (up3) {
+			if (j3==0) continue;
+			j3 = j-n2;
+			q3 = p2[j3];
+			k3 = jp-np2;
+		    } else {
+			if (j3==n3-1) continue;
+			j3 = j+n2;
+			q3 = p2[j];
+			k3 = jp+np2;
+		    }
+		}
+
+		switch(update) {
+		    case 0:			
+			break;
+		    case 1:
+			predict1_step(up2,u[j2][k2],q2,trace);
+			break;
+		    case 2:
+			predict1_step(up3,u[j3][k3],q3,trace);
+			break;
+		    case 3:
+			predict2_step(up2,up3,u[j2][k2],u[j3][k3],
+				      q2,q3,trace);
+			break;
+		}
+	    }
+// 	}
+
+// 	for (i=0; i < n23; i++) {
+// 	    for (ip=0; ip < np; ip++) {
+// 		ps_floatwrite(u[i][ip],n1,out);
+// 	    }
+// 	}
+    }
+    
+    int k;
+    float sum;
+    for(i=0;i<n23;i++)
+    {
+    	
+    	
+    	for(k=0;k<n1;k++)
+    	{	
+    	sum=0;
+    	for(j=0;j<np;j++)
+    		sum=sum+u[i][j][k];
+    	sum=sum/np;
+    	din[i*n1+k]=sum;
+//     	printf("sum=%g\n",u[i][0][k]);
+    	}
+    }
+    
     /*Below is the output part*/
     PyArrayObject *vecout;
 	npy_intp dims[2];
@@ -1548,71 +1616,91 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
 	/* Make a new double vector of same dimension */
 	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
 	for(i=0;i<dims[0];i++)
-		(*((float*)PyArray_GETPTR1(vecout,i))) = smooth[i];
+		(*((float*)PyArray_GETPTR1(vecout,i))) = din[i];
 
 
 	return PyArray_Return(vecout);
 	
 }
 
-static PyObject *csomf2d(PyObject *self, PyObject *args){
-	
-	
+static PyObject *csomf3d(PyObject *self, PyObject *args){
 // 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
 	
     /*Below is the input part*/
-    int f3,f4,f5,f6,f7,f8;
-    float f9;
-    int f10;
-    int nmf, option=0;
+//     int f4,f5,f6,f7,f8,f9;
+//     float f10;
+//     int f12;
     
 	/**initialize data input**/
     int nd, nd2;
+    bool verb, up2, up3;
+    unsigned char update;
+    int n1,n2,n3, i1,i2,i3, ns2, ns3, nmf, option=0, ip, np2, np3, n23, n123;
+    int order, np, i4, n4, k2, k3, j2, j3, i, jp, j;
+    float eps, *din, ***u, **p1, **p2, **cost, *trace, *q2=NULL, *q3=NULL;
+    /*why option=0 plays a different role?*/
     
     PyObject *f1=NULL;
     PyObject *f2=NULL;
+    PyObject *f3=NULL;
     PyObject *arrf1=NULL;
     PyObject *arrf2=NULL;
+    PyObject *arrf3=NULL;
     
-	PyArg_ParseTuple(args, "OOiiiiiiifi", &f1, &f2, &f3, &f4, &f5, &f6, &nmf, &option, &f7, &f9, &f10);
+	PyArg_ParseTuple(args, "OOOiiiiiiiifi", &f1, &f2, &f3, &n1, &n2, &n3, &ns2, &ns3, &nmf, &option, &order, &eps, &verb);
 
-//     int ndim;
-    
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 	
-    int i1,i2,i3;
-    int n123, niter, order, nj1,nj2, i,j, liter, dim;
-    int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
-    float p0, q0, *p, *pi=NULL, *qi=NULL;
-    float pmin, pmax, qmin, qmax, eps;
-    char key[4];
-    bool verb, both, adj;
-//     sf_file in, out, mask, idip0, xdip0;
 
-    int n1, n2, n3, ns;
-    float *input, *smooth, ***slope;
+//     ps_file inp, out, dip;
+// 
+//     ps_init(argc,argv);
+//     inp = ps_input("in");
+//     dip = ps_input("dip");
+//     out = ps_output("out");
+// 
+//     if (!ps_histint(inp,"n1",&n1)) ps_error("No n1= in input");
+//     if (!ps_histint(inp,"n2",&n2)) ps_error("No n2= in input");
+//     if (!ps_histint(inp,"n3",&n3)) ps_error("No n3= in input");
+//     n23 = n2*n3;
+//     n4 = ps_leftsize(inp,3);
+
+//     if (!ps_getbool("verb",&verb)) verb=false;
+    /* verbosity */
+//     if (!ps_getfloat("eps",&eps)) eps=0.01;
+    /* regularization */
     
-	n1=f3;
-	n2=f4;
-	n3=f5;
+//     if (!ps_getint("order",&order)) order=1;
+    /* accuracy order */
+
+//     if (!ps_getint("ns2",&ns2)) ps_error("Need ns1=");
+//     if (!ps_getint("ns3",&ns3)) ps_error("Need ns2=");
+    /* spray radius */
+    
+// 	n1=f4;
+// 	n2=f5;
+// 	n3=f6;
 	n123=n1*n2*n3;
-	
-	ns=f6;
-	order=f7;/*default order=1*/
-	eps=f9; /*regularization*/
-	verb=f10;
-	
-	printf("ns=%d,nmf=%d\n",ns,nmf);
-	printf("option=%d\n",option);
+	n23=n2*n3;
+// 	
+// 	ns2=f7;
+// 	ns3=f8;
+// 	
+// 	order=f9;/*default order=1*/
+// 	eps=f10; /*regularization*/
+// 	verb=f11;
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
+	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
+	printf("n123=%d\n",n123);
+	printf("eps=%f\n",eps);
+	printf("nmf=%d\n",nmf);
+	printf("option=%d\n",option);
+	printf("order=%d\n",order);
+	eps=0.01;
 //     ndata=nt0*nh0;
 //     nmod=nt0*nv0;
 // 
@@ -1627,46 +1715,154 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     	return NULL;
     }
 
-    input = ps_floatalloc(n123);
-    smooth = ps_floatalloc(n123);
-    slope = ps_floatalloc3(n1,n2,n3);
+
     
+    
+    np2 = 2*ns2+1;
+    np3 = 2*ns3+1;
+    np = np2*np3;
+
+//     ps_putint(out,"n2",np);
+//     ps_shiftdim(inp, out, 2);
+
+    cost = ps_floatalloc2(np2,np3);
+    for (i3=0; i3 < np3; i3++) {
+	for (i2=0; i2 < np2; i2++) {
+	    cost[i3][i2] = hypotf(i2-ns2,i3-ns3);
+	}
+    }
+
+    predict_init (n1, n2, eps*eps, order, 1, true);
+    update_init(np2,np3,*cost);
+
+    u = ps_floatalloc3(n1,np,n23);
+    for (i3=0; i3 < n23; i3++) {
+	for (ip=0; ip < np; ip++) {
+	    for (i1=0; i1 < n1; i1++) {
+		u[i3][ip][i1] = 0.;
+	    }
+	}
+    }
+
+    p1 = ps_floatalloc2(n1,n23);
+    p2 = ps_floatalloc2(n1,n23);
+    
+    din = ps_floatalloc(n123);
     /*reading data*/
     for (i=0; i<n123; i++)
     {
-        input[i]=*((float*)PyArray_GETPTR1(arrf1,i));
-        smooth[i]=0.0;
+        din[i]=*((float*)PyArray_GETPTR1(arrf1,i));
     }
-
-	for (i1=0;i1<n1;i1++)
-	for (i2=0;i2<n2;i2++)
-	for (i3=0;i3<n3;i3++)
-	{
-		i=i3*n2*n1+i2*n1+i1;
-		slope[i3][i2][i1] = *((float*)PyArray_GETPTR1(arrf2,i));
-	}
-
-    pwsmooth_init(ns, n1, n2, order, eps);
-	int np=2*ns+1;
-	int k;
-    float *tt;
-    float sum;
-    tt=ps_floatalloc(n1*np);
     
-    for (i3=0; i3 < n3; i3++) {
-	if (verb) printf("slice %d of %d;\n",i3+1,n3);
+    for (i=0; i<n123; i++)
+    {
+        p1[0][i]=*((float*)PyArray_GETPTR1(arrf2,i));
+    }
+    for (i=0; i<n123; i++)
+    {
+        p2[0][i]=*((float*)PyArray_GETPTR1(arrf3,i));
+    }
+    
+//     for (i=0; i < n23; i++) { 
+// 	ps_floatread(p1[i],n1,dip);
+//     }
 
-	pwsmooth_set(slope[i3]);
+//     for (i=0; i < n23; i++) { 
+// 	ps_floatread(p2[i],n1,dip);
+//     }
 
-
-// 	pwsmooth_lop(false,false,n1*n2,n1*n2,input+i3*n1*n2,smooth+i3*n1*n2);
-
-	
-	pwspray_lop(false, false, n1*n2, n1*n2*np, input+i3*n1*n2, u[0][0]);
-	
-
+//     for (i4=0; i4 < n4; i4++) {
+// int k;float sum;
+//     for(i=0;i<n23;i++)
+//     {
+//     	
+//     	
+//     	for(k=0;k<n1;k++)
+//     	{	
+//     	sum=0;
+//     	for(j=0;j<np;j++)
+//     		sum=sum+u[i][j][k];
+//     	sum=sum/np;
+//     	din[i*n1+k]=sum;
+//     	printf("sum=%g\n",u[i][0][k]);
+//     	}
+//     }
+    
+	for (i=0; i < n23; i++) { 
+// 	    ps_floatread(u[i][ns3*np2+ns2],n1,inp);
+	    for(j=0;j<n1;j++)
+	    	u[i][ns3*np2+ns2][j]=din[i*n1+j];
 	    
-	/*below is MF/SVMF*/
+	    i2 = i%n2;
+	    i3 = i/n2;
+
+	    for (ip=0; ip < np; ip++) {
+		update = get_update(ip,&up2,&up3,&jp);
+		
+		/* from jp to j */
+		k2 = jp%np2;
+		k3 = jp/np2;
+		
+		j2 = i2+k2-ns2;
+		j3 = i3+k3-ns3;
+
+		if (j2 < 0 || j2 >= n2 || 
+		    j3 < 0 || j3 >= n3) continue;
+
+		j = j2+j3*n2;
+		trace = u[j][jp];
+
+		if (update & 1) {		
+		    if (up2) {
+			if (j2==0) continue;
+			j2 = j-1;
+			q2 = p1[j2];
+			k2 = jp-1;
+		    } else {
+			if (j2==n2-1) continue;
+			j2 = j+1;
+			q2 = p1[j];
+			k2 = jp+1;
+		    }
+		}
+		if (update & 2) {
+		    if (up3) {
+			if (j3==0) continue;
+			j3 = j-n2;
+			q3 = p2[j3];
+			k3 = jp-np2;
+		    } else {
+			if (j3==n3-1) continue;
+			j3 = j+n2;
+			q3 = p2[j];
+			k3 = jp+np2;
+		    }
+		}
+
+		switch(update) {
+		    case 0:			
+			break;
+		    case 1:
+			predict1_step(up2,u[j2][k2],q2,trace);
+			break;
+		    case 2:
+			predict1_step(up3,u[j3][k3],q3,trace);
+			break;
+		    case 3:
+			predict2_step(up2,up3,u[j2][k2],u[j3][k3],
+				      q2,q3,trace);
+			break;
+		}
+	    }
+// 	}
+
+// 	for (i=0; i < n23; i++) {
+// 	    for (ip=0; ip < np; ip++) {
+// 		ps_floatwrite(u[i][ip],n1,out);
+// 	    }
+// 	}
+    }
+    
     if(option==1)
     {
     mf_init(n1, np, nmf, 2, 1);
@@ -1678,11 +1874,23 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     	printf("running SVMF\n");
     }
     
-
-
-
-    for(i=0;i<n2;i++)
+    float *tt;
+    tt=ps_floatalloc(n1*np);
+    int k;
+    float sum;
+    for(i=0;i<n23;i++)
     {
+    	
+    	
+//     	for(k=0;k<n1;k++)
+//     	{	
+//     	sum=0;
+//     	for(j=0;j<np;j++)
+//     		sum=sum+u[i][j][k];
+//     	sum=sum/np;
+//     	din[i*n1+k]=sum;
+// //     	printf("sum=%g\n",u[i][0][k]);
+//     	}
     	sum=0;
     	for(j=0;j<n1*np;j++)
     	{tt[j]=u[i][0][j];sum=sum+tt[j];}
@@ -1699,17 +1907,11 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 //     	printf("sum2=%g\n",sum);
 
 	for(k=0;k<n1;k++)
-	smooth[i*n1+k+i3*n1*n2] = u[i][(np-1)/2][k];
+	din[i*n1+k] = u[i][(np-1)/2][k];
     }
     
     
-	
-// 	sf_floatwrite(smooth,n12,out);
-    }
-//     if (verb) sf_warning(".");
     
-    
-
     /*Below is the output part*/
     PyArrayObject *vecout;
 	npy_intp dims[2];
@@ -1718,44 +1920,38 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 	/* Make a new double vector of same dimension */
 	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
 	for(i=0;i<dims[0];i++)
-		(*((float*)PyArray_GETPTR1(vecout,i))) = smooth[i];
+		(*((float*)PyArray_GETPTR1(vecout,i))) = din[i];
 
 
 	return PyArray_Return(vecout);
 	
 }
 
-
-
-
-
-
-
 // documentation for each functions.
-static char sofcfun_document[] = "Document stuff for dip...";
+static char sof3dcfun_document[] = "Document stuff for dip...";
 
 // defining our functions like below:
 // function_name, function, METH_VARARGS flag, function documents
 static PyMethodDef functions[] = {
-  {"csomean2d", csomean2d, METH_VARARGS, sofcfun_document},
-  {"csomf2d", csomf2d, METH_VARARGS, sofcfun_document},
+  {"csomean3d", csomean3d, METH_VARARGS, sof3dcfun_document},
+  {"csomf3d", csomf3d, METH_VARARGS, sof3dcfun_document},
   {NULL, NULL, 0, NULL}
 };
 
 // initializing our module informations and settings in this structure
 // for more informations, check head part of this file. there are some important links out there.
-static struct PyModuleDef sofcfunModule = {
+static struct PyModuleDef sof3dcfunModule = {
   PyModuleDef_HEAD_INIT, // head informations for Python C API. It is needed to be first member in this struct !!
-  "sofcfun",  // module name
+  "sof3dcfun",  // module name
   NULL, // means that the module does not support sub-interpreters, because it has global state.
   -1,
   functions  // our functions list
 };
 
 // runs while initializing and calls module creation function.
-PyMODINIT_FUNC PyInit_sofcfun(void){
+PyMODINIT_FUNC PyInit_sof3dcfun(void){
   
-    PyObject *module = PyModule_Create(&sofcfunModule);
+    PyObject *module = PyModule_Create(&sof3dcfunModule);
     import_array();
     return module;
 }
