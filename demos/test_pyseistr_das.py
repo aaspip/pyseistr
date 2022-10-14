@@ -38,9 +38,9 @@ d1_bp=d1.copy();
 print(d1.max())
 
 ## SOMF
-pp=ps.dip2d(d1,2,10,2,0.01, 1, 0.000001,[50,50,1],1);
+pp=ps.dip2dc(d1,2,10,2,0.01, 1, 0.000001,[50,50,1],1);
 print('finished')
-d1=ps.somf2d(d1,pp,8,2,0.01,1);#SOMF
+d1=ps.somf2dc(d1,pp,8,2,0.01,1);#SOMF
 d1_bpsomf=d1.copy()
 
 ## FK
