@@ -65,12 +65,13 @@ from .somean2d import somean2dc
 from .somean3d import somean3dc
 from .somf2d import somf2dc
 from .somf3d import somf3dc
-
+from .soint3d import soint3dc
+from .bp import bandpassc
 
 from dipcfun import *
 from sofcfun import *
 from sof3dcfun import *
-
+from bpcfun import *
 
 
 

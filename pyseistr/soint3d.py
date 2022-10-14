@@ -1,3 +1,5 @@
+from soint3dcfun import *
+
 def soint3d(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	# soint3d: 3D structure-oriented interpolation
 	# 
@@ -61,7 +63,48 @@ def soint3d(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	return dout
 	
 	
+def soint3dc(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,seed=202223,hasmask=1,var=0,verb=1):
+	# soint3d: 3D structure-oriented interpolation
+	# 
+	# by Yangkang Chen, 2022
+	#
+	# INPUT:
+	# dn: model  noisy data
+	# dipi: inline slope
+	# dipx: xline slope
+	# r1,r2:    spray radius
+	# order:    PWD order
+	# eps: regularization (default:0.01);
+	# hasmask: if 1, using the provided mask; if 0, using the data itself to determine
+	# 
+	# OUTPUT:
+	# ds: filtered data 
+	#
+	# Demo
+	# demos/test_xxx_soint3d.py
+	
+	from .solvers import solver
+	from .solvers import cgstep
+	from .operators import allpass3_lop
+	import numpy as np
+	
+	nw=order;
+	nj1=njs[0];
+	nj2=njs[1];
+	[n1,n2,n3]=din.shape;
 
+	
+	dipi=np.float32(dipi).flatten(order='F');
+	dipx=np.float32(dipx).flatten(order='F');
+	mask=np.float32(mask).flatten(order='F');
+	din=np.float32(din).flatten(order='F');
+	dout=csoint3d(din,mask,dipi,dipx,n1,n2,n3,nw,nj1,nj2,niter,drift,seed,hasmask,var,verb);
+	dout=dout.reshape(n1,n2,n3,order='F');
+
+
+	
+	
+	return dout
 
 
 
