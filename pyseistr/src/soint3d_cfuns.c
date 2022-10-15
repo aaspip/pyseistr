@@ -1265,7 +1265,7 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
     int i, niter, nw, n1, n2, n3, n123, nj1, nj2, seed, i4, n4;
     float *mm, *dd, *pp, *qq, a, var;
     bool *known;
-    int verb, drift, haskmask;
+    int verb, drift, hasmask;
     
     PyObject *f1=NULL;
     PyObject *f2=NULL;
