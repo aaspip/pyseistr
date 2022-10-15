@@ -524,15 +524,12 @@ void sf_reverse (int n1, float* trace)
 
 static PyObject *cbp(PyObject *self, PyObject *args){
 	
-
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
 	bool phase, verb;
     int i, i2, n1, n2, n3, n123, nplo, nphi;
     float d1, flo, fhi, *trace;
     const float eps=0.0001;
     sf_butter blo=NULL, bhi=NULL;
-//     sf_file in, out;
+
     
 	/**initialize data input**/
     int nd, nd2;
@@ -543,13 +540,7 @@ static PyObject *cbp(PyObject *self, PyObject *args){
     
 	PyArg_ParseTuple(args, "Oiiifffiiii", &f1, &n1, &n2, &n3, &d1, &flo, &fhi, &nplo, &nphi, &phase, &verb);
 
-
-//     int ndim;
-    
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 		
+	
 	verb=1;
 	n123=n1*n2*n3;
 	printf("nplo=%d,n123=%d\n",nplo,n123);
@@ -558,24 +549,6 @@ static PyObject *cbp(PyObject *self, PyObject *args){
 
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
-
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
-	
-//     if (*sp != n123)
-//     {
-//     	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
-//     	return NULL;
-//     }
-
-//     input = ps_floatalloc(n123);
-//     smooth = ps_floatalloc(n123);
-//     slope = ps_floatalloc3(n1,n2,n3);
 
 	if(flo<0)
 		printf('Negative flo');
@@ -597,7 +570,6 @@ static PyObject *cbp(PyObject *self, PyObject *args){
     if (nplo < 1)            nplo = 1;
     if (nplo > 1 && !phase)  nplo /= 2; 
 
-//     if (!sf_getint("nphi",&nphi)) nphi = 6;
     /* number of poles for high cutoff */
     if (nphi < 1)            nphi = 1;
     if (nphi > 1 && !phase)  nphi /= 2; 
@@ -619,7 +591,6 @@ static PyObject *cbp(PyObject *self, PyObject *args){
     if (fhi < 0.5-eps) bhi = sf_butter_init(true,  fhi, nphi);
 
     for (i2=0; i2 < n2*n3; i2++) {
-// 	sf_floatread(trace,n1,in);
 	for(i1=0;i1<n1;i1++)
 		trace1[i1]=trace[i1+i2*n1];
 	

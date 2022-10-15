@@ -30,7 +30,7 @@ from numpy.distutils.core import setup
 
 setup(
     name="pyseistr",
-    version="0.0.2",
+    version="0.0.3",
     license='GNU General Public License, Version 3 (GPLv3)',
     description="A python package for structural denoising and interpolation of multi-channel seismic data",
     long_description=long_description,
