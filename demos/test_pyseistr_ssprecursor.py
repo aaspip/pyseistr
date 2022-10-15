@@ -18,7 +18,7 @@ d0=data["d0"]
 ## 3D slope calculation (inline and xline)
 import pyseistr as ps
 import matplotlib.pyplot as plt
-[dipi,dipx] = ps.dip3d(d0);
+[dipi,dipx] = ps.dip3dc(d0);
 #
 ## 3D slope calculation (inline and xline)
 ## Structural smoothing
@@ -26,7 +26,7 @@ r1=2;
 r2=2;
 eps=0.01;
 order=2;
-cmpn_d1=ps.somean3d(d0,dipi,dipx,r1,r2,eps,order);
+cmpn_d1=ps.somean3dc(d0,dipi,dipx,r1,r2,eps,order);
 #cmpn_d2=ps.somf3d(d0,dipi,dipx,r1,r2,eps,order);
 
 ## plot results (with x & y labels)

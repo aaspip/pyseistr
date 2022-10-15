@@ -1694,9 +1694,6 @@ void dip3(bool left               /* left or right prediction */,
 
 static PyObject *dipc(PyObject *self, PyObject *args){
 	
-	
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
     /*Below is the input part*/
     int f2,f3,f4,f5,f6,f7;
     float f8,f9,f10;
@@ -1709,14 +1706,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     PyObject *arrf1=NULL;
 
     
-	PyArg_ParseTuple(args, "Oiiiiiifffiiii", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10, &f11, &f12, &f13, &f14);
-
-//     int ndim;
-    
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 	
+	PyArg_ParseTuple(args, "Oiiiiiifffiiii", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10, &f11, &f12, &f13, &f14); 	
     
     int n123, niter, order, nj1,nj2, i,j, liter, dim;
     int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
@@ -1724,15 +1714,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     float pmin, pmax, qmin, qmax, eps;
     char key[4];
     bool verb, both, **mm, drift;
-//     sf_file in, out, mask, idip0, xdip0;
 
-//     sf_init(argc,argv);
-//     in = sf_input ("in");
-//     out = sf_output ("out");
-
-//     if (SF_FLOAT != sf_gettype(in)) ps_error("Need float type");
-
-//     dim = sf_filedims(in,n);
     dim=4;
     if (dim < 2) n[1]=1;
     if (dim < 3) n[2]=1;
@@ -1770,57 +1752,36 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 
 // 	n4=0;
 	
-//     if (!sf_getint("niter",&niter)) 
     niter=5;
     /* number of iterations */
-//     if (!sf_getint("liter",&liter)) 
     liter=20;
     /* number of linear iterations */
-
-//     if (!sf_getint("rect1",&rect[0])) 
     rect[0]=1;
     /* dip smoothness on 1st axis */
-//     if (!sf_getint("rect2",&rect[1])) 
     rect[1]=1;
     /* dip smoothness on 2nd axis */
-//     if (!sf_getint("rect3",&rect[2])) 
     rect[2]=1;
     /* dip smoothness on 3rd axis */
-
-//     if (!sf_getfloat("p0",&p0)) 
     p0=0.;
     /* initial in-line dip */
-//     if (!sf_getfloat("q0",&q0)) 
     q0=0.;
     /* initial cross-line dip */
-
-//     if (!sf_getint("order",&order)) 
     order=1;
     /* accuracy order */
-//     if (!sf_getint("nj1",&nj1)) 
     nj1=1;
     /* in-line antialiasing */
-//     if (!sf_getint("nj2",&nj2)) 
     nj2=1;
     /* cross-line antialiasing */
-
-//     if (!sf_getbool("drift",&drift)) 
     drift=false;
     /* if shift filter */
-
-//     if (!sf_getbool("verb",&verb)) 
     verb = false;
     /* verbosity flag */
-//     if (!sf_getfloat("pmin",&pmin)) 
     pmin = -FLT_MAX;
     /* minimum inline dip */
-//     if (!sf_getfloat("pmax",&pmax)) 
     pmax = +FLT_MAX;
     /* maximum inline dip */
-//     if (!sf_getfloat("qmin",&qmin)) 
     qmin = -FLT_MAX;
     /* minimum cross-line dip */
-//     if (!sf_getfloat("qmax",&qmax)) 
     qmax = +FLT_MAX;
     /* maximum cross-line dip */
 
@@ -1832,7 +1793,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	liter=f6;
 	order=f7;
 	eps=f8;
-	//eps_cg,tol_cg no use
 	
     rect[0]=f11;
     rect[1]=f12;
@@ -1844,13 +1804,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1887,10 +1840,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     /* initialize dip estimation */
     dip3_init(n[0], n[1], n[2], rect, liter, eps, verb);
 
-//     if (!sf_getfloat("eps",&eps)) 
-//     eps=0.0f;
-    /* regularization */
-
 
 
 //     if (NULL != sf_getstring("mask")) {
@@ -1924,9 +1873,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 // 	    sf_floatread(u,n123,mask);
 // 	    mask32 (both, order, nj1, nj2, n[0], n[1], n[2], u, mm);
 // 	}
-
-	/* read data */
-// 	sf_floatread(u,n123,in);
 	
 	if (1 != n4) {
 	    /* initialize t-x dip */
@@ -1948,9 +1894,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	    /* estimate t-x dip */
 	    dip3(false, 1, niter, order, nj1, drift, u, p, mm[0], pmin, pmax);
 	    
-	    /* write t-x dip */
-// 	    sf_floatwrite(p,n123,out);
-	printf("H1\n");
 	}
 
 	if (0 != n4) {
@@ -1972,10 +1915,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	    
 	    /* estimate t-y dip */
 	    dip3(false, 2, niter, order, nj2, drift, u, p+n123, mm[1], qmin, qmax);
-	    
-	    /* write t-y dip */
-// 	    sf_floatwrite(p,n123,out);
-printf("H2\n");
+
 	}
 
 	if (!both) continue;
@@ -2014,10 +1954,6 @@ printf("H3\n");
 	    
 	    /* estimate t-y dip */
 	    dip3(true, 2, niter, order, nj2, drift, u, p+n123*3, mm[3], -qmax, -qmin);
-	    
-	    /* write t-y dip */
-// 	    sf_floatwrite(p,n123,out);
-printf("H4\n");
 	}	
     }
 

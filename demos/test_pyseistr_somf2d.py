@@ -49,7 +49,7 @@ dtemp=dn*0;#dtemp is the preprocessed data
 for i in range(1,dn.shape[0]+1):
     dtemp[i-1,:]=smooth(dn[i-1,:],5);
 
-dip=ps.dip2d(dtemp,rect=[10,20,1]);
+dip=ps.dip2dc(dtemp,rect=[10,20,1]);
 print(dn.shape)
 print(dip.flatten().max(),dip.flatten().min())
 
@@ -57,8 +57,8 @@ print(dip.flatten().max(),dip.flatten().min())
 r=2;
 eps=0.01;
 order=2;
-d1=ps.somean2d(dn,dip,r,order,eps);
-d2=ps.somf2d(dn,dip,r,order,eps,1);
+d1=ps.somean2dc(dn,dip,r,order,eps);
+d2=ps.somf2dc(dn,dip,r,order,eps,1);
 
 ## plot results
 fig = plt.figure(figsize=(10, 8))

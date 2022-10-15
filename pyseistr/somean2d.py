@@ -57,7 +57,6 @@ def somean2dc(dn,dip,ns,order,eps,adj=0,verb=1):
 	dip=np.float32(dip).flatten(order='F');
 	
 	ds=csomean2d(dn,dip,n1,n2,n3,ns,order,adj,eps,verb);
-	print(type(ds),ds.shape,ds.max(),ds.min(),ds.var())
 	ds=ds.reshape(n1,n2,n3,order='F')
 	
 	if n3==1:	#for 2D problems

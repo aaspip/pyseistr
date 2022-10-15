@@ -86,22 +86,6 @@ def dip3dc(din,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,r
 
 	n123 = din.size;
 
-# 	dip_i=np.zeros([n1,n2,n3]);
-# 	dip_x=np.zeros([n1,n2,n3]);
-# 
-# 	for iter in range(0,niter):
-# 
-# 		#corresponding to the eq.21 in the paper
-# 		u1_i,u2_i = conv_allpass_i(din,dip_i,order); 	#inline linearization using the updated dip	
-# 		ratio_i  = divne(-u2_i, u1_i, liter, rect, n, eps_dv, eps_cg, tol_cg,verb);
-# 
-# 		#corresponding to the eq.21 in the paper
-# 		u1_x,u2_x = conv_allpass_x(din,dip_x,order); 	#xline linearization using the updated dip
-# 		ratio_x  = divne(-u2_x, u1_x, liter, rect, n, eps_dv, eps_cg, tol_cg,verb);
-# 	
-# 		dip_i=dip_i+ratio_i;
-# 		dip_x=dip_x+ratio_x;
-
 	r1=rect[0]
 	r2=rect[1]
 	r3=rect[2]

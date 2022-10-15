@@ -1330,7 +1330,6 @@ void mf(float *trace)
 	printf("Wrong axis number for 2D dataset");
 	}
 	}
-// 	printf("nfilter=%d,nfilter2=%d,n1=%d,n2=%d,axis=%d\n",nfilter,nfilter2,n1,n2,axis);
 }
 
 void svmf(float *trace)
@@ -1430,14 +1429,10 @@ void svmf(float *trace)
 	printf("Wrong axis number for 2D dataset");
 	}
 	}
-// 	printf("nfilter=%d,nfilter2=%d,n1=%d,n2=%d,axis=%d\n",nfilter,nfilter2,n1,n2,axis);
 }
 
 static PyObject *csomean2d(PyObject *self, PyObject *args){
-	
-	
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
+		
     /*Below is the input part*/
     int f3,f4,f5,f6,f7,f8;
     float f9;
@@ -1453,12 +1448,6 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
     
 	PyArg_ParseTuple(args, "OOiiiiiifi", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10);
 
-//     int ndim;
-    
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 	
     int i1,i2,i3;
     int n123, niter, order, nj1,nj2, i,j, liter, dim;
     int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
@@ -1466,7 +1455,6 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
     float pmin, pmax, qmin, qmax, eps;
     char key[4];
     bool verb, both, adj;
-//     sf_file in, out, mask, idip0, xdip0;
 
     int n1, n2, n3, ns;
     float *input, *smooth, ***slope;
@@ -1488,13 +1476,6 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1534,12 +1515,8 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
 	    pwsmooth_lop(false,false,n1*n2,n1*n2,input+i3*n1*n2,smooth+i3*n1*n2);
 	}
 
-// 	sf_floatwrite(smooth,n12,out);
     }
-//     if (verb) sf_warning(".");
     
-    
-
     /*Below is the output part*/
     PyArrayObject *vecout;
 	npy_intp dims[2];
@@ -1556,10 +1533,7 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
 }
 
 static PyObject *csomf2d(PyObject *self, PyObject *args){
-	
-	
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
+		
     /*Below is the input part*/
     int f3,f4,f5,f6,f7,f8;
     float f9;
@@ -1576,12 +1550,6 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     
 	PyArg_ParseTuple(args, "OOiiiiiiifi", &f1, &f2, &f3, &f4, &f5, &f6, &nmf, &option, &f7, &f9, &f10);
 
-//     int ndim;
-    
-//     int typ, niter_in, niter_out, nt0, nv0, nh0, verb, ndata, nmod;
-//     float *v0, *h0, *misfit, *data, *model; 
-// 	float dt0;
-// 	
     int i1,i2,i3;
     int n123, niter, order, nj1,nj2, i,j, liter, dim;
     int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
@@ -1589,7 +1557,6 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     float pmin, pmax, qmin, qmax, eps;
     char key[4];
     bool verb, both, adj;
-//     sf_file in, out, mask, idip0, xdip0;
 
     int n1, n2, n3, ns;
     float *input, *smooth, ***slope;
@@ -1604,22 +1571,11 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 	eps=f9; /*regularization*/
 	verb=f10;
 	
-	printf("ns=%d,nmf=%d\n",ns,nmf);
-	printf("option=%d\n",option);
-	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
 
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
-
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1657,10 +1613,6 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 	if (verb) printf("slice %d of %d;\n",i3+1,n3);
 
 	pwsmooth_set(slope[i3]);
-
-
-// 	pwsmooth_lop(false,false,n1*n2,n1*n2,input+i3*n1*n2,smooth+i3*n1*n2);
-
 	
 	pwspray_lop(false, false, n1*n2, n1*n2*np, input+i3*n1*n2, u[0][0]);
 	
@@ -1686,7 +1638,6 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     	sum=0;
     	for(j=0;j<n1*np;j++)
     	{tt[j]=u[i][0][j];sum=sum+tt[j];}
-//     	printf("sum1=%g\n",sum);
     	
     	if(option==1)
     	mf(tt);
@@ -1696,17 +1647,14 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     	sum=0;
     	for(j=0;j<n1*np;j++)
     	{u[i][0][j]=tt[j];sum=sum+tt[j];}
-//     	printf("sum2=%g\n",sum);
 
 	for(k=0;k<n1;k++)
 	smooth[i*n1+k+i3*n1*n2] = u[i][(np-1)/2][k];
     }
     
-    
-	
-// 	sf_floatwrite(smooth,n12,out);
+
     }
-//     if (verb) sf_warning(".");
+
     
     
 

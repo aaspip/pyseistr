@@ -13,7 +13,7 @@ d0=d;
 ## 3D slope calculation (inline and xline)
 import pyseistr as ps
 import matplotlib.pyplot as plt
-[dipi,dipx] = ps.dip3d(d0);
+[dipi,dipx] = ps.dip3dc(d0);
 
 
 ## Create the mask (sampling operator)
@@ -24,7 +24,7 @@ mask[inds]=1;
 mask=mask.reshape(n1,n2,n3,order='F');
 
 ## 3D structure-oriented interpolation
-d1=ps.soint3d(d0,mask,dipi,dipx,order=2,niter=20,njs=[1,1],drift=0,verb=1);
+d1=ps.soint3dc(d0,mask,dipi,dipx,order=2,niter=20,njs=[1,1],drift=0,verb=1);
 fig = plt.figure(figsize=(5, 8))
 ax=plt.subplot(5,1,1)
 plt.imshow(d0.reshape(150,13*13,order='F'),cmap='jet',clim=(-0.001, 0.001),aspect=0.25);ax.set_xticks([]);ax.set_yticks([]);

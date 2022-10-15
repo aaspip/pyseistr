@@ -18,7 +18,7 @@ cmpn=cmp;
 print(cmpn.flatten().sum())
 
 ## 3D slope calculation (inline and xline)
-[dipi,dipx] = ps.dip3d(cmpn);
+[dipi,dipx] = ps.dip3dc(cmpn);
 
 
 ## Structural smoothing
@@ -26,7 +26,7 @@ r1=2;
 r2=2;
 eps=0.01;
 order=2;
-cmpn_d1=ps.somean3d(cmpn,dipi,dipx,r1,r2,eps,order);
+cmpn_d1=ps.somean3dc(cmpn,dipi,dipx,r1,r2,eps,order);
 
 ## plot results
 fig = plt.figure(figsize=(8, 8))

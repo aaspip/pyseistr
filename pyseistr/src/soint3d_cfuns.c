@@ -1259,64 +1259,12 @@ float sf_randn_one_bm (void)
 
 
 static PyObject *csoint3d(PyObject *self, PyObject *args){
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
-    /*Below is the input part*/
-//     int f4,f5,f6,f7,f8,f9;
-//     float f10;
-//     int f12;
     
 	/**initialize data input**/
     int nd, nd2;
-//     bool verb, up2, up3;
-//     unsigned char update;
-//     int n1,n2,n3, i1,i2,i3, ns2, ns3, nmf, option=0, ip, np2, np3, n23, n123;
-//     int order, np, i4, n4, k2, k3, j2, j3, i, jp, j;
-//     float eps, *din, ***u, **p1, **p2, **cost, *trace, *q2=NULL, *q3=NULL;
-//     /*why option=0 plays a different role?*/
-
     int i, niter, nw, n1, n2, n3, n123, nj1, nj2, seed, i4, n4;
     float *mm, *dd, *pp, *qq, a, var;
     bool *known, verb, drift, hasmask;
-//     sf_file in, out, dip, mask;
-
-//     sf_init (argc,argv);
-//     in = sf_input("in");
-//     out = sf_output("out");
-//     dip = sf_input("dip");
-
-//     if (!sf_histint(in,"n1",&n1)) sf_error("No n1= in input");
-//     if (!sf_histint(in,"n2",&n2)) sf_error("No n2= in input");
-//     if (!sf_histint(in,"n3",&n3)) sf_error("No n3= in input");
-    
-//     n4 = sf_leftsize(in,3);
-
-//     if (!sf_getint("niter",&niter)) niter=100;
-    /* number of iterations */
-
-//     if (!sf_getint("order",&nw)) nw=1;
-    /* [1,2,3] accuracy order */
-//     if (nw < 1 || nw > 3) 
-// 	sf_error ("Unsupported nw=%d, choose between 1 and 3",nw);
-
-//     if (!sf_getint("nj1",&nj1)) nj1=1;
-//     if (!sf_getint("nj2",&nj2)) nj2=1;
-    /* antialiasing */
-
-//     if (!sf_getbool("drift",&drift)) drift=false;
-    /* if shift filter */
-
-//     if (!sf_getbool("verb",&verb)) verb = false;
-    /* verbosity flag */
-    
-//     if (!sf_getint("seed",&seed)) seed = time(NULL);
-    /* random seed */
-
-
-//     if (!sf_getfloat("var",&var)) var=0.;
-    /* noise variance */
-
-    
     
     PyObject *f1=NULL;
     PyObject *f2=NULL;
@@ -1335,13 +1283,6 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
     
 	n123=n1*n2*n3;
     init_genrand((unsigned long) seed);
-    
-// 	ns2=f7;
-// 	ns3=f8;
-// 	
-// 	order=f9;/*default order=1*/
-// 	eps=f10; /*regularization*/
-// 	verb=f11;
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
@@ -1350,21 +1291,6 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
 	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
-
-	printf("n123=%d\n",n123);
-// 	printf("eps=%f\n",eps);
-// 	printf("nmf=%d\n",nmf);
-// 	printf("option=%d\n",option);
-	printf("order=%d\n",nw);
-	printf("hasmask=%d\n",hasmask);
-// 	eps=0.01;
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1402,14 +1328,8 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
 
     allpass3_init(allpass_init(nw, nj1, n1,n2,n3, drift, pp),
 		  allpass_init(nw, nj2, n1,n2,n3, drift, qq));
-
-// 	printf("slice %d of %d\n",i4+1,n4);
-// 	sf_floatread(pp,n123,dip);
-// 	sf_floatread(qq,n123,dip);
-// 	sf_floatread(mm,n123,in);
 	
-	if (hasmask==1) {
-// 	    sf_floatread(dd,n123,mask);	    
+	if (hasmask==1) {    
 	    for (i=0; i < n123; i++) {
 		known[i] = (bool) (dd[i] != 0.);
 	    }

@@ -33,7 +33,7 @@ from pyseistr import cseis as seis
 
 ## BP
 print(dn.max())
-d1=ps.bandpass(dn,0.0005,0,200,6,6,0,0);
+d1=ps.bandpassc(dn,0.0005,0,200,6,6,0,0);
 d1_bp=d1.copy();
 print(d1.max())
 

@@ -43,7 +43,7 @@ dtemp=d2d*0;#dtemp is the preprocessed data
 for i in range(d2d.shape[0]):
     dtemp[i,:]=smooth(d2d[i,:],5);
 
-dip=ps.dip2d(dtemp);
+dip=ps.dip2dc(dtemp);
 print(d2d.shape)
 print(dip.flatten().max(),dip.flatten().min())
 
@@ -51,8 +51,8 @@ print(dip.flatten().max(),dip.flatten().min())
 r=2
 eps=0.01
 order=2
-d1=ps.somean2d(d2d,dip,r,order,eps)
-d2=ps.somf2d(d2d,dip,r,order,eps,1)
+d1=ps.somean2dc(d2d,dip,r,order,eps)
+d2=ps.somf2dc(d2d,dip,r,order,eps,1)
 
 dmax=np.max(d2d[:,30])
 
@@ -65,7 +65,7 @@ plt.title('Raw data')
 plt.axis('off')
 
 plt.subplot(4,2,2)
-plt.imshow(dip[:,:,0]/np.max(dip[:,:,0]),cmap='jet',clim=(-0.2, 0.2),aspect=0.06)
+plt.imshow(dip[:,:]/np.max(dip[:,:]),cmap='jet',clim=(-0.2, 0.2),aspect=0.06)
 #plt.xlabel('Trace#')
 #plt.ylabel('Time (s)')
 plt.title('Slope')

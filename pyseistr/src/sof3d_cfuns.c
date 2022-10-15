@@ -1250,7 +1250,6 @@ void mf(float *trace)
 	printf("Wrong axis number for 2D dataset");
 	}
 	}
-// 	printf("nfilter=%d,nfilter2=%d,n1=%d,n2=%d,axis=%d\n",nfilter,nfilter2,n1,n2,axis);
 }
 
 void svmf(float *trace)
@@ -1351,12 +1350,10 @@ void svmf(float *trace)
 	printf("Wrong axis number for 2D dataset");
 	}
 	}
-// 	printf("nfilter=%d,nfilter2=%d,n1=%d,n2=%d,axis=%d\n",nfilter,nfilter2,n1,n2,axis);
 }
 
 
 static PyObject *csomean3d(PyObject *self, PyObject *args){
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
 	
     /*Below is the input part*/
     int f4,f5,f6,f7,f8,f9;
@@ -1381,29 +1378,6 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
     int order, np, i4, n4, k2, k3, j2, j3, i, jp, j;
     float eps, *din, ***u, **p1, **p2, **cost, *trace, *q2=NULL, *q3=NULL;
     
-//     ps_file inp, out, dip;
-// 
-//     ps_init(argc,argv);
-//     inp = ps_input("in");
-//     dip = ps_input("dip");
-//     out = ps_output("out");
-// 
-//     if (!ps_histint(inp,"n1",&n1)) ps_error("No n1= in input");
-//     if (!ps_histint(inp,"n2",&n2)) ps_error("No n2= in input");
-//     if (!ps_histint(inp,"n3",&n3)) ps_error("No n3= in input");
-//     n23 = n2*n3;
-//     n4 = ps_leftsize(inp,3);
-
-//     if (!ps_getbool("verb",&verb)) verb=false;
-    /* verbosity */
-//     if (!ps_getfloat("eps",&eps)) eps=0.01;
-    /* regularization */
-    
-//     if (!ps_getint("order",&order)) order=1;
-    /* accuracy order */
-
-//     if (!ps_getint("ns2",&ns2)) ps_error("Need ns1=");
-//     if (!ps_getint("ns3",&ns3)) ps_error("Need ns2=");
     /* spray radius */
     
 	n1=f4;
@@ -1426,16 +1400,7 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
-	printf("n123=%d\n",n123);
-	printf("eps=%f\n",eps);
 	eps=0.01;
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1449,9 +1414,6 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
     np2 = 2*ns2+1;
     np3 = 2*ns3+1;
     np = np2*np3;
-
-//     ps_putint(out,"n2",np);
-//     ps_shiftdim(inp, out, 2);
 
     cost = ps_floatalloc2(np2,np3);
     for (i3=0; i3 < np3; i3++) {
@@ -1490,34 +1452,8 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
     {
         p2[0][i]=*((float*)PyArray_GETPTR1(arrf3,i));
     }
-    
-//     for (i=0; i < n23; i++) { 
-// 	ps_floatread(p1[i],n1,dip);
-//     }
-
-//     for (i=0; i < n23; i++) { 
-// 	ps_floatread(p2[i],n1,dip);
-//     }
-
-//     for (i4=0; i4 < n4; i4++) {
-// int k;float sum;
-//     for(i=0;i<n23;i++)
-//     {
-//     	
-//     	
-//     	for(k=0;k<n1;k++)
-//     	{	
-//     	sum=0;
-//     	for(j=0;j<np;j++)
-//     		sum=sum+u[i][j][k];
-//     	sum=sum/np;
-//     	din[i*n1+k]=sum;
-//     	printf("sum=%g\n",u[i][0][k]);
-//     	}
-//     }
-    
+      
 	for (i=0; i < n23; i++) { 
-// 	    ps_floatread(u[i][ns3*np2+ns2],n1,inp);
 	    for(j=0;j<n1;j++)
 	    	u[i][ns3*np2+ns2][j]=din[i*n1+j];
 	    
@@ -1582,13 +1518,7 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
 			break;
 		}
 	    }
-// 	}
 
-// 	for (i=0; i < n23; i++) {
-// 	    for (ip=0; ip < np; ip++) {
-// 		ps_floatwrite(u[i][ip],n1,out);
-// 	    }
-// 	}
     }
     
     int k;
@@ -1604,7 +1534,6 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
     		sum=sum+u[i][j][k];
     	sum=sum/np;
     	din[i*n1+k]=sum;
-//     	printf("sum=%g\n",u[i][0][k]);
     	}
     }
     
@@ -1624,12 +1553,6 @@ static PyObject *csomean3d(PyObject *self, PyObject *args){
 }
 
 static PyObject *csomf3d(PyObject *self, PyObject *args){
-// 	din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb
-	
-    /*Below is the input part*/
-//     int f4,f5,f6,f7,f8,f9;
-//     float f10;
-//     int f12;
     
 	/**initialize data input**/
     int nd, nd2;
@@ -1649,44 +1572,9 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
     
 	PyArg_ParseTuple(args, "OOOiiiiiiiifi", &f1, &f2, &f3, &n1, &n2, &n3, &ns2, &ns3, &nmf, &option, &order, &eps, &verb);
 
-
-//     ps_file inp, out, dip;
-// 
-//     ps_init(argc,argv);
-//     inp = ps_input("in");
-//     dip = ps_input("dip");
-//     out = ps_output("out");
-// 
-//     if (!ps_histint(inp,"n1",&n1)) ps_error("No n1= in input");
-//     if (!ps_histint(inp,"n2",&n2)) ps_error("No n2= in input");
-//     if (!ps_histint(inp,"n3",&n3)) ps_error("No n3= in input");
-//     n23 = n2*n3;
-//     n4 = ps_leftsize(inp,3);
-
-//     if (!ps_getbool("verb",&verb)) verb=false;
-    /* verbosity */
-//     if (!ps_getfloat("eps",&eps)) eps=0.01;
-    /* regularization */
-    
-//     if (!ps_getint("order",&order)) order=1;
-    /* accuracy order */
-
-//     if (!ps_getint("ns2",&ns2)) ps_error("Need ns1=");
-//     if (!ps_getint("ns3",&ns3)) ps_error("Need ns2=");
-    /* spray radius */
-    
-// 	n1=f4;
-// 	n2=f5;
-// 	n3=f6;
 	n123=n1*n2*n3;
 	n23=n2*n3;
-// 	
-// 	ns2=f7;
-// 	ns3=f8;
-// 	
-// 	order=f9;/*default order=1*/
-// 	eps=f10; /*regularization*/
-// 	verb=f11;
+
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
@@ -1695,19 +1583,7 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
-	printf("n123=%d\n",n123);
-	printf("eps=%f\n",eps);
-	printf("nmf=%d\n",nmf);
-	printf("option=%d\n",option);
-	printf("order=%d\n",order);
 	eps=0.01;
-//     ndata=nt0*nh0;
-//     nmod=nt0*nv0;
-// 
-// 	data  = (float*)malloc(ndata * sizeof(float));
-// 	model = (float*)malloc(nmod * sizeof(float));
-// 	v0 = (float*)malloc(nv0 * sizeof(float));
-// 	h0 = (float*)malloc(nh0 * sizeof(float));
 	
     if (*sp != n123)
     {
@@ -1721,9 +1597,6 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
     np2 = 2*ns2+1;
     np3 = 2*ns3+1;
     np = np2*np3;
-
-//     ps_putint(out,"n2",np);
-//     ps_shiftdim(inp, out, 2);
 
     cost = ps_floatalloc2(np2,np3);
     for (i3=0; i3 < np3; i3++) {
@@ -1763,33 +1636,7 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
         p2[0][i]=*((float*)PyArray_GETPTR1(arrf3,i));
     }
     
-//     for (i=0; i < n23; i++) { 
-// 	ps_floatread(p1[i],n1,dip);
-//     }
-
-//     for (i=0; i < n23; i++) { 
-// 	ps_floatread(p2[i],n1,dip);
-//     }
-
-//     for (i4=0; i4 < n4; i4++) {
-// int k;float sum;
-//     for(i=0;i<n23;i++)
-//     {
-//     	
-//     	
-//     	for(k=0;k<n1;k++)
-//     	{	
-//     	sum=0;
-//     	for(j=0;j<np;j++)
-//     		sum=sum+u[i][j][k];
-//     	sum=sum/np;
-//     	din[i*n1+k]=sum;
-//     	printf("sum=%g\n",u[i][0][k]);
-//     	}
-//     }
-    
 	for (i=0; i < n23; i++) { 
-// 	    ps_floatread(u[i][ns3*np2+ns2],n1,inp);
 	    for(j=0;j<n1;j++)
 	    	u[i][ns3*np2+ns2][j]=din[i*n1+j];
 	    
@@ -1854,13 +1701,7 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
 			break;
 		}
 	    }
-// 	}
 
-// 	for (i=0; i < n23; i++) {
-// 	    for (ip=0; ip < np; ip++) {
-// 		ps_floatwrite(u[i][ip],n1,out);
-// 	    }
-// 	}
     }
     
     if(option==1)
@@ -1877,34 +1718,18 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
     float *tt;
     tt=ps_floatalloc(n1*np);
     int k;
-    float sum;
     for(i=0;i<n23;i++)
     {
-    	
-    	
-//     	for(k=0;k<n1;k++)
-//     	{	
-//     	sum=0;
-//     	for(j=0;j<np;j++)
-//     		sum=sum+u[i][j][k];
-//     	sum=sum/np;
-//     	din[i*n1+k]=sum;
-// //     	printf("sum=%g\n",u[i][0][k]);
-//     	}
-    	sum=0;
     	for(j=0;j<n1*np;j++)
-    	{tt[j]=u[i][0][j];sum=sum+tt[j];}
-//     	printf("sum1=%g\n",sum);
+    	{tt[j]=u[i][0][j];}
     	
     	if(option==1)
     	mf(tt);
     	else
     	svmf(tt);
     	
-    	sum=0;
     	for(j=0;j<n1*np;j++)
-    	{u[i][0][j]=tt[j];sum=sum+tt[j];}
-//     	printf("sum2=%g\n",sum);
+    	{u[i][0][j]=tt[j];}
 
 	for(k=0;k<n1;k++)
 	din[i*n1+k] = u[i][(np-1)/2][k];

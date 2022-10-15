@@ -87,11 +87,8 @@ def somf3dc(dn,dipi,dipx,r1,r2,eps,order,option=1,verb=1):
 	dipx=np.float32(dipx).flatten(order='F');
 	
 	rmf=2*r1*r2+1; #median filter length
-	print(dn.max(),dn.min(),dn.var())
-	print('option=',option)
 	ds=csomf3d(dn,dipi,dipx,n1,n2,n3,r1,r2,rmf,option,order,eps,verb);
 	ds=ds.reshape([n1,n2,n3],order='F');
-	print(ds.max(),ds.min(),ds.var())
 
 	return ds
 
