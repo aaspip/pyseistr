@@ -1556,7 +1556,8 @@ static PyObject *csomf3d(PyObject *self, PyObject *args){
     
 	/**initialize data input**/
     int nd, nd2;
-    bool verb, up2, up3;
+    bool up2, up3;
+    int verb;
     unsigned char update;
     int n1,n2,n3, i1,i2,i3, ns2, ns3, nmf, option=0, ip, np2, np3, n23, n123;
     int order, np, i4, n4, k2, k3, j2, j3, i, jp, j;
