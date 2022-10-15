@@ -1934,10 +1934,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	    
 	    /* estimate t-x dip */
 	    dip3(true, 1, niter, order, nj1, drift, u, p+n123*2, mm[2], -pmax, -pmin);
-	    
-	    /* write t-x dip */
-// 	    sf_floatwrite(p,n123,out);
-printf("H3\n");
+
 	}
 
 	if (0 != n4) {
