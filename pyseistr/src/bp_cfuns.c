@@ -524,7 +524,7 @@ void sf_reverse (int n1, float* trace)
 
 static PyObject *cbp(PyObject *self, PyObject *args){
 	
-	bool phase, verb;
+	int phase, verb;
     int i, i2, n1, n2, n3, n123, nplo, nphi;
     float d1, flo, fhi, *trace;
     const float eps=0.0001;
