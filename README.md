@@ -3,7 +3,7 @@
 
 ## Description
 
-**Pyseistr** is a python package for structural denoising and interpolation of multi-channel seismic data. This package has a variety of applications in both exploration and earthquake seismology.
+**Pyseistr** is a python package for structural denoising and interpolation of multi-channel seismic data. The latest version has incorporated both Python and C (hundreds of times faster) implementations of the embedded functions. We keep both implementations for both educational and production purposes. This package has a variety of applications in both exploration and earthquake seismology.
 
 ## Reference
 Chen et al., 2022, Pyseistr: a python package for structural denoising and interpolation of multi-channel seismic data, under review. 
@@ -59,17 +59,17 @@ Each figure in the gallery directory corresponds to a DEMO script in the "demo" 
 
 -----------
 ## Modules
-    dip2d.py  -> 2D local slope estimation
-    dip3d.py  -> 3D local slope estimation
-    divne.py  -> element-wise division constrained by shaping regularization
-    somean2d.py -> 2D structure-oriented mean filter 
-    somean3d.py -> 3D structure-oriented mean filter 
-    somf2d.py 	-> 2D structure-oriented median filter 
-    somf3d.py 	-> 3D structure-oriented median filter 
-    soint2d.py  -> 2D structural interpolation
-    soint3d.py  -> 3D structural interpolation
+    dip2d.py  -> 2D local slope estimation (including both python and C implementations)
+    dip3d.py  -> 3D local slope estimation (including both python and C implementations)
+    divne.py  -> element-wise division constrained by shaping regularization (python implementation)
+    somean2d.py -> 2D structure-oriented mean filter  (including both python and C implementations)
+    somean3d.py -> 3D structure-oriented mean filter  (including both python and C implementations)
+    somf2d.py 	-> 2D structure-oriented median filter  (including both python and C implementations)
+    somf3d.py 	-> 3D structure-oriented median filter  (including both python and C implementations)
+    soint2d.py  -> 2D structural interpolation  (including both python and C implementations)
+    soint3d.py  -> 3D structural interpolation  (including both python and C implementations)
     ricker.py	-> Ricker wavelet
-    bp.py		-> Butterworth bandpass filter
+    bp.py		-> Butterworth bandpass filter (including both python and C implementations)
     fk.py		-> FK dip filter
     plot.py		-> seismic plotting functions
     
