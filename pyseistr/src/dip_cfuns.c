@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <numpy/arrayobject.h>
-// #include <float.h>
 
 /*NOTE: PS indicates PySeistr*/
 #define PS_NINT(x) ((int)((x)>0.0?(x)+0.5:(x)-0.5))
@@ -1776,18 +1775,20 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     /* if shift filter */
     verb = false;
     /* verbosity flag */
-    //pmin = -FLT_MAX;
-    pmin = -9999999999999999999;
+//    pmin = -FLT_MAX;
     /* minimum inline dip */
 //     pmax = +FLT_MAX;
-	pmax = 9999999999999999999;
     /* maximum inline dip */
 //     qmin = -FLT_MAX;
-    qmin = -9999999999999999999;
     /* minimum cross-line dip */
 //     qmax = +FLT_MAX;
-	qmax = 9999999999999999999;
     /* maximum cross-line dip */
+
+pmin=-340282346638528859811704183484516925440.000000;
+pmax=340282346638528859811704183484516925440.000000;
+qmin=-340282346638528859811704183484516925440.000000;
+qmax=340282346638528859811704183484516925440.000000;
+/*printf("pmin pmax qmin qmax=%f,%f,%f,%f\n",pmin,pmax,qmin,qmax);*/
 
 	n[0]=f2;
 	n[1]=f3;
