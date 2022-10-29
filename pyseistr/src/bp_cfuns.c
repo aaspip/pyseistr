@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <numpy/arrayobject.h>
-// #include <float.h>
 
 /*NOTE: PS indicates PySeistr*/
 #define PS_NINT(x) ((int)((x)>0.0?(x)+0.5:(x)-0.5))

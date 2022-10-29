@@ -1775,20 +1775,16 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     /* if shift filter */
     verb = false;
     /* verbosity flag */
-//    pmin = -FLT_MAX;
+    
     /* minimum inline dip */
-//     pmax = +FLT_MAX;
     /* maximum inline dip */
-//     qmin = -FLT_MAX;
     /* minimum cross-line dip */
-//     qmax = +FLT_MAX;
     /* maximum cross-line dip */
-
-pmin=-340282346638528859811704183484516925440.000000;
-pmax=340282346638528859811704183484516925440.000000;
-qmin=-340282346638528859811704183484516925440.000000;
-qmax=340282346638528859811704183484516925440.000000;
-/*printf("pmin pmax qmin qmax=%f,%f,%f,%f\n",pmin,pmax,qmin,qmax);*/
+	pmin=-340282346638528859811704183484516925440.000000;
+	pmax=340282346638528859811704183484516925440.000000;
+	qmin=-340282346638528859811704183484516925440.000000;
+	qmax=340282346638528859811704183484516925440.000000;
+	/*printf("pmin pmax qmin qmax=%f,%f,%f,%f\n",pmin,pmax,qmin,qmax);*/
 
 	n[0]=f2;
 	n[1]=f3;

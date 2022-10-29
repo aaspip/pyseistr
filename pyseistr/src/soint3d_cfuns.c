@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <numpy/arrayobject.h>
-// #include <float.h>
 
 
 /*NOTE: PS indicates PySeistr*/
