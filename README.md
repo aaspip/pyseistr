@@ -59,9 +59,9 @@ Each figure in the gallery directory corresponds to a DEMO script in the "demo" 
 
 -----------
 ## Modules
-    dip2d.py  -> 2D local slope estimation (including both python and C implementations)
-    dip3d.py  -> 3D local slope estimation (including both python and C implementations)
-    divne.py  -> element-wise division constrained by shaping regularization (python implementation)
+    dip2d.py  	-> 2D local slope estimation (including both python and C implementations)
+    dip3d.py  	-> 3D local slope estimation (including both python and C implementations)
+    divne.py  	-> element-wise division constrained by shaping regularization (python implementation)
     somean2d.py -> 2D structure-oriented mean filter  (including both python and C implementations)
     somean3d.py -> 3D structure-oriented mean filter  (including both python and C implementations)
     somf2d.py 	-> 2D structure-oriented median filter  (including both python and C implementations)
@@ -69,9 +69,9 @@ Each figure in the gallery directory corresponds to a DEMO script in the "demo" 
     soint2d.py  -> 2D structural interpolation  (including both python and C implementations)
     soint3d.py  -> 3D structural interpolation  (including both python and C implementations)
     ricker.py	-> Ricker wavelet
-    bp.py		-> Butterworth bandpass filter (including both python and C implementations)
-    fk.py		-> FK dip filter
-    plot.py		-> seismic plotting functions
+    bp.py	-> Butterworth bandpass filter (including both python and C implementations)
+    fk.py	-> FK dip filter
+    plot.py	-> seismic plotting functions
     
 -----------
 ## Development
