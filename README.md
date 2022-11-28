@@ -42,7 +42,7 @@ or using Pypi
     pip install pyseistr
 
 -----------
-## Examples
+## DEMO scripts
     The "demo" directory contains all runable scripts to demonstrate different applications of pyseistr. 
 
 -----------
