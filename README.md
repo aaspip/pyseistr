@@ -6,18 +6,18 @@
 **Pyseistr** is a python package for structural denoising and interpolation of multi-channel seismic data. The latest version has incorporated both Python and C (hundreds of times faster) implementations of the embedded functions. We keep both implementations for both educational and production purposes. This package has a variety of applications in both exploration and earthquake seismology.
 
 ## Reference
-Chen et al., 2022, Pyseistr: a python package for structural denoising and interpolation of multi-channel seismic data, under review. 
+Chen et al., 2023, Pyseistr: a python package for structural denoising and interpolation of multi-channel seismic data, Seismological Research Letters, in press. 
 
 BibTeX:
 
 	@article{pyseistr,
 	  title={Pyseistr: a python package for structural denoising and interpolation of multi-channel seismic data},
 	  author={Yangkang Chen and Alexandros Savvaidis and Sergey Fomel and Yunfeng Chen and Omar M. Saad and Yapo Abol{\'e} Serge Innocent Obou{\'e} and Quan Zhang and Wei Chen},
-	  journal={TBD},
+	  journal={Seismological Research Letters},
 	  volume={1},
 	  number={1},
 	  pages={1-10},
-	  year={2022}
+	  year={2023}
 	}
 
 -----------
