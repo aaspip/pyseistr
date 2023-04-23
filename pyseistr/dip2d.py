@@ -2,22 +2,27 @@ import numpy as np
 from dipcfun import *
 
 def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
-	# dip2d: dip estimation based on shaping regularized PWD algorithm 
-	# (independent implementation)
-	#
-	# INPUT
-	# din: input data (nt*nx)
-	# niter: number of nonlinear iterations
-	# liter: number of linear iterations (in divn)
-	# order: accuracy order
-	# eps_dv: eps for divn  (default: 0.01)
-	# eps_cg: eps for CG    (default: 1)
-	# tol_cg: tolerence for CG (default: 0.000001)
-	# rect:  smoothing radius (ndim*1)
-	# verb: verbosity flag
-	#
-	# OUTPUT
-	# dip:  2D slope
+	'''
+	dip2d: dip estimation based on shaping regularized PWD algorithm 
+	(independent implementation)
+	
+	INPUT
+	din: input data (nt*nx)
+	niter: number of nonlinear iterations
+	liter: number of linear iterations (in divn)
+	order: accuracy order
+	eps_dv: eps for divn  (default: 0.01)
+	eps_cg: eps for CG    (default: 1)
+	tol_cg: tolerence for CG (default: 0.000001)
+	rect:  smoothing radius (ndim*1)
+	verb: verbosity flag
+	
+	OUTPUT
+	dip:  2D slope
+	
+	NOTE: mask function is not enabled yet (will do in the future)
+	'''
+	
 	from .divne import divne
 	
 	p0 = 0.0;
@@ -45,24 +50,27 @@ def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 
 	return dip
 
-def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
-	# dip2d: dip estimation based on shaping regularized PWD algorithm 
-	# (independent implementation)
-	#
-	# INPUT
-	# din: input data (nt*nx)
-	# niter: number of nonlinear iterations
-	# liter: number of linear iterations (in divn)
-	# order: accuracy order
-	# eps_dv: eps for divn  (default: 0.01)
-	# eps_cg: eps for CG    (default: 1)
-	# tol_cg: tolerence for CG (default: 0.000001)
-	# rect:  smoothing radius (ndim*1)
-	# verb: verbosity flag
-	#
-	# OUTPUT
-	# dip:  2D slope
+def dip2dc(din,mask=None,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
+	'''
+	dip2dc: dip estimation based on shaping regularized PWD algorithm 
+	(C implementation)
+	
+	INPUT
+	din: input data (nt*nx)
+	niter: number of nonlinear iterations
+	liter: number of linear iterations (in divn)
+	order: accuracy order
+	eps_dv: eps for divn  (default: 0.01)
+	eps_cg: eps for CG    (default: 1)
+	tol_cg: tolerence for CG (default: 0.000001)
+	rect:  smoothing radius (ndim*1)
+	verb: verbosity flag
+	
+	OUTPUT
+	dip:  2D slope
+	
 	from .divne import divne
+	'''
 	
 	p0 = 0.0;
 	nj1 = 1;
@@ -76,29 +84,38 @@ def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,r
 	r1=rect[0]
 	r2=rect[1]
 	r3=rect[2]
-	
-	din=np.float32(din.flatten(order='F'));
-	dip=dipc(din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,verb);
+
+	if mask is None:
+		din=np.float32(din.flatten(order='F'));
+		hasmask=0
+	else:
+		if din.size != mask.size:
+			Exception("Mask and Data should have the same dimension")
+		else:
+			din=np.float32(np.concatenate([din.flatten(order='F'),mask.flatten(order='F')],axis=0));
+			hasmask=1;
+	dip=dipc(din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,hasmask,verb);
 	dip=dip.reshape(n1,n2,order='F');
 		
 	return dip
 	
 def conv_allpass(din,dip,order):
-	#conv_allpass: Convolutional operator implemented by an allpass filter
-	#
-	#Linearized inverse problem
-	#C'(\sigma)d\Delta \sigma =  C(\sigma)d
-	#
-	#IPNUT:
-	#din: input data
-	#dip: 3D dip
-	#order: accuracy order
-	#
-	#OUTPUT:
-	#u1: C'(\sigma)d (denominator)
-	#u2: C(\sigma)d  (numerator)
-	#
+	'''
+	conv_allpass: Convolutional operator implemented by an allpass filter
 	
+	Linearized inverse problem
+	C'(\sigma)d\Delta \sigma =  C(\sigma)d
+	
+	IPNUT:
+	din: input data
+	dip: 3D dip
+	order: accuracy order
+	
+	OUTPUT:
+	u1: C'(\sigma)d (denominator)
+	u2: C(\sigma)d  (numerator)
+	
+	'''
 	[n1,n2]=din.shape;
 	u1=np.zeros([n1,n2]);
 	u2=np.zeros([n1,n2]);
@@ -131,9 +148,10 @@ def conv_allpass(din,dip,order):
 #cprresponding to eqs.13-16
 #form the filters
 def B3(sigma):
-	#B3 coefficient
-	#sigma: slope
-
+	'''
+	B3 coefficient
+	sigma: slope
+	'''
 	b3=np.zeros[2];
 	b3[0]=(1-sigma)*(2-sigma)/12;
 	b3[1]=(2+sigma)*(2-sigma)/6;
@@ -142,9 +160,10 @@ def B3(sigma):
 	return b3
 
 def B3d(sigma):
-	#B3 coefficient derivative
-	#sigma: slope
-
+	'''
+	B3 coefficient derivative
+	sigma: slope
+	'''
 	b3d=np.zeros[2];
 	b3d[0]=-(2-sigma)/12-(1-sigma)/12;
 	b3d[1]=(2-sigma)/6-(2+sigma)/6;
@@ -153,9 +172,10 @@ def B3d(sigma):
 	return b3d
 
 def B5(sigma):
-	#B5 coefficient
-	#sigma: slope
-
+	'''
+	B5 coefficient
+	sigma: slope
+	'''
 	b5=np.zeros(5);
 	b5[0]=(1-sigma)*(2-sigma)*(3-sigma)*(4-sigma)/1680;
 	b5[1]=(4-sigma)*(2-sigma)*(3-sigma)*(4+sigma)/420;
@@ -166,9 +186,10 @@ def B5(sigma):
 	return b5
 
 def B5d(sigma):
-	#B5 coefficient derivative
-	#sigma: slope
-
+	'''
+	B5 coefficient derivative
+	sigma: slope
+	'''
 	b5d=np.zeros(5);
 	b5d[0]=-(2-sigma)*(3-sigma)*(4-sigma)/1680-\
 	(1-sigma)*(3-sigma)*(4-sigma)/1680-\

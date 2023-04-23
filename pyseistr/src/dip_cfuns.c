@@ -1696,7 +1696,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     /*Below is the input part*/
     int f2,f3,f4,f5,f6,f7;
     float f8,f9,f10;
-    int f11,f12,f13,f14;
+    int f11,f12,f13,f14,f15;
     
 	/**initialize data input**/
     int nd, nd2;
@@ -1705,14 +1705,14 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     PyObject *arrf1=NULL;
 
     
-	PyArg_ParseTuple(args, "Oiiiiiifffiiii", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10, &f11, &f12, &f13, &f14); 	
+	PyArg_ParseTuple(args, "Oiiiiiifffiiiii", &f1, &f2, &f3, &f4, &f5, &f6, &f7, &f8, &f9, &f10, &f11, &f12, &f13, &f14, &f15); 	
     
     int n123, niter, order, nj1,nj2, i,j, liter, dim;
     int n[PS_MAX_DIM], rect[3], n4, nr, ir; 
-    float p0, q0, *u, *p, *pi=NULL, *qi=NULL;
+    float p0, q0, *u, *um, *p, *pi=NULL, *qi=NULL;
     float pmin, pmax, qmin, qmax, eps;
     char key[4];
-    bool verb, both, **mm, drift;
+    bool verb, both, **mm, drift, hasmask;
 
     dim=4;
     if (dim < 2) n[1]=1;
@@ -1798,20 +1798,24 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     rect[0]=f11;
     rect[1]=f12;
     rect[2]=f13;
-	verb=f14;
-	verb=true;
+	hasmask=f14;
+	verb=f15;
+// 	verb=true;
+	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
     
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
 	
-    if (*sp != n123)
-    {
-    	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
-    	return NULL;
-    }
-
+	if(hasmask==0)
+    	if (*sp != n123)
+    	{
+    		printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
+    		return NULL;
+    	}
+    printf("rect1=%d,rect2=%d,rect3=%d\n",rect[0],rect[1],rect[2]);
+	printf("both=%d,hasmask=%d,verb=%d\n",both,hasmask,verb);
 	printf("n123=%d\n",n123);
 	printf("eps_dv=%f\n",eps);
 
@@ -1827,6 +1831,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	p = ps_floatalloc(n123*2);
 	}
     u = ps_floatalloc(n123);
+    um = ps_floatalloc(n123); /*temporary array for mask*/
     
     
     /*reading data*/
@@ -1843,14 +1848,14 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 
 
 
-//     if (NULL != sf_getstring("mask")) {
-// 	mm = ps_boolalloc2(n123,both? 4:2);
+    if (hasmask) {
+	mm = ps_boolalloc2(n123,both? 4:2);
 // 	mask = sf_input("mask");
-//     } else {
+    } else {
 	mm = (bool**) ps_alloc(4,sizeof(bool*));
 	mm[0] = mm[1] = mm[2] = mm[3] = NULL;
 // 	mask = NULL;
-//     }
+    }
 
 //     if (NULL != sf_getstring("idip")) {
 // 	/* initial in-line dip */
@@ -1870,10 +1875,12 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 
 	nr=1;
     for (ir=0; ir < nr; ir++) {
-//     	if (NULL != mask) {
+    	if (hasmask) {
 // 	    sf_floatread(u,n123,mask);
-// 	    mask32 (both, order, nj1, nj2, n[0], n[1], n[2], u, mm);
-// 	}
+    	for (i=0; i<n123; i++)
+        	um[i]=*((float*)PyArray_GETPTR1(arrf1,i+n123));
+	    mask32 (both, order, nj1, nj2, n[0], n[1], n[2], um, mm);
+	}
 	
 	if (1 != n4) {
 	    /* initialize t-x dip */
