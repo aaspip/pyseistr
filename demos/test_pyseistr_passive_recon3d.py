@@ -10,18 +10,17 @@ d = np.fromfile(fid, dtype = np.float32, count = 150*169).reshape([150,169],orde
 d=d.reshape(150,13,13,order='F');
 d0=d;
 
-## 3D slope calculation (inline and xline)
-import pyseistr as ps
-import matplotlib.pyplot as plt
-[dipi,dipx] = ps.dip3dc(d0);
-
-
 ## Create the mask (sampling operator)
 [n1,n2,n3]=d.shape;
 mask=np.zeros([n1*n2*n3,1]);
 inds=np.argwhere(abs(d0.flatten(order='F'))>0.00001);
 mask[inds]=1;
 mask=mask.reshape(n1,n2,n3,order='F');
+
+## 3D slope calculation (inline and xline)
+import pyseistr as ps
+import matplotlib.pyplot as plt
+[dipi,dipx] = ps.dip3dc(d0,mask=mask,niter=10,rect=[10, 5, 5]); #[dipi,dipx] = ps.dip3dc(d0); is the one used in the paper
 
 ## 3D structure-oriented interpolation
 d1=ps.soint3dc(d0,mask,dipi,dipx,order=2,niter=20,njs=[1,1],drift=0,verb=1);
