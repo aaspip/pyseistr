@@ -11,9 +11,8 @@ import pyseistr as ps
 # https://github.com/aaspip/data/blob/main/apr18_160_160.bin
 
 ## Load data
-fid=open("/Users/chenyk/RSFSRC/book/sep/pwd/seab/apr18_160_160.bin","rb");
+fid=open("apr18_160_160.bin","rb");
 raw = np.fromfile(fid, dtype = np.float32, count = 160*160).reshape([160,160],order='F')
-
 
 ## Calculate local slope
 dip=ps.dip2dc(raw,mask=raw,order=2,rect=[10,10,1],verb=0);
