@@ -50,6 +50,7 @@ from .somean2d import somean2d
 from .somean3d import somean3d
 from .somf2d import somf2d
 from .somf3d import somf3d
+from .soint2d import soint2d #structure-oriented interpolation for 2D data
 from .soint3d import soint3d #structure-oriented interpolation for 3D data
 from .ricker import ricker
 from .bp import bandpass
@@ -65,6 +66,7 @@ from .somean2d import somean2dc
 from .somean3d import somean3dc
 from .somf2d import somf2dc
 from .somf3d import somf3dc
+from .soint2d import soint2dc
 from .soint3d import soint3dc
 from .bp import bandpassc
 

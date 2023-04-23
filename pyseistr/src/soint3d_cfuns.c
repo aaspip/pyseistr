@@ -12,9 +12,9 @@
 #define PS_PI (3.14159265358979323846264338328)
 
 
-#define SF_MAX(a,b) ((a) < (b) ? (b) : (a))
-#define SF_MIN(a,b) ((a) < (b) ? (a) : (b))
-#define SF_ABS(a)   ((a) >= 0  ? (a) : (-(a)))
+#define PS_MAX(a,b) ((a) < (b) ? (b) : (a))
+#define PS_MIN(a,b) ((a) < (b) ? (a) : (b))
+#define PS_ABS(a)   ((a) >= 0  ? (a) : (-(a)))
 
 /*sf functions*/
 typedef void (*operator)(bool,bool,int,int,float*,float*);
@@ -868,11 +868,11 @@ void ps_cgstep_close (void)
 }
 
 static const float TOLERANCE=1.e-12;
-typedef void (*sf_operator)(bool,bool,int,int,float*,float*);
+typedef void (*ps_operator)(bool,bool,int,int,float*,float*);
 typedef void (*ps_solverstep)(bool,int,int,float*,
 			   const float*,float*,const float*);
-typedef void (*sf_weight)(int,const float*,float*);
-void ps_solver (sf_operator oper   /* linear operator */, 
+typedef void (*ps_weight)(int,const float*,float*);
+void ps_solver (ps_operator oper   /* linear operator */, 
 		ps_solverstep solv /* stepping function */, 
 		int nx             /* size of x */, 
 		int ny             /* size of dat */, 
@@ -893,9 +893,9 @@ void ps_solver (sf_operator oper   /* linear operator */,
   Parameters in ...:
   ---
   "wt":     float*:         weight      
-  "wght":   sf_weight wght: weighting function
+  "wght":   ps_weight wght: weighting function
   "x0":     float*:         initial model
-  "nloper": sf_operator:    nonlinear operator
+  "nloper": ps_operator:    nonlinear operator
   "mwt":    float*:         model weight
   "verb":   bool:           verbosity flag
   "known":  bool*:          known model mask
@@ -911,9 +911,9 @@ void ps_solver (sf_operator oper   /* linear operator */,
     va_list args;
     char* par;
     float* wt = NULL;
-    sf_weight wght = NULL;
+    ps_weight wght = NULL;
     float* x0 = NULL;
-    sf_operator nloper = NULL;
+    ps_operator nloper = NULL;
     float* mwt = NULL;
     bool verb = false;
     bool* known = NULL;
@@ -936,11 +936,11 @@ void ps_solver (sf_operator oper   /* linear operator */,
 	else if (0 == strcmp (par,"wt"))      
 	{                    wt = va_arg (args, float*);}
 	else if (0 == strcmp (par,"wght"))      
-	{                    wght = va_arg (args, sf_weight);}
+	{                    wght = va_arg (args, ps_weight);}
 	else if (0 == strcmp (par,"x0"))      
 	{                    x0 = va_arg (args, float*);}
 	else if (0 == strcmp (par,"nloper"))      
-	{                    nloper = va_arg (args, sf_operator);}
+	{                    nloper = va_arg (args, ps_operator);}
 	else if (0 == strcmp (par,"mwt"))      
 	{                    mwt = va_arg (args, float*);}
 	else if (0 == strcmp (par,"verb"))      
@@ -1230,7 +1230,7 @@ double genrand_real1(void)
 static bool   iset = true;
 static float  vset = 0.0;
 
-float sf_randn_one_bm (void)
+float ps_randn_one_bm (void)
 /*< return a random number (normally distributed, Box-Muller method) >*/
 {
     double x1, x2, y1, y2, z1, z2;
@@ -1340,7 +1340,7 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
 	}
 	
 	for (i=0; i < 2*n123; i++) {
-	    dd[i] = a*sf_randn_one_bm();
+	    dd[i] = a*ps_randn_one_bm();
 	}
 	
 	ps_solver(allpass3_lop, ps_cgstep, n123, 2*n123, mm, dd, niter,
