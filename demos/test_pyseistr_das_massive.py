@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from pyseistr import cseis as seis
 import pyseistr as ps
 
-fname="FORGE_78-32_iDASv3-P11_UTC190423150554.sgy"
-fname="FORGE_78-32_iDASv3-P11_UTC190423213209.sgy"
+fname="FORGE/FORGE_78-32_iDASv3-P11_UTC190423150554.sgy"
+fname="FORGE/FORGE_78-32_iDASv3-P11_UTC190423213209.sgy"
     
 d=obspy.read(fname,format='SEGY')
 
@@ -19,7 +19,8 @@ dn=np.concatenate(data,axis=1);
 dt=d[0].stats.delta;
 nt=d[0].stats.npts;
 
-dn=dn[1484-20:3484-20,200:1160]
+# dn=dn[1484-20:3484-20,200:1160]
+dn=dn[:,200:1160]
 
 ## BP
 print(dn.max())
@@ -57,6 +58,44 @@ plt.imshow(dn-d1_bpsomffk,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xt
 plt.title('Removed Noise');
 plt.savefig('test_pyseistr_das_massive.png',format='png',dpi=300)
 plt.show()
+
+
+
+
+
+clip=20;
+fig = plt.figure(figsize=(6, 8))
+ax=plt.subplot(3,2,1)
+plt.imshow(dn[0:3000,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+
+
+ax=plt.subplot(3,2,2)
+plt.imshow(dn[0:6000,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+
+
+ax=plt.subplot(3,2,3)
+plt.imshow(dn[0:9000,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+
+
+ax=plt.subplot(3,2,4)
+plt.imshow(dn[0:12000,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+
+
+ax=plt.subplot(3,2,5)
+plt.imshow(dn[0:15000,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+
+
+ax=plt.subplot(3,2,6)
+plt.imshow(dn[0:-1,:],cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+plt.title('Raw DAS data');
+plt.savefig('test_pyseistr_das_massive2.png',format='png',dpi=300)
+plt.show()
+
 
 
 

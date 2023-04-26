@@ -13,3 +13,6 @@ python test_pyseistr_passive_recon3d.py
 python test_pyseistr_ssprecursor.py
 python test_pyseistr_rf.py
 python test_pyseistr_das.py
+
+python test_pyseistr_soint2d.py
+python test_pyseistr_soint2d_seafloor.py
