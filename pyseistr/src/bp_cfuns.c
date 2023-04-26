@@ -539,10 +539,10 @@ static PyObject *cbp(PyObject *self, PyObject *args){
     
 	PyArg_ParseTuple(args, "Oiiifffiiii", &f1, &n1, &n2, &n3, &d1, &flo, &fhi, &nplo, &nphi, &phase, &verb);
 
-	
-	verb=1;
 	n123=n1*n2*n3;
-	printf("nplo=%d,n123=%d\n",nplo,n123);
+	
+	if(verb)
+		printf("nplo=%d,n123=%d\n",nplo,n123);
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 
@@ -634,6 +634,8 @@ static PyObject *cbp(PyObject *self, PyObject *args){
 		(*((float*)PyArray_GETPTR1(vecout,i))) = trace[i];
 
     free(trace);
+    free(trace1);
+    
 	return PyArray_Return(vecout);
 	
 }

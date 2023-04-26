@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 :copyright:
-    Yangkang Chen (chenyk2016@gmail.com), 2021-2022   
+    Yangkang Chen (chenyk2016@gmail.com), 2021-2023   
 :license:
     GNU General Public License, Version 3
     (http://www.gnu.org/copyleft/gpl.html)
@@ -59,6 +59,8 @@ from .plot import cseis
 
 from .das import coh 
 from .das import cohc
+
+from .synthetics import *
 
 ## C versions
 from .dip2d import dip2dc

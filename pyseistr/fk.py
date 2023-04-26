@@ -1,15 +1,39 @@
 import numpy as np
 def fkdip(d,w):
-	# das_fk_dip: FK dip filter
-	#
-	#
-	# INPUT
-	# d: 	input data (2D)
-	# w:  	half width (in percentage) of the cone filter (i.e., w*nk=nwidth)
-	#
-	# OUTPUT
-	# d0: output data
-
+	'''
+	fkdip: FK dip filter
+	
+	INPUT
+	d: 	input data (2D)
+	w:  half width (in percentage) of the cone filter (i.e., w*nk=nwidth)
+	
+	OUTPUT
+	d0: output data
+	
+	EXAMPLE
+	import pyseistr as ps
+	from pyseistr import gensyn
+	from pyseistr import genflat
+	import numpy as np
+	data=gensyn();[nt,nx]=data.shape;
+	noise=genflat(nt,nx,t=np.linspace(5,10*36,37,dtype='int32'),amp=0.5*np.ones(37),freq=80);
+	datan=data+noise;
+	datafk=datan-ps.fkdip(datan,0.005); ## FK filtering
+	import matplotlib.pyplot as plt;	
+	plt.figure(figsize=(8, 8));
+	plt.subplot(1,3,1);
+	plt.imshow(datan,aspect='auto');plt.xlabel('Trace');plt.ylabel('Time sample');
+	plt.subplot(1,3,2);
+	plt.imshow(datafk,aspect='auto');plt.xlabel('Trace');
+	plt.subplot(1,3,3);
+	plt.imshow(datan-datafk,aspect='auto');plt.xlabel('Trace');
+	plt.show();
+	
+	REFERENCE
+	Chen, Y., Savvaidis, A., Fomel, S., Chen, Y., Saad, O.M., Wang, H., Oboué, Y.A.S.I., Yang, L. and Chen, W., 2023. Denoising of Distributed Acoustic Sensing Seismic Data Using an Integrated Framework. Seismological Society of America, 94(1), pp.457-472.
+	
+	'''
+	
 	[n1,n2]=d.shape;
 	nf=nextpow2(n1);
 	nk=nextpow2(n2);

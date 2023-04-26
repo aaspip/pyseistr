@@ -6,17 +6,17 @@ def soint3d(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	
 	by Yangkang Chen, 2022
 	
-	INPUT:
+	INPUT
 	dn: model  noisy data
 	dipi: inline slope
 	dipx: xline slope
 	order:    PWD order
 	
-	OUTPUT:
+	OUTPUT
 	dout: filtered data 
 
-	Demo
-	demos/test_xxx_soint3d.py
+	EXAMPLE
+	demos/test_pyseistr_soint3d.py
 	'''
 	from .solvers import solver
 	from .solvers import cgstep
@@ -64,24 +64,24 @@ def soint3d(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	
 def soint3dc(din,mask,dipi,dipx,order=1,niter=100,njs=[1,1],drift=0,seed=202223,hasmask=1,var=0,verb=1):
 	'''
-	# soint3d: 3D structure-oriented interpolation
-	# 
-	# by Yangkang Chen, 2022
-	#
-	# INPUT:
-	# dn: model  noisy data
-	# dipi: inline slope
-	# dipx: xline slope
-	# r1,r2:    spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# hasmask: if 1, using the provided mask; if 0, using the data itself to determine
-	# 
-	# OUTPUT:
-	# dout: filtered data 
-	#
-	# Demo
-	# demos/test_xxx_soint3d.py
+	soint3dc: 3D structure-oriented interpolation implemented in C
+	
+	by Yangkang Chen, 2022
+	
+	INPUT
+	dn: model  noisy data
+	dipi: inline slope
+	dipx: xline slope
+	r1,r2:    spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
+	hasmask: if 1, using the provided mask; if 0, using the data itself to determine
+	
+	OUTPUT
+	dout: filtered data 
+	
+	EXAMPLE
+	demos/test_pyseistr_soint3d.py
 	'''
 	
 	from .solvers import solver

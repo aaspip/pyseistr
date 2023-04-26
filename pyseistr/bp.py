@@ -2,31 +2,49 @@ import numpy as np
 from bpcfun import *
 
 def bandpass(din,dt,flo=0,fhi=0.5,nplo=6,nphi=6,phase=0,verb=1):
-	# bandpass: Bandpass filtering.
-	#
-	# Aug, 05, 2020
-	# by Yangkang Chen
-	#
-	# INPUT
-	# din:	  input data
-	# dt:       sampling
-	# flo:      Low frequency in band, default is 0
-	# fhi:      High frequency in band, default is Nyquist
-	# nplo=6:   number of poles for low cutoff
-	# nphi=6:   number of poles for high cutoff
-	# phase=0:  y: minimum phase, n: zero phase
-	# verb=0:   verbosity flag
-	#
-	# OUTPUT
-	# dout:     output data
-	#
-	# RFERENCE
-	# November 2012 program of the month: http://ahay.org/blog/2012/11/03/program-of-the-month-sfbandpass/
-	#
-	# Example
-	# demos/test_xxx_das.py
-	#
+	'''
+	bandpass: Bandpass filtering.
 	
+	Aug, 05, 2020
+	by Yangkang Chen
+	
+	INPUT
+	din:	  input data
+	dt:       sampling
+	flo:      Low frequency in band, default is 0
+	fhi:      High frequency in band, default is Nyquist
+	nplo=6:   number of poles for low cutoff
+	nphi=6:   number of poles for high cutoff
+	phase=0:  y: minimum phase, n: zero phase
+	verb=0:   verbosity flag
+	
+	OUTPUT
+	dout:     output data
+	
+	RFERENCE
+	November 2012 program of the month: http://ahay.org/blog/2012/11/03/program-of-the-month-sfbandpass/
+	
+	EXAMPLE 1
+	demos/test_pyseistr_das.py
+	
+	EXAMPLE 2
+	from pyseistr import ricker;
+	wav,tw=ricker(20,0.004,2);
+	from pyseistr import bandpass;
+	wav2=bandpass(wav,0.004,flo=0,fhi=20);
+	
+	import matplotlib.pyplot as plt;
+	plt.subplot(2,1,1);
+	plt.plot(tw,wav);plt.ylabel('Amplitude');plt.gca().set_ylim([-0.5,1]);
+	plt.subplot(2,1,2);
+	plt.plot(tw,wav2);plt.xlabel('Time (s)');plt.ylabel('Amplitude');plt.gca().set_ylim([-0.5,1]);
+	plt.show();
+
+	
+	'''
+	if din.ndim==1:	#for 1D problems
+		din=np.expand_dims(din, axis=1)
+		
 	if din.ndim==2:	#for 2D problems
 		din=np.expand_dims(din, axis=2)
 		
@@ -72,9 +90,8 @@ def bandpass(din,dt,flo=0,fhi=0.5,nplo=6,nphi=6,phase=0,verb=1):
 
 
 	if verb:
-		print("flo=%g fhi=%g nplo=%d nphi=%d\n",flo,fhi,nplo,nphi);
+		print("flo=%g fhi=%g nplo=%d nphi=%d\n"%(flo,fhi,nplo,nphi));
 	
-
 	if flo>eps:
 		blo=butter_init(0,flo,nplo);
 	else:
@@ -109,39 +126,57 @@ def bandpass(din,dt,flo=0,fhi=0.5,nplo=6,nphi=6,phase=0,verb=1):
 	return dout
 
 def bandpassc(din,dt,flo=0,fhi=0.5,nplo=6,nphi=6,phase=0,verb=1):
-	# bandpass: Bandpass filtering.
-	#
-	# Aug, 05, 2020
-	# by Yangkang Chen
-	#
-	# INPUT
-	# din:	  input data
-	# dt:       sampling
-	# flo:      Low frequency in band, default is 0
-	# fhi:      High frequency in band, default is Nyquist
-	# nplo=6:   number of poles for low cutoff
-	# nphi=6:   number of poles for high cutoff
-	# phase=0:  y: minimum phase, n: zero phase
-	# verb=0:   verbosity flag
-	#
-	# OUTPUT
-	# dout:     output data
-	#
-	# RFERENCE
-	# November 2012 program of the month: http://ahay.org/blog/2012/11/03/program-of-the-month-sfbandpass/
-	#
-	# Example
-	# demos/test_xxx_das.py
-	#
+	'''
+	bandpass: Bandpass filtering.
 	
+	Aug, 05, 2020
+	by Yangkang Chen
+	
+	INPUT
+	din:	  input data
+	dt:       sampling
+	flo:      Low frequency in band, default is 0
+	fhi:      High frequency in band, default is Nyquist
+	nplo=6:   number of poles for low cutoff
+	nphi=6:   number of poles for high cutoff
+	phase=0:  y: minimum phase, n: zero phase
+	verb=0:   verbosity flag
+	
+	OUTPUT
+	dout:     output data
+	
+	RFERENCE
+	November 2012 program of the month: http://ahay.org/blog/2012/11/03/program-of-the-month-sfbandpass/
+	
+	EXAMPLE 1
+	demos/test_pyseistr_das.py
+	
+	EXAMPLE 2
+	from pyseistr import ricker;
+	wav,tw=ricker(20,0.004,2);
+	from pyseistr import bandpassc;
+	wav2=bandpassc(wav,0.004,flo=0,fhi=20);
+	
+	import matplotlib.pyplot as plt;
+	figsize=(8, 8)
+	plt.subplot(2,1,1);
+	plt.plot(tw,wav);plt.ylabel('Amplitude');plt.gca().set_ylim([-0.5,1]);
+	plt.subplot(2,1,2);
+	plt.plot(tw,wav2);plt.xlabel('Time (s)');plt.ylabel('Amplitude');plt.gca().set_ylim([-0.5,1]);
+	plt.show();
+	
+	'''
+	if din.ndim==1:	#for 1D problems
+		din=np.expand_dims(din, axis=1)
+		
 	if din.ndim==2:	#for 2D problems
 		din=np.expand_dims(din, axis=2)
 		
 	if din.shape[0]==1 and din.shape[1]>1 and din.shape[2]==1: #row vector
 		din=din.flatten();
-	
-	[n1,n2,n3]=din.shape;
 
+	[n1,n2,n3]=din.shape;
+		
 	din=np.float32(din).flatten(order='F');
 	dout=cbp(din,n1,n2,n3,dt,flo,fhi,nplo,nphi,phase,verb);
 	dout=dout.reshape(n1,n2,n3,order='F');
@@ -151,19 +186,21 @@ def bandpassc(din,dt,flo=0,fhi=0.5,nplo=6,nphi=6,phase=0,verb=1):
 	return dout
 	
 def butter_init(low,cutoff,nn):
-	# butter_init: initialize
-	# Aug, 5, 2020
-	# Yangkang Chen
-	# 
-	# INPUT
-	# low:	  low-pass (or high-pass)
-	# cutoff:   cut off frequency
-	# nn:	   number of poles
-	# 
-	# OUTPUT
-	# bw:	   butterworth struct
-	# 
-# 	bw=struct;
+	'''
+	butter_init: initialize
+	Aug, 5, 2020
+	Yangkang Chen
+	
+	INPUT
+	low:	  low-pass (or high-pass)
+	cutoff:   cut off frequency
+	nn:	   number of poles
+	
+	OUTPUT
+	bw:	   butterworth struct
+	
+	'''
+
 	arg=2*np.pi*cutoff;
 	sinw=np.sin(arg);
 	cosw=np.cos(arg);
@@ -194,21 +231,23 @@ def butter_init(low,cutoff,nn):
 
 
 def butter_apply(bw,nx,x):
-	# butter_apply: filter the data (in place)
-	# 
-	#Implementation is inspired by D. Hale and J.F. Claerbout, 1983, Butterworth
-	#dip filters: Geophysics, 48, 1033-1038.
-	#
-	# Aug, 5, 2020
-	# Yangkang Chen
-	# 
-	# INPUT
-	# bw: butterworth struct
-	# nx: size of x
-	# x: input data
-	# 
-	# OUTPUT
-	# x: output data
+	'''
+	butter_apply: filter the data (in place)
+	
+	Implementation is inspired by D. Hale and J.F. Claerbout, 1983, Butterworth
+	dip filters: Geophysics, 48, 1033-1038.
+	
+	Aug, 5, 2020
+	Yangkang Chen
+	
+	INPUT
+	bw: butterworth struct
+	nx: size of x
+	x: input data
+	
+	OUTPUT
+	x: output data
+	'''
 	d1=bw['mid'];
 	nn=bw['nn'];
 	if np.mod(nn,2)>0:
@@ -232,7 +271,9 @@ def butter_apply(bw,nx,x):
 	return x
 
 def reverse(n1,trace):
-	# reverse a trace (in place)
+	'''
+	reverse a trace (in place)
+	'''
 	for i1 in range(0,int(np.floor(n1/2))):
 		t=trace[i1].copy();#This bug is striking, .copy is necessary because otherwise x0 will automatically change according to y0.
 		trace[i1]=trace[n1-i1-1];
@@ -241,10 +282,11 @@ def reverse(n1,trace):
 
 
 def ifnot(yes, v1, v2):
-	# ifnot: equivalent to C grammar (v=yes?v1:v2)
-	# Yangkang Chen
-	# July, 22, 2020
-
+	'''
+	ifnot: equivalent to C grammar (v=yes?v1:v2)
+	Yangkang Chen
+	July, 22, 2020
+	'''
 	if yes:
 		v=v1;
 	else:

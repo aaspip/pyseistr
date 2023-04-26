@@ -1800,7 +1800,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     rect[2]=f13;
 	hasmask=f14;
 	verb=f15;
-// 	verb=true;
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
     
@@ -1814,11 +1813,13 @@ static PyObject *dipc(PyObject *self, PyObject *args){
     		printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
     		return NULL;
     	}
+    if(verb)
+    {
     printf("rect1=%d,rect2=%d,rect3=%d\n",rect[0],rect[1],rect[2]);
 	printf("both=%d,hasmask=%d,verb=%d\n",both,hasmask,verb);
 	printf("n123=%d\n",n123);
 	printf("eps_dv=%f\n",eps);
-
+	} 
 
 	if(n[2]==1)
 	{
@@ -1977,6 +1978,11 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	for(i=0;i<dims[0];i++)
 		(*((float*)PyArray_GETPTR1(vecout,i))) = p[i];
 
+	
+	free(p);
+	free(u);
+	free(um);
+	
 	
 	return PyArray_Return(vecout);
 	

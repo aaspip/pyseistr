@@ -1,18 +1,23 @@
 from sofcfun import *
 
 def somean2d(dn,dip,ns,order,eps):
-	# somean2d: plane-wave smoothing 
-	#
-	# INPUT:
-	# dn: model   noisy data
-	# dip: slope (2D array)
-	# ns:       spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
+	'''
+	somean2d: plane-wave smoothing 
+	
+	INPUT
+	dn: model   noisy data
+	dip: slope (2D array)
+	ns:       spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
 
-	# OUTPUT:
-	# ds:  smoothed data
-	#
+	OUTPUT
+	ds:  smoothed data
+	
+	EXAMPLE
+	
+	
+	'''
 	import numpy as np
 	n1=dn.shape[0];
 	n2=dn.shape[1];
@@ -29,20 +34,24 @@ def somean2d(dn,dip,ns,order,eps):
 	return ds
 
 def somean2dc(dn,dip,ns,order,eps,adj=0,verb=1):
-	# somean2dc: plane-wave smoothing implemented in C
-	#
-	# INPUT:
-	# dn: model   noisy data
-	# dip: slope (2D array)
-	# ns:       spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# adj: adjoint flat (default: 0, forward)
-	# verb: verbosity
-	# 
-	# OUTPUT:
-	# ds:  smoothed data
-	#
+	'''
+	somean2dc: plane-wave smoothing implemented in C
+	
+	INPUT
+	dn: model   noisy data
+	dip: slope (2D array)
+	ns:       spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
+	adj: adjoint flat (default: 0, forward)
+	verb: verbosity
+	
+	OUTPUT
+	ds:  smoothed data
+	
+	EXAMPLE
+	
+	'''
 	import numpy as np
 
 	ns2=2*ns+1;	#spray diameter

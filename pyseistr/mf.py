@@ -1,31 +1,36 @@
 def mf(D,nfw=7,ifb=1,axis=2):
-	#MF: median filter along first or second axis for 2D profile
-	#  IN   D:   	intput data 
-	#       nfw:    window size 
-	#       ifb:    if use padded boundary (if not, zero will be padded)
-	#       axis:   along the vertical (1) or horizontal (2) axis
-	#      
-	#  OUT   D1:  	output data
-	# 
-	#  Copyright (C) 2014 The University of Texas at Austin
-	#  Copyright (C) 2014 Yangkang Chen
-	#  Ported to python in Apr, 17, 2022
-	#
-	#  This program is free software: you can redistribute it and/or modify
-	#  it under the terms of the GNU General Public License as published
-	#  by the Free Software Foundation, either version 3 of the License, or
-	#  any later version.
-	#
-	#  This program is distributed in the hope that it will be useful,
-	#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-	#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	#  GNU General Public License for more details: http://www.gnu.org/licenses/
-	#  
-	# References
-	# Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
-	# Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
-	# Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
-	# Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	'''
+	MF: median filter along first or second axis for 2D profile
+	
+	INPUT 
+	D:   	intput data 
+	nfw:    window size 
+	ifb:    if use padded boundary (if not, zero will be padded)
+	axis:   along the vertical (1) or horizontal (2) axis
+	    
+	OUTPUT 
+	D1:  	output data
+	
+	Copyright (C) 2014 The University of Texas at Austin
+	Copyright (C) 2014 Yangkang Chen
+	Ported to python in Apr, 17, 2022
+	
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published
+	by the Free Software Foundation, either version 3 of the License, or
+	any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details: http://www.gnu.org/licenses/
+	
+	References
+	Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
+	Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
+	Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
+	Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	'''
 	import numpy as np
 
 	# nfw should be odd
@@ -55,26 +60,31 @@ def mf(D,nfw=7,ifb=1,axis=2):
 
 
 def svmf(D,nfw=7,ifb=1,axis=2,l1=2,l2=0,l3=2,l4=4):
-	#SVMF: space-varying median filter along first or second axis for 2D profile
-	#  IN   D:   	intput data 
-	#       nfw:    window size
-	#       ifb:    if use padded boundary (if not, zero will be padded)
-	#       axis:   along the vertical (1) or horizontal (2) axis
-	#      
-	#  OUT   D1:  	output data
+	'''
+	SVMF: space-varying median filter along first or second axis for 2D profile
+	
+	INPUT   
+	D:   	intput data 
+	nfw:    window size
+	ifb:    if use padded boundary (if not, zero will be padded)
+	axis:   along the vertical (1) or horizontal (2) axis
+	    
+	OUTPUT  
+	D1:  	output data
 	# 		 win_len: window length distribution
-	#  Copyright (C) 2019 Yangkang Chen
-	#
-	#  This program is free software: you can redistribute it and/or modify
-	#  it under the terms of the GNU General Public License as published
-	#  by the Free Software Foundation, either version 3 of the License, or
-	#  any later version.
-	#
-	#  This program is distributed in the hope that it will be useful,
-	#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-	#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	#  GNU General Public License for more details: http://www.gnu.org/licenses/
-	#
+	
+	Copyright (C) 2019 Yangkang Chen
+	
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published
+	by the Free Software Foundation, either version 3 of the License, or
+	any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details: http://www.gnu.org/licenses/
+	'''
 	import numpy as np
 	n1=D.shape[0];
 	n2=D.shape[1];

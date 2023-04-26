@@ -1,22 +1,23 @@
 from soint2dcfun import *
 
 def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
-	# soint2d: 2D structure-oriented interpolation
-	# 
-	# by Yangkang Chen, 2022
-	#
-	# INPUT:
-	# dn: model  noisy data
-	# dip: slope
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# 
-	# OUTPUT:
-	# ds: filtered data 
-	#
-	# Demo
-	# demos/test_pyseistr_soint2d.py
+	'''
+	soint2d: 2D structure-oriented interpolation
 	
+	by Yangkang Chen, 2022
+	
+	INPUT
+	dn: model  noisy data
+	dip: slope
+	order:    PWD order
+	eps: regularization (default:0.01);
+	
+	OUTPUT
+	ds: filtered data 
+	
+	EXAMPLE
+	demos/test_pyseistr_soint2d.py
+	'''
 	from .solvers import solver
 	from .solvers import cgstep
 	from .operators import allpass3_lop
@@ -51,25 +52,26 @@ def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	
 	
 def soint2dc(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,hasmask=1,twoplane=0,prec=0,verb=1):
-	# soint2d: 3D structure-oriented interpolation
-	# 
-	# by Yangkang Chen, 2022
-	#
-	# INPUT:
-	# dn: model  noisy data
-	# dipi: inline slope
-	# dipx: xline slope
-	# r1,r2:    spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# hasmask: if 1, using the provided mask; if 0, using the data itself to determine
-	# 
-	# OUTPUT:
-	# ds: filtered data 
-	#
-	# Demo
-	# demos/test_pyseistr_soint3d.py
+	'''
+	soint2d: 3D structure-oriented interpolation
 	
+	by Yangkang Chen, 2022
+	
+	INPUT
+	dn: model  noisy data
+	dipi: inline slope
+	dipx: xline slope
+	r1,r2:    spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
+	hasmask: if 1, using the provided mask; if 0, using the data itself to determine
+	
+	OUTPUT
+	ds: filtered data 
+	
+	EXAMPLE
+	demos/test_pyseistr_soint3d.py
+	'''
 	from .solvers import solver
 	from .solvers import cgstep
 	from .operators import allpass3_lop

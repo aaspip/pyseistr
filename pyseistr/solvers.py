@@ -1,42 +1,43 @@
 import numpy as np
 def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
-	#Generic linear solver. (same as Madagascar function: sf_solver)
-	#
-	#Solves
-	#L{x}    =~ dat
-	#
-	#Yangkang Chen
-	#Aug, 05, 2020
-	#Ported to Python in Apr, 25, 2022
-	#
-	#INPUT
-	#opL: forward/linear operator
-	#solv: stepping function
-	#nx:   size of x   (1D vector)
-	#ny:   size of dat (1D vector)
-	#x:    estimated model
-	#dat:  data
-	#niter:number of iterations
-	#
-	#par. (parameter struct)
-	#  "wt":     float*:         weight      
-	#  "wght":   sf_weight wght: weighting function
-	#  "x0":     float*:         initial model
-	#  "nloper": sf_operator:    nonlinear operator
-	#  "mwt":    float*:         model weight
-	#  "verb":   bool:           verbosity flag
-	#  "known":  bool*:          known model mask
-	#  "nmem":   int:            iteration memory
-	#  "nfreq":  int:            periodic restart
-	#  "xmov":   float**:        model iteration
-	#  "rmov":   float**:        residual iteration
-	#  "err":    float*:         final error
-	#  "res":    float*:         final residual
-	#
-	#OUPUT
-	#x: estimated model
-	#
-	#
+	'''
+	Generic linear solver. (same as Madagascar function: sf_solver)
+	
+	Solves
+	L{x}    =~ dat
+	
+	Yangkang Chen
+	Aug, 05, 2020
+	Ported to Python in Apr, 25, 2022
+	
+	INPUT
+	opL: forward/linear operator
+	solv: stepping function
+	nx:   size of x   (1D vector)
+	ny:   size of dat (1D vector)
+	x:    estimated model
+	dat:  data
+	niter:number of iterations
+	
+	par. (parameter struct)
+	  "wt":     float*:         weight      
+	  "wght":   sf_weight wght: weighting function
+	  "x0":     float*:         initial model
+	  "nloper": sf_operator:    nonlinear operator
+	  "mwt":    float*:         model weight
+	  "verb":   bool:           verbosity flag
+	  "known":  bool*:          known model mask
+	  "nmem":   int:            iteration memory
+	  "nfreq":  int:            periodic restart
+	  "xmov":   float**:        model iteration
+	  "rmov":   float**:        residual iteration
+	  "err":    float*:         final error
+	  "res":    float*:         final residual
+	
+	OUPUT
+	x: estimated model
+	
+	'''
 	
 	TOLERANCE=1.e-12;
 	forget=0;
@@ -236,29 +237,31 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 	return x,par
 
 def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S,verb):
-	#conjgrad: conjugate gradient with shaping
-	#
-	#by Yangkang Chen, 2022
-	#
-	#Modified by Yangkang Chen, Nov, 09, 2019 (fix the "adding" for each oper)
-	#
-	#INPUT
-	#opP: preconditioning operator
-	#opL: forward/linear operator
-	#opS: shaping operator
-	#d:  data
-	#N:  number of iterations
-	#eps_cg:  scaling
-	#tol_cg:  tolerance
-	#ifhasp0: flag indicating if has initial model
-	#par_P: parameters for P
-	#par_L: parameters for L
-	#par_S: parameters for S
-	#verb: verbosity flag
-	#
-	#OUPUT
-	#x: estimated model
-	#
+	'''
+	conjgrad: conjugate gradient with shaping
+	
+	by Yangkang Chen, 2022
+	
+	Modified by Yangkang Chen, Nov, 09, 2019 (fix the "adding" for each oper)
+	
+	INPUT
+	opP: preconditioning operator
+	opL: forward/linear operator
+	opS: shaping operator
+	d:  data
+	N:  number of iterations
+	eps_cg:  scaling
+	tol_cg:  tolerance
+	ifhasp0: flag indicating if has initial model
+	par_P: parameters for P
+	par_L: parameters for L
+	par_S: parameters for S
+	verb: verbosity flag
+	
+	OUPUT
+	x: estimated model
+	
+	'''
 
 	nnp=p.size;
 	nx=par_L['nm'];	#model size
@@ -355,25 +358,26 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 
 
 def cgstep(forget,nx,ny,x,g,rr,gg):
-	#Step of conjugate-gradient iteration.
-	# Yangkang Chen
-	# Aug, 05, 2020
-	# 
-	# INPUT
-	# forget:restart flag
-	# nx:   model size
-	# ny:   data size
-	# x:    current model [nx]
-	# g:    gradient [nx]
-	# rr:   data residual [ny]
-	# gg:   conjugate gradient [ny]
-	# 
-	# OUTPUT
-	# x:    current model [nx]
-	# g:    gradient [nx]
-	# rr:   data residual [ny]
-	# gg:   conjugate gradient [ny]
+	'''
+	Step of conjugate-gradient iteration.
+	Yangkang Chen
+	Aug, 05, 2020
 	
+	INPUT
+	forget:restart flag
+	nx:   model size
+	ny:   data size
+	x:    current model [nx]
+	g:    gradient [nx]
+	rr:   data residual [ny]
+	gg:   conjugate gradient [ny]
+	
+	OUTPUT
+	x:    current model [nx]
+	g:    gradient [nx]
+	rr:   data residual [ny]
+	gg:   conjugate gradient [ny]
+	'''
 	EPSILON=1.e-12;
 	Allocated=0;
 	if not Allocated:

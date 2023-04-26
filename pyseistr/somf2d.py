@@ -1,27 +1,29 @@
 from sofcfun import *
 
 def somf2d(dn,dip,ns,order,eps,option=1):
-	# somf2d: structure-oriented median filter
-	#
-	# INPUT:
-	# dn: model   noisy data
-	# dip: slope (2D array)
-	# ns:       spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# option=1 or 2: (1 for MF; 2 for SVMF)
-	#
-	# OUTPUT:
-	# ds:  filtered data
-	#  
-	# References
-	# Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
-	# Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
-	# Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
-	# Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
-	#
-	# Demo
-	# demos/test_xxx_somf2d.py
+	'''
+	somf2d: structure-oriented median filter
+	
+	INPUT:
+	dn: model   noisy data
+	dip: slope (2D array)
+	ns:       spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
+	option=1 or 2: (1 for MF; 2 for SVMF)
+	
+	OUTPUT
+	ds:  filtered data
+	 
+	REFERENCES
+	Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
+	Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
+	Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
+	Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	
+	EXAMPLE
+	demos/test_xxx_somf2d.py
+	'''
 	
 	import numpy as np
 	from .pwspray2d import pwspray2d
@@ -48,27 +50,29 @@ def somf2d(dn,dip,ns,order,eps,option=1):
 	return ds
 
 def somf2dc(dn,dip,ns,order,eps,option=1,verb=1):
-	# somf2dc: structure-oriented median filter in C
-	#
-	# INPUT:
-	# dn: model   noisy data
-	# dip: slope (2D array)
-	# ns:       spray radius
-	# order:    PWD order
-	# eps: regularization (default:0.01);
-	# option=1 or 2: (1 for MF; 2 for SVMF)
-	#
-	# OUTPUT:
-	# ds:  filtered data
-	#  
-	# References
-	# Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
-	# Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
-	# Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
-	# Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
-	#
-	# Demo
-	# demos/test_xxx_somf2d.py
+	'''
+	somf2dc: structure-oriented median filter in C
+	
+	INPUT
+	dn: model   noisy data
+	dip: slope (2D array)
+	ns:       spray radius
+	order:    PWD order
+	eps: regularization (default:0.01);
+	option=1 or 2: (1 for MF; 2 for SVMF)
+	
+	OUTPUT
+	ds:  filtered data
+	 
+	REFERENCES
+	Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
+	Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
+	Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
+	Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	
+	EXAMPLE
+	demos/test_pyseistr_somf2d.py
+	'''
 	
 	import numpy as np
 	ns2=2*ns+1;	#spray diameter

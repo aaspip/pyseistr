@@ -1,19 +1,23 @@
 def ricker(f,dt,tlength=None):
-	# ricker: Ricker wavelet of central frequency f.
-	#
-	# INPUT:
-	# f : central freq. in Hz (f <<1/(2dt) )
-	# dt: sampling interval in sec
-	# tlength : the duration of wavelet in sec
-	#
-	# OUTPUT: 
-	# w:  the Ricker wavelet
-	# tw: time axis
-	#
-	# Example
-	#
-	#   [w,tw] = str_ricker(10,0.004,0.2);
-	#    plot(tw,w);
+	'''
+	ricker: Ricker wavelet of central frequency f.
+	
+	INPUT:
+	f : central freq. in Hz (f <<1/(2dt) )
+	dt: sampling interval in sec
+	tlength : the duration of wavelet in sec
+	
+	OUTPUT: 
+	w:  the Ricker wavelet
+	tw: time axis
+	
+	EXAMPLE
+	from pyseistr import ricker;
+	wav,tw=ricker(20,0.004,2);
+	import matplotlib.pyplot as plt;
+	plt.plot(tw,wav);plt.xlabel('Time (s)');plt.ylabel('Amplitude');plt.show();
+	
+	'''
 	import numpy as np
 	
 	if tlength!=None:

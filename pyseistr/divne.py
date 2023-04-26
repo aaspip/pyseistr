@@ -1,26 +1,28 @@
 import numpy as np
 def divne(num, den, Niter, rect, ndat, eps_dv, eps_cg, tol_cg,verb):
-	#divne: N-dimensional smooth division rat=num/den		  
-	#This is a subroutine from the seistr package (https://github.com/chenyk1990/seistr)
-	#
-	#by Yangkang Chen, 2022, verified to be exactly the same as the Matlab version
-	#
-	#INPUT
-	#num: numerator
-	#den: denominator
-	#Niter: number of iterations
-	#rect: triangle radius [ndim], e.g., [5,5,1]
-	#ndat: data dimensions [ndim], e.g., [n1,n2,1]
-	#eps_dv: eps for divn  (default: 0.01)
-	#eps_cg: eps for CG	(default: 1)
-	#tol_cg: tolerence for CG (default: 0.000001)
-	#verb: verbosity flag
-	#
-	#OUTPUT
-	#rat: output ratio
-	# 
-	#Reference
-	#H. Wang, Y. Chen, O. Saad, W. Chen, Y. Oboue, L. Yang, S. Fomel, and Y. Chen, 2022, A Matlab code package for 2D/3D local slope estimation and structural filtering. Geophysics, 87(3), F1–F14, doi: 10.1190/geo2021-0266.1. 
+	'''
+	divne: N-dimensional smooth division rat=num/den		  
+	This is a subroutine from the seistr package (https://github.com/chenyk1990/seistr)
+	
+	by Yangkang Chen, 2022, verified to be exactly the same as the Matlab version
+	
+	INPUT
+	num: numerator
+	den: denominator
+	Niter: number of iterations
+	rect: triangle radius [ndim], e.g., [5,5,1]
+	ndat: data dimensions [ndim], e.g., [n1,n2,1]
+	eps_dv: eps for divn  (default: 0.01)
+	eps_cg: eps for CG	(default: 1)
+	tol_cg: tolerence for CG (default: 0.000001)
+	verb: verbosity flag
+	
+	OUTPUT
+	rat: output ratio
+	 
+	REFERENCE
+	H. Wang, Y. Chen, O. Saad, W. Chen, Y. Oboue, L. Yang, S. Fomel, and Y. Chen, 2022, A Matlab code package for 2D/3D local slope estimation and structural filtering. Geophysics, 87(3), F1–F14, doi: 10.1190/geo2021-0266.1. 
+	'''
 	n=num.size
 	
 	ifhasp0=0
@@ -53,18 +55,20 @@ def divne(num, den, Niter, rect, ndat, eps_dv, eps_cg, tol_cg,verb):
 
 
 def weight_lop(din,par,adj,add):
-	# weight_lop: Weighting operator (verified)
-	# 
-	# Ported to Python by Yangkang Chen, 2022
-	# 
-	# INPUT
-	# din: model/data
-	# par: parameter
-	# adj: adj flag
-	# add: add flag
-	# OUTPUT
-	# dout: data/model
-	# 
+	'''
+	weight_lop: Weighting operator (verified)
+	
+	Ported to Python by Yangkang Chen, 2022
+	
+	INPUT
+	din: model/data
+	par: parameter
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	'''
 	nm=par['nm'];
 	nd=par['nd'];
 	w=par['w'];
@@ -96,17 +100,20 @@ def weight_lop(din,par,adj,add):
 	return dout
 	
 def trianglen_lop(din,par,adj,add ):
-	# trianglen_lop: N-D triangle smoothing operator (verified)
-	# 
-	# Ported to Python by Yangkang Chen, 2022
-	# 
-	# INPUT
-	# din: model/data
-	# par: parameter
-	# adj: adj flag
-	# add: add flag
-	# OUTPUT
-	# dout: data/model
+	'''
+	trianglen_lop: N-D triangle smoothing operator (verified)
+	
+	Ported to Python by Yangkang Chen, 2022
+	
+	INPUT
+	din: model/data
+	par: parameter
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	'''
 	if adj==1:
 		d=din;
 		if 'm' in par and add==1:
@@ -166,17 +173,20 @@ def trianglen_lop(din,par,adj,add ):
 
 
 def first_index( i, j, dim, n, s ):
-	#first_index: Find first index for multidimensional transforms
-	#Ported to Python by Yangkang Chen, 2022
-	#
-	#INPUT
-	#i:	dimension [0...dim-1]
-	#j:	line coordinate
-	#dim:  number of dimensions
-	#n:	box size [dim], vector
-	#s:	step [dim], vector
-	#OUTPUT
-	#i0:   first index
+	'''
+	first_index: Find first index for multidimensional transforms
+	Ported to Python by Yangkang Chen, 2022
+	
+	INPUT
+	i:	dimension [0...dim-1]
+	j:	line coordinate
+	dim:  number of dimensions
+	n:	box size [dim], vector
+	s:	step [dim], vector
+	
+	OUTPUT
+	i0:   first index
+	'''
 
 	n123 = 1;
 	i0 = 0;
@@ -191,19 +201,22 @@ def first_index( i, j, dim, n, s ):
 
 
 def smooth2( tr, o, d, der, x):
-	#smooth2: apply triangle smoothing
-	#
-	#Ported to Python by Yangkang Chen, 2022
-	#
-	#INPUT
-	#tr:   smoothing object
-	#o:	trace sampling
-	#d:	trace sampling
-	#x:	data (smoothed in place)
-	#der:  if derivative
-	#OUTPUT
-	#x: smoothed result
-	#tr: triangle struct
+	'''
+	smooth2: apply triangle smoothing
+	
+	Ported to Python by Yangkang Chen, 2022
+	
+	INPUT
+	tr:   smoothing object
+	o:	trace sampling
+	d:	trace sampling
+	x:	data (smoothed in place)
+	der:  if derivative
+	
+	OUTPUT
+	x: smoothed result
+	tr: triangle struct
+	'''
 
 	tr['tmp'] = triple2(o, d, tr['nx'], tr['nb'], x, tr['tmp'], tr['box'], tr['wt']);
 	tr['tmp'] = doubint2(tr['np'], tr['tmp'], (tr['box'] or der));
@@ -213,8 +226,9 @@ def smooth2( tr, o, d, der, x):
 
 
 def triple2( o, d, nx, nb, x, tmp, box, wt ):
-	#BY Yangkang Chen, Nov, 04, 2019
-
+	'''
+	BY Yangkang Chen, Nov, 04, 2019
+	'''
 	for i in range(0,nx+2*nb):
 		tmp[i] = 0;
 
@@ -229,7 +243,9 @@ def triple2( o, d, nx, nb, x, tmp, box, wt ):
 	return tmp
 
 def doubint2( nx, xx, der ):
-	#Modified by Yangkang Chen, Nov, 04, 2019
+	'''
+	Modified by Yangkang Chen, Nov, 04, 2019
+	'''
 	#integrate forward
 	t = 0.0;
 	for i in range(0,nx):
@@ -250,9 +266,10 @@ def doubint2( nx, xx, der ):
 
 
 def cblas_saxpy( n, a, x, sx, y, sy ):
-	#y += a*x
-	#Modified by Yangkang Chen, Nov, 04, 2019
-
+	'''
+	y += a*x
+	Modified by Yangkang Chen, Nov, 04, 2019
+	'''
 	for i in range(0,n):
 		ix = i * sx;
 		iy = i * sy;
@@ -261,8 +278,9 @@ def cblas_saxpy( n, a, x, sx, y, sy ):
 	return y
 
 def fold2(o, d, nx, nb, np, x, tmp):
-	#Modified by Yangkang Chen, Nov, 04, 2019
-
+	'''
+	Modified by Yangkang Chen, Nov, 04, 2019
+	'''
 	#copy middle
 	for i in range(0,nx):
 		x[o+i*d] = tmp[i+nb];
@@ -301,24 +319,26 @@ def fold2(o, d, nx, nb, np, x, tmp):
 	return x
 
 def adjnull( adj,add,nm,nd,m,d ):
-	#Claerbout-style adjoint zeroing Zeros out the output (unless add is true). 
-	#Useful first step for and linear operator.
-	# 
-	#  This program is free software; you can redistribute it and/or modify
-	#  it under the terms of the GNU General Public License as published by
-	#  the Free Software Foundation; either version 2 of the License, or
-	#  (at your option) and later version.
-	#  
-	#  This program is distributed in the hope that it will be useful,
-	#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-	#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	#  GNU General Public License for more details.
-	#  
-	#  You should have received a copy of the GNU General Public License
-	#  along with this program; if not, write to the Free Software
-	#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	#adj : adjoint flag; add: addition flag; nm: size of m; nd: size of d
-
+	'''
+	Claerbout-style adjoint zeroing Zeros out the output (unless add is true). 
+	Useful first step for and linear operator.
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) and later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	adj : adjoint flag; add: addition flag; nm: size of m; nd: size of d
+	'''
+	
 	if add:
 		return m,d
 

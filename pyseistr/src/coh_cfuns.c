@@ -539,7 +539,6 @@ static PyObject *cohc_fb(PyObject *self, PyObject *args){
 	return PyArray_Return(vecout);
 	
 	
-
 }
 
 // documentation for each functions.

@@ -1621,16 +1621,14 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
     if(option==1)
     {
     mf_init(n1, np, nmf, 2, 1);
-    	printf("running MF\n");
+    	if (verb) printf("running MF\n");
     }
     else
     {
     svmf_init(n1, np, nmf, 2, 1);
-    	printf("running SVMF\n");
+    	if (verb) printf("running SVMF\n");
     }
     
-
-
 
     for(i=0;i<n2;i++)
     {
@@ -1654,8 +1652,6 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 
     }
 
-    
-    
 
     /*Below is the output part*/
     PyArrayObject *vecout;
@@ -1667,6 +1663,9 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 	for(i=0;i<dims[0];i++)
 		(*((float*)PyArray_GETPTR1(vecout,i))) = smooth[i];
 
+	free(smooth);
+	free(input);
+	free(slope);
 
 	return PyArray_Return(vecout);
 	

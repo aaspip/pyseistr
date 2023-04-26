@@ -1,17 +1,18 @@
 import numpy as np
 def pwspray2d(u1,dip,nr,order,eps):
-	# pwspray2d: 2D plane-wave spray operator
-	#
-	# INPUT:
-	# u1: noisy data  
-	# dip: slope 
-	# nr: spray radius
-	# order: PWD order
-	# eps: regularization (default:0.01);
-	#
-	# OUTPUT:
-	# u: smooth data
-   
+	'''
+	pwspray2d: 2D plane-wave spray operator
+	
+	INPUT
+	u1: noisy data  
+	dip: slope 
+	nr: spray radius
+	order: PWD order
+	eps: regularization (default:0.01);
+	
+	OUTPUT
+	u: smooth data
+   	'''
 	[n1,n2]=u1.shape;
 	ns=nr;	 	#spray radius
 	ns2=2*ns+1;	#spray diameter
@@ -67,21 +68,22 @@ def pwspray2d(u1,dip,nr,order,eps):
 	return u
 
 def predict_step(e,nw,forw,pp,trace1):
-	# predict_step: prediction step
-	#
-	# INPUT:
-	# e: regularization parameter (default, 0.01*0.01);
-	# nw: accuracy order
-	# forw: forward or backward
-	# n1: trace length
-	# pp: slope
-	# trace: input trace
-	# 
-	# OUTPUT:
-	# w: PWD object
-	# diag,offd: diagonal/offdiagonals of the banded matrix
-	# trace: output trace
-	#
+	'''
+	predict_step: prediction step
+	
+	INPUT
+	e: regularization parameter (default, 0.01*0.01);
+	nw: accuracy order
+	forw: forward or backward
+	n1: trace length
+	pp: slope
+	trace: input trace
+	
+	OUTPUT
+	w: PWD object
+	diag,offd: diagonal/offdiagonals of the banded matrix
+	trace: output trace
+	'''
 	n1=trace1.shape[0];
 	nb=2*nw;
 	eps=e;
@@ -120,19 +122,21 @@ def predict_step(e,nw,forw,pp,trace1):
 
 
 def regularization(diag,offd,nw,eps,eps2):
-	# fill diag and offd using regularization 
-	# 
-	# INPUT:
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	# eps: regularization parameter (default: e*e, e=0.01);
-	# eps2: second regularization parameter (default, same as eps)
-	# nw: accuracy order (nb=2*nw)
+	'''
+	fill diag and offd using regularization 
+	
+	INPUT
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
+	eps: regularization parameter (default: e*e, e=0.01);
+	eps2: second regularization parameter (default, same as eps)
+	nw: accuracy order (nb=2*nw)
+	
+	OUTPUT
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
 	#
-	# OUTPUT:
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	#
+	'''
 
 	nb=2*nw;
 	n1=diag.size;
@@ -157,22 +161,23 @@ def regularization(diag,offd,nw,eps,eps2):
 	return diag,offd
 
 def pwd_define(forw,diag,offd,n1,nw,pp):
-	# pwd_define: matrix multiplication
-	# 
-	# INPUT:
-	# forw:forward or backward
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	# n1: trace length
-	# nw: PWD filter(accuracy) order (default nw=1)
-	# pp: slope				  (1D array)
-	#
-	# OUTPUT:
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	# w: PWD object(struct)
-	#
-	#
+	'''
+	pwd_define: matrix multiplication
+	
+	INPUT
+	forw:forward or backward
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
+	n1: trace length
+	nw: PWD filter(accuracy) order (default nw=1)
+	pp: slope				  (1D array)
+	
+	OUTPUT
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
+	w: PWD object(struct)
+	
+	'''
 	
 	#define PWD object(struct)
 	w={'n':n1,'na':2*nw+1,'a':np.zeros([n1,2*nw+1]),'b':np.zeros(2*nw+1)}
@@ -205,18 +210,19 @@ def pwd_define(forw,diag,offd,n1,nw,pp):
 
 
 def passfilter(p,nw):
-	# passfilter: find filter coefficients 
-	# All-pass plane-wave destruction filter coefficients
-	# 
-	# INPUT:
-	# p: slope
-	# nw: PWD filter(accuracy) order
-	#
-	# OUTPUT:
-	# a: output filter (n+1) (1D array)
-	# b: temp variable of a
-	#
-
+	'''
+	passfilter: find filter coefficients 
+	All-pass plane-wave destruction filter coefficients
+	
+	INPUT
+	p: slope
+	nw: PWD filter(accuracy) order
+	
+	OUTPUT
+	a: output filter (n+1) (1D array)
+	b: temp variable of a
+	
+	'''
 	n=nw*2;
 	b=np.zeros(n+1);
 	a=np.zeros(n+1);
@@ -239,24 +245,26 @@ def passfilter(p,nw):
 	return a,b
 
 def pwd_set(adj,w,diag,offd,pp,inp):
-	# pwd_set: matrix multiplication
-	# 
-	# INPUT:
-	# adj:adjoint flag
-	# w: PWD object(struct)
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	# pp: slope				  (1D array)
-	# inp: model
-	#
-	# OUTPUT:
-	# out: data 
-	#
+	'''
+	pwd_set: matrix multiplication
+	
+	INPUT
+	adj:adjoint flag
+	w: PWD object(struct)
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
+	pp: slope				  (1D array)
+	inp: model
+	
+	OUTPUT
+	out: data 
+	
+	'''
 
 	n=w['n'];
 	nw=np.int((w['na']-1)/2);
 
-	#	# pwd_set
+	#	pwd_set
 	tmp=np.zeros(n);
 	out=np.zeros(n);
 	if adj:
@@ -291,18 +299,20 @@ def pwd_set(adj,w,diag,offd,pp,inp):
 	return out
 
 def banded_solve(n,band,diag,offd,b):
-	# banded_solve: Banded matrix solver
-	# 
-	# INPUT:
-	# n:	matrix size
-	# band: band size
-	# diag: defined diagonal .   (1D array)
-	# offd: defined off-diagonal (2D array)
-	# b: input trace
-	#
-	# OUTPUT:
-	# b: trace solution
-	#
+	'''
+	banded_solve: Banded matrix solver
+	
+	INPUT
+	n:	matrix size
+	band: band size
+	diag: defined diagonal .   (1D array)
+	offd: defined off-diagonal (2D array)
+	b: input trace
+	
+	OUTPUT
+	b: trace solution
+	
+	'''
 
 	#define Band object(struct)
 	slv={'n':n,'band':band,'d':np.zeros(n),'o':np.zeros([n-1,band])}
@@ -323,7 +333,6 @@ def banded_solve(n,band,diag,offd,b):
 				t=t-slv['o'][k-m-1,m]*slv['o'][k-m-1,n+m+1]*slv['d'][k-m-1];
 
 			slv['o'][k,n]=t/slv['d'][k];
-
 
 	# the solver 
 	for k in range(1,slv['n']):
