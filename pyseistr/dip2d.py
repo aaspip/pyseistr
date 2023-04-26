@@ -50,7 +50,7 @@ def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 
 	return dip
 
-def dip2dc(din,mask=None,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1):
+def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[10,10,1],verb=1,mask=None):
 	'''
 	dip2dc: dip estimation based on shaping regularized PWD algorithm 
 	(C implementation)

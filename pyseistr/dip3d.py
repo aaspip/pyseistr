@@ -56,7 +56,7 @@ def dip3d(din,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 
 	return dip_i,dip_x
 
-def dip3dc(din,mask=None,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[5,5,5],verb=1,runc=1):
+def dip3dc(din,niter=5,liter=10,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,rect=[5,5,5],verb=1,runc=1,mask=None):
 	'''
 	dip3dc: 3D dip estimation based on shaping regularized PWD algorithm
 	(C implementation)

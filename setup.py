@@ -32,7 +32,7 @@ bpc_module = Extension('bpcfun', sources=['pyseistr/src/bp_cfuns.c'],
 
 setup(
     name="pyseistr",
-    version="0.0.4.3",
+    version="0.0.4.3.1",
     license='GNU General Public License, Version 3 (GPLv3)',
     description="A python package for structural denoising and interpolation of multi-channel seismic data",
     long_description=long_description,
