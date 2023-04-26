@@ -439,6 +439,9 @@ static PyObject *cohc_fb(PyObject *self, PyObject *args){
 	forw=f9; /*forw=1: forward, else: backward/adjoint*/
 	verb=f10;
 	
+	if(verb)
+		printf("typ=%d,nt0=%d,nv0=%d,nh0=%d,dt0=%g,forw=%d,verb=%d\n",typ,nt0,nv0,nh0,dt0,forw,verb);
+	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
     arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
     arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
@@ -497,11 +500,10 @@ static PyObject *cohc_fb(PyObject *self, PyObject *args){
     {
         h0[i]=*((float*)PyArray_GETPTR1(arrf3,i));
     }
-    
+
 	coh_init2(nt0, nh0, nv0, dt0, v0, h0, typ, num0, den0);
-	
 	coh(adj, 0, nmod, ndata, model, data);
-		
+
     /*Below is the output part*/
     PyArrayObject *vecout;
 	npy_intp dims[2];

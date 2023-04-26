@@ -89,7 +89,7 @@ def coh(inpt,par,operator=-1):
     return out
     
     
-def cohc(din,par,operator=-1):
+def cohc(din,par,operator=-1,verb=0):
 	'''
 	Forward and Adjoint operators for Radon RT in the time domain.
 	radon implemented in C
@@ -108,7 +108,7 @@ def cohc(din,par,operator=-1):
 	v=np.float32(v);
 	h=np.float32(h);
 	
-	dout=cohc_fb(din, v, h, typ, nt, nv, nh, dt, operator, 0);
+	dout=cohc_fb(din, v, h, typ, nt, nv, nh, dt, operator, verb);
 	
 	if operator==1: #forward
 		dout=dout.reshape(nt,nh,order='F');

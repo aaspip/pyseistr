@@ -56,7 +56,7 @@ d2=ps.somf2dc(d2d,dip,r,order,eps,1)
 
 dmax=np.max(d2d[:,30])
 
-plt.figure(figsize=(10,16))
+plt.figure(figsize=(6,8))
 plt.subplot(4,2,1)
 plt.imshow(d2d/dmax,cmap='jet',clim=(-0.2, 0.2),aspect=0.06)
 #plt.xlabel('Trace#')
