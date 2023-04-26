@@ -57,7 +57,8 @@ from .bp import bandpass
 from .fk import fkdip
 from .plot import cseis
 
-
+from .das import coh 
+from .das import cohc
 
 ## C versions
 from .dip2d import dip2dc

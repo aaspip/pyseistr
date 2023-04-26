@@ -29,7 +29,8 @@ sointc2d_module = Extension('soint2dcfun', sources=['pyseistr/src/soint2d_cfuns.
 										include_dirs=[numpy.get_include()])
 bpc_module = Extension('bpcfun', sources=['pyseistr/src/bp_cfuns.c'], 
 										include_dirs=[numpy.get_include()])
-
+cohc_module = Extension('cohcfun', sources=['pyseistr/src/coh_cfuns.c'], 
+										include_dirs=[numpy.get_include()])
 setup(
     name="pyseistr",
     version="0.0.4.3.1",
@@ -39,7 +40,7 @@ setup(
     author="pyseistr developing team",
     author_email="chenyk2016@gmail.com",
     url="https://github.com/aaspip/pyseistr",
-    ext_modules=[dipc_module,sofc_module,sofc3d_module,sointc2d_module,sointc3d_module,bpc_module],
+    ext_modules=[dipc_module,sofc_module,sofc3d_module,sointc2d_module,sointc3d_module,bpc_module,cohc_module],
     packages=['pyseistr'],
     include_package_data=True,
     zip_safe=False,
