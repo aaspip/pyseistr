@@ -151,8 +151,8 @@ fname="FORGE/FORGE_78-32_iDASv3-P11_UTC190423213209.sgy"
 
 clip=20;
 nwin=3000
-thr=0.5
-v=np.linspace(-0.00023,0.00023,100);
+thr=0.85
+v=np.linspace(-0.005,0.005,100);
 nt=nwin;nx=960;dt=0.0005;
 h=np.linspace(0,nx-1,nx)
 par={'v':v,'nt':nt,'h':h,'dt':dt,'typ':1,'oper':1}
@@ -174,9 +174,9 @@ for ii in range(len(files)):
 	dn=np.concatenate(data,axis=1);
 
 	if dn.shape[1]>1200:
-		dn=dn[:,200:1160]
+		dn=dn[:,300:1160]
 	else:
-		dn=dn[:,100:1000]
+		dn=dn[:,200:1000]
 	
 	[nt,nx]=dn.shape;
 	
@@ -193,10 +193,10 @@ for ii in range(len(files)):
 		if nwin != d0.shape[0]:
 			print('nwin=',nwin,'n1=',d0.shape[0])
 		d1=d0;
-# 		d1=ps.bandpassc(d0,0.0005,0,200,6,6,0,0);d1_bp=d1.copy(); 	##BP
-# 		pp=ps.dip2dc(d1,2,10,2,0.01, 1, 0.000001,[40,40,1],verb=0); ##SOMF
-# 		d1=ps.somf2dc(d1,pp,8,2,0.01,verb=0);d1_bpsomf=d1.copy();	#SOMF
-# 		d1=d1-ps.fkdip(d1,0.02);d1_bpsomffk=d1.copy()				#FK
+		d1=ps.bandpassc(d0,0.0005,0,200,6,6,0,0);d1_bp=d1.copy(); 	##BP
+		pp=ps.dip2dc(d1,2,10,2,0.01, 1, 0.000001,[40,40,1],verb=0); ##SOMF
+		d1=ps.somf2dc(d1,pp,8,2,0.01,verb=0);d1_bpsomf=d1.copy();	#SOMF
+		d1=d1-ps.fkdip(d1,0.05);d1_bpsomffk=d1.copy()				#FK
 		c=ps.cohc(d1,par);
 		cmax=c.max()
 		print('Window',ic,' Cmax=',cmax)
@@ -207,27 +207,27 @@ for ii in range(len(files)):
 			ax=plt.subplot(3,2,1)
 			plt.imshow(d0,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
 # 			plt.title('Raw DAS data');
-			plt.title(ifile+' '+str(t0),fontsize=20)
-			plt.xlabel('Cmax=%g'%cmax)
-# 			ax=plt.subplot(3,2,3)
-# 			plt.imshow(d1_bp,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
-# 			plt.title('BP');
-# 			ax=plt.subplot(3,2,4)
-# 			plt.imshow(d1_bpsomf,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
-# 			plt.title('BPSOMF');
-# 			ax=plt.subplot(3,2,5)
-# 			plt.imshow(d1_bpsomffk,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
-# 			plt.title('BPSOMFFK (Cmax=%g)'%cmax);
-# 			ax=plt.subplot(3,2,6)
-# 			plt.imshow(d0-d1_bpsomffk,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
-# 			plt.title('Removed Noise');
+			plt.title(ifile+' '+str(t0),fontsize=6)
+#			plt.xlabel('Cmax=%g'%cmax)
+			ax=plt.subplot(3,2,3)
+			plt.imshow(d1_bp,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+			plt.title('BP');
+			ax=plt.subplot(3,2,4)
+			plt.imshow(d1_bpsomf,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+			plt.title('BPSOMF');
+			ax=plt.subplot(3,2,5)
+			plt.imshow(d1_bpsomffk,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+			plt.title('BPSOMFFK (Cmax=%g)'%cmax);
+			ax=plt.subplot(3,2,6)
+			plt.imshow(d0-d1_bpsomffk,cmap=seis(),clim=(-clip,clip),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);
+			plt.title('Removed Noise');
 			plt.savefig('FORGEFIG/%s_%d_%d.png'%(ifile,ic,t0),format='png',dpi=200)
 			plt.close;
 		del d0
 		del d1
-# 		del d1_bp
-# 		del d1_bpsomf
-# 		del d1_bpsomffk
+		del d1_bp
+		del d1_bpsomf
+		del d1_bpsomffk
 		del c
 	del dn
 	del d

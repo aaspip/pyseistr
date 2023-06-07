@@ -1993,26 +1993,6 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // documentation for each functions.
 static char dipcfun_document[] = "Document stuff for dip...";
 

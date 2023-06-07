@@ -1,20 +1,31 @@
 import numpy as np
-def gensyn():
+def gensyn(noise=False,seed=202122,var=0.2):
 	'''
 	gensyn: quickly generate the representative synthetic data used in the paper
 	
 	INPUT
-	None
+	noise: if add noise
+	seed: random number seed
+	var: noise variance (actually the maximum amplitude of noise)
 	
 	OUTPUT
-	data: synthetic data
-	
-	EXAMPLE
+	case 1. data: clean synthetic data
+	case 2. data,noisy: noisy case
+		
+	EXAMPLE 1
 	from pyseistr import gensyn
 	data=gensyn();
 	import matplotlib.pyplot as plt;
 	plt.imshow(data);plt.ylabel('Time sample');plt.xlabel('Trace');plt.show();
 
+	EXAMPLE 2
+	from pyseistr import gensyn
+	data,noisy=gensyn(noise=True);
+	import matplotlib.pyplot as plt;
+	plt.subplot(1,2,1);plt.imshow(data,clim=[-0.2,0.2],aspect='auto');plt.xlabel('Trace');plt.ylabel('Time sample');
+	plt.subplot(1,2,2);plt.imshow(noisy,clim=[-0.2,0.2],aspect='auto');plt.xlabel('Trace');
+	plt.show();
+	
 	'''
 	import numpy as np
 	from .ricker import ricker
@@ -31,7 +42,14 @@ def gensyn():
 	for i in range(1,n+1):
 		data[:,i-1]=np.convolve(t[:,i-1],w);
 	
-	return data
+	if noise:
+		data=data/np.max(np.max(data));
+		np.random.seed(seed);
+		noise=(np.random.rand(data.shape[0],data.shape[1])*2-1)*var;
+		noisy=data+noise
+		return data,noisy
+	else:
+		return data
 	
 	
 def genflat(nt=100,nx=60,t=[30,50,80],amp=[1,1,1],freq=30,dt=0.004):

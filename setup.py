@@ -31,16 +31,18 @@ bpc_module = Extension('bpcfun', sources=['pyseistr/src/bp_cfuns.c'],
 										include_dirs=[numpy.get_include()])
 cohc_module = Extension('cohcfun', sources=['pyseistr/src/coh_cfuns.c'], 
 										include_dirs=[numpy.get_include()])
+paintc2d_module = Extension('paint2dcfun', sources=['pyseistr/src/paint_cfuns.c'], 
+										include_dirs=[numpy.get_include()])
 setup(
     name="pyseistr",
-    version="0.0.4.3.1",
+    version="0.0.4.4.1",
     license='GNU General Public License, Version 3 (GPLv3)',
     description="A python package for structural denoising and interpolation of multi-channel seismic data",
     long_description=long_description,
     author="pyseistr developing team",
     author_email="chenyk2016@gmail.com",
     url="https://github.com/aaspip/pyseistr",
-    ext_modules=[dipc_module,sofc_module,sofc3d_module,sointc2d_module,sointc3d_module,bpc_module,cohc_module],
+    ext_modules=[dipc_module,sofc_module,sofc3d_module,sointc2d_module,sointc3d_module,bpc_module,paintc2d_module,cohc_module],
     packages=['pyseistr'],
     include_package_data=True,
     zip_safe=False,

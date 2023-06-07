@@ -61,6 +61,8 @@ from .das import coh
 from .das import cohc
 
 from .synthetics import *
+from .rgt import *
+from .smooth import *
 
 ## C versions
 from .dip2d import dip2dc

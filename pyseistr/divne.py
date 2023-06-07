@@ -199,10 +199,35 @@ def first_index( i, j, dim, n, s ):
 
 	return int(i0)
 
+def triangle_init(nbox,ndat,box):
+	'''
+	triangle smoother initialization
+	Ported to Python by Yangkang Chen, 2023
+	
+	INPUT
+	nbox:	triangle length
+	ndat:	data length
+	box:	if box instead of triangle
+	
+	OUTPUT
+	tr:		triangle struct
+	
+	EXAMPLE
+	from pyseistr import smooth
+	
+	'''
+	if box:
+		wt=1.0/(2*nbox-1);
+	else:
+		wt=1.0/(nbox*nbox);
+	
+	tr={'nx':ndat, 'nb':nbox, 'box':box, 'np':ndat+2*nbox, 'wt':wt, 'tmp':np.zeros(ndat+2*nbox)}
+	
+	return tr
 
 def smooth2( tr, o, d, der, x):
 	'''
-	smooth2: apply triangle smoothing
+	smooth2: apply adjoint triangle smoothing
 	
 	Ported to Python by Yangkang Chen, 2022
 	
@@ -224,6 +249,28 @@ def smooth2( tr, o, d, der, x):
 
 	return x,tr
 
+def smooth( tr, o, d, der, x):
+	'''
+	smooth: apply triangle smoothing
+	
+	Ported to Python by Yangkang Chen, 2023
+	
+	INPUT
+	tr:   smoothing object
+	o:	trace sampling
+	d:	trace sampling
+	x:	data (smoothed in place)
+	der:  if derivative
+	
+	OUTPUT
+	x: smoothed result
+	tr: triangle struct
+	'''
+	tr['tmp'] = fold(o, d, tr['nx'], tr['nb'], tr['np'], x, tr['tmp']);
+	tr['tmp'] = doubint(tr['np'], tr['tmp'], (tr['box'] or der));
+	x = triple(o, d, tr['nx'], tr['nb'], x, tr['tmp'], tr['box'], tr['wt']);
+	
+	return x,tr
 
 def triple2( o, d, nx, nb, x, tmp, box, wt ):
 	'''
@@ -242,6 +289,20 @@ def triple2( o, d, nx, nb, x, tmp, box, wt ):
 
 	return tmp
 
+def triple( o, d, nx, nb, x, tmp, box, wt ):
+	'''
+	BY Yangkang Chen, Jun, 06, 2023
+	'''
+
+	if box:
+		for i in range(0,nx):
+			x[o+i*d]=(tmp[i+1]-tmp[i+2*nb])*wt;
+	else:
+		for i in range(0,nx):
+			x[o+i*d]=(2.0*tmp[i+nb]-tmp[i]-tmp[i+2*nb])*wt;
+
+	return x
+	
 def doubint2( nx, xx, der ):
 	'''
 	Modified by Yangkang Chen, Nov, 04, 2019
@@ -263,7 +324,27 @@ def doubint2( nx, xx, der ):
 
 	return xx
 
+def doubint( nx, xx, der ):
+	'''
+	Modified by Yangkang Chen, Jun, 06, 2023
+	'''
+	
+	#integrate backward
+	t = 0.0;
+	for i in range(nx-1,-1,-1):
+		t = t + xx[i];
+		xx[i] = t
 
+	if der:
+		return xx
+		
+	#integrate forward
+	t = 0.0;
+	for i in range(0,nx):
+		t = t + xx[i];
+		xx[i] = t;
+	
+	return xx
 
 def cblas_saxpy( n, a, x, sx, y, sy ):
 	'''
@@ -317,6 +398,47 @@ def fold2(o, d, nx, nb, np, x, tmp):
 			for i in range(0,j):
 				x[o+(nx-1-i)*d] = x[o+(nx-1-i)*d] + tmp[j-1-i];
 	return x
+
+def fold(o, d, nx, nb, np, x, tmp):
+	'''
+	Modified by Yangkang Chen, Jun, 06, 2023
+	'''
+	#copy middle
+	for i in range(0,nx):
+		tmp[i+nb] = x[o+i*d];
+
+	#reflections from the right side
+	for j in range(nb+nx,np+1,nx):
+		if (nx <= np-j):
+			for i in range(0,nx):
+				tmp[j+i] = x[o+(nx-1-i)*d];
+		else:
+			for i in range(0,np-j):
+				tmp[j+i] = x[o+(nx-1-i)*d];
+		j = j + nx;
+		if (nx <= np-j):
+			for i in range(0,nx): 
+				tmp[j+i] = x[o+i*d];
+		else:
+			for i in range(0,np-j):
+				tmp[j+i] = x[o+i*d];
+
+	#reflections from the left side
+	for j in range(nb,-1,-nx):
+		if (nx <= j):
+			for i in range(0,nx):
+				tmp[j-1-i] = x[o+i*d];
+		else:
+			for i in range(0,j):
+				tmp[j-1-i] = x[o+i*d];
+		j = j - nx;
+		if (nx <= j):
+			for i in range(0,nx):
+				tmp[j-1-i] = x[o+(nx-1-i)*d];
+		else:
+			for i in range(0,j):
+				tmp[j-1-i] = x[o+(nx-1-i)*d];
+	return tmp
 
 def adjnull( adj,add,nm,nd,m,d ):
 	'''

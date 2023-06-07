@@ -1858,53 +1858,27 @@ void ps_solver_prec (ps_operator oper   /* linear operator */,
 }
 
 
-static PyObject *csoint2d(PyObject *self, PyObject *args){
+static PyObject *cpaint2d(PyObject *self, PyObject *args){
     
 	/**initialize data input**/
-    int nd, nd2;
-    int i, niter, nw, n1, n2, n12, nj1, nj2, i4, n4;
-    float *mm, *dd, **pp, **qq, a;
-    bool *known;
-    int verb, drift, hasmask, twoplane, prec;
+    int i1, i2, niter, n1, n2, n12, nd2;
+    float *mm, *dd, **pp, **u, *trace;
+    int verb,order,i0,i;
+    float eps;
     
     PyObject *f1=NULL;
     PyObject *f2=NULL;
-    PyObject *f3=NULL;
-    PyObject *f4=NULL;
     PyObject *arrf1=NULL;
     PyObject *arrf2=NULL;
-    PyObject *arrf3=NULL;
-    PyObject *arrf4=NULL;
     
-	PyArg_ParseTuple(args, "OOOOiiiiiiiiiii", &f1, &f2, &f3, &f4, &n1, &n2, &nw, &nj1, &nj2, &niter, &drift, &hasmask, &twoplane, &prec, &verb);
-
-	/*f1: mm*/
-	/*f2: dd*/
-	/*pp: slope*/
-	/*qq: second slope*/
-	/*n1/n2: first/second dimension*/
-	/*nw: accuracy order*/
-	/*nj1: antialiasing for first dip*/
-	/*nj2: antialiasing for second dip*/
-	/*niter: number of iterations*/
-	/*drift: shift filter*/
-	/*hasmaks: if has mask*/
-	/*twoplane: if has two plane-wave components*/
-	/*prec: if apply preconditioning*/
-	/*verb: verbosity flag*/
-	
-	/*var is noise variance*/
-//     a = sqrtf(var);
+	PyArg_ParseTuple(args, "OOiiiifi", &f1, &f2, &n1, &n2, &order, &i0, &eps, &verb);
     
-    printf("n1=%d,n2=%d,nw=%d,nj1=%d,nj2=%d,niter=%d,drift=%d\n",n1,n2,nw,nj1,nj2,niter,drift);
-    printf("hasmask=%d,twoplane=%d,prec=%d,verb=%d\n",hasmask,twoplane,prec,verb);
+    printf("n1=%d,n2=%d,order=%d,i0=%d,eps=%g,verb=%d\n",n1,n2,order,i0,eps,verb);
     
 	n12=n1*n2;
 	
     arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
 	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_IN_ARRAY);
 	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
@@ -1915,202 +1889,156 @@ static PyObject *csoint2d(PyObject *self, PyObject *args){
     	return NULL;
     }
 
-    mm = ps_floatalloc(n12);
-    dd = ps_floatalloc(n12);
-    known = ps_boolalloc(n12);
-
     pp = ps_floatalloc2(n1,n2);
+    trace = ps_floatalloc(n1);
+    u = ps_floatalloc2(n1,n2);
     
     /*reading data*/
     for (i=0; i<n12; i++)
     {
-        mm[i]=*((float*)PyArray_GETPTR1(arrf1,i));
+        pp[0][i]=*((float*)PyArray_GETPTR1(arrf1,i));
     }
     
-    for (i=0; i<n12; i++)
+    for (i=0; i<n1; i++)
     {
-        dd[i]=*((float*)PyArray_GETPTR1(arrf2,i));
+        trace[i]=*((float*)PyArray_GETPTR1(arrf2,i));
     }
     
-    for (i=0; i<n12; i++)
-    {
-        pp[0][i]=*((float*)PyArray_GETPTR1(arrf3,i));
-    }
-    
-    
-    if(twoplane)
-    {
-    	qq = ps_floatalloc2(n1,n2);
-    	for (i=0; i<n12; i++)
-    	{
-        qq[0][i]=*((float*)PyArray_GETPTR1(arrf4,i));
-    	}
-    }
-    else
-    {qq = NULL;}
-    
-    /*NOTE: if twoplane==0, pp = qq eactly*/
+	predict_init (n1, n2, eps*eps, order, 1, false);
 
-//     allpass3_init(allpass_init(nw, nj1, n1,n2,n3, drift, pp),
-// 		  allpass_init(nw, nj2, n1,n2,n3, drift, qq));
-	
-//     if (!ps_getint("niter",&niter)) niter=100;
-//     /* number of iterations */
-// 
-//     if (!ps_getint("order",&nw)) nw=1;
-//     /* accuracy order */
-//     if (!ps_getint("nj1",&nj1)) nj1=1;
-//     /* antialiasing for first dip */
-//     if (!ps_getint("nj2",&nj2)) nj2=1;
-//     /* antialiasing for second dip */
-// 
-//     if (!ps_getbool("drift",&drift)) drift=false;
-//     /* if shift filter */
-// 
-//     if (!ps_getbool("prec",&prec)) prec = false;
-//     /* if y, apply preconditioning */
-// 
-//     if (!ps_getbool("verb",&verb)) verb = false;
-//     /* verbosity flag */
-
-//     np = ps_leftsize(dip,2);
-
-//     pp = ps_floatalloc2(n1,n2);
-
-//     if (np > n3) {
-// 	qq = ps_floatalloc2(n1,n2);
-//     } else {
-// 	qq = NULL;
-//     }
-
-//     mm = ps_floatalloc(n12);
-//     dd = ps_floatalloc(n12);
-//     known = ps_boolalloc(n12);
-    
-//     if (NULL != ps_getstring ("mask")) {
-// 	mask = ps_input("mask");
-//     } else {
-// 	mask = NULL;
-//     }
-
-    if (twoplane) {
-	if (prec) {
-	    predict2_init(n1,n2,0.0001,nw,pp,qq);
-	    ps_mask_init(known);
-	} else {
-// 	    twoplane2_init(nw, nj1,nj2, n1,n2, drift, pp, qq);
+	for (i1=0; i1 < n1; i1++) {
+	    u[i0][i1] = trace[i1];
 	}
-    } else {
-	if (prec) {
-	    predict_init(n1,n2,0.0001,nw,1,false);
-	    predict_set(pp);
-	    ps_mask_init(known);
-	} else {
-	    allpass22_init(allpass2_init(nw, nj1, n1,n2, drift, pp));
-	}
-    }
-    
-	
-	if (hasmask==1) {    
-	    for (i=0; i < n12; i++) {
-		known[i] = (bool) (dd[i] != 0.);
-		dd[i] = 0.;
-	    }
-	} else {
-	    for (i=0; i < n12; i++) {
-		known[i] = (bool) (mm[i] != 0.);
-		dd[i] = 0.;
+	for (i2=i0-1; i2 >= 0; i2--) {
+	    predict_step(false,false,trace,pp[i2]);
+	    for (i1=0; i1 < n1; i1++) {
+		u[i2][i1] = trace[i1];
 	    }
 	}
-	
-// 	for (i=0; i < 2*n123; i++) {
-// 	    dd[i] = a*ps_randn_one_bm();
-// 	}
-	
-// 	if (NULL != mask) {
-// 	    ps_floatread(dd,n12,mask);
-// 
-// 	    for (i=0; i < n12; i++) {
-// 		known[i] = (bool) (dd[i] != 0.);
-// 		dd[i] = 0.;
-// 	    }
-// 	} else {
-// 	    for (i=0; i < n12; i++) {
-// 		known[i] = (bool) (mm[i] != 0.);
-// 		dd[i] = 0.;
-// 	    }
-// 	}	
-	
-// 	ps_solver(allpass3_lop, ps_cgstep, n123, 2*n123, mm, dd, niter,
-// 		  "known", known, "x0", mm, "verb", verb, "end");
-// 	ps_cgstep_close();
 
-// 	n12=n123;
-// 	ps_floatread(pp[0],n12,dip);
-
-	
-	if (NULL != qq) {
-// 	    ps_floatread(qq[0],n12,dip);
-
-	    if (prec) {
-		ps_solver_prec(ps_mask_lop, ps_cgstep, predict2_lop, 
-			       n12, n12, n12, 
-			       mm, mm, niter, 0.,"verb", verb,"end");
-	    } else {
-// 		ps_solver(twoplane2_lop, ps_cgstep, n12, n12, mm, dd, niter,
-// 			  "known", known, "x0", mm, "verb", verb, "end");
-	    }
-	} else {
-	    if (prec) {
-		ps_solver_prec(ps_mask_lop, ps_cgstep, predict_lop, 
-			       n12, n12, n12, 
-			       mm, mm, niter, 0.,"verb", verb,"end");
-	    } else {
-
-		ps_solver(allpass21_lop, ps_cgstep, n12, n12, mm, dd, niter,
-			  "known", known, "x0", mm, "verb", verb, "end");
+	for (i1=0; i1 < n1; i1++) {
+	    trace[i1] = u[i0][i1];
+	}
+	for (i2=i0+1; i2 < n2; i2++) {
+	    predict_step(false,true,trace,pp[i2-1]);
+	    for (i1=0; i1 < n1; i1++) {
+		u[i2][i1] = trace[i1];
 	    }
 	}
-	ps_cgstep_close();
     
     /*Below is the output part*/
     PyArrayObject *vecout;
 	npy_intp dims[2];
-	dims[0]=n12;dims[1]=1;
+	dims[0]=n1*n2;dims[1]=1;
 	/* Parse tuples separately since args will differ between C fcns */
 	/* Make a new double vector of same dimension */
 	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
 	for(i=0;i<dims[0];i++)
-		(*((float*)PyArray_GETPTR1(vecout,i))) = mm[i];
+		(*((float*)PyArray_GETPTR1(vecout,i))) = u[0][i];
 
 	return PyArray_Return(vecout);
 	
 }
 
-// documentation for each functions.
-static char soint2dcfun_document[] = "C-implementation of 2D structure-oriented interpolation";
+static PyObject *cpaint3d(PyObject *self, PyObject *args){
+    
+	/**initialize data input**/
+    int i1, i2, niter, n1, n2, n12, nd2;
+    float *mm, *dd, **pp, **u, *trace;
+    int verb,order,i0,i;
+    float eps;
+    
+    PyObject *f1=NULL;
+    PyObject *f2=NULL;
+    PyObject *arrf1=NULL;
+    PyObject *arrf2=NULL;
+    
+	PyArg_ParseTuple(args, "OOiiiifi", &f1, &f2, &n1, &n2, &order, &i0, &eps, &verb);
+    
+    printf("n1=%d,n2=%d,order=%d,i0=%d,eps=%g,verb=%d\n",n1,n2,order,i0,eps,verb);
+    
+	n12=n1*n2;
+	
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
+	
+    nd2=PyArray_NDIM(arrf1);
+    npy_intp *sp=PyArray_SHAPE(arrf1);
+	
+    if (*sp != n12)
+    {
+    	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n12);
+    	return NULL;
+    }
 
-// defining our functions like below:
-// function_name, function, METH_VARARGS flag, function documents
+    pp = ps_floatalloc2(n1,n2);
+    trace = ps_floatalloc(n1);
+    u = ps_floatalloc2(n1,n2);
+    
+    /*reading data*/
+    for (i=0; i<n12; i++)
+    {
+        pp[0][i]=*((float*)PyArray_GETPTR1(arrf1,i));
+    }
+    
+    for (i=0; i<n1; i++)
+    {
+        trace[i]=*((float*)PyArray_GETPTR1(arrf2,i));
+    }
+    
+	predict_init (n1, n2, eps*eps, order, 1, false);
+
+	for (i1=0; i1 < n1; i1++) {
+	    u[i0][i1] = trace[i1];
+	}
+	for (i2=i0-1; i2 >= 0; i2--) {
+	    predict_step(false,false,trace,pp[i2]);
+	    for (i1=0; i1 < n1; i1++) {
+		u[i2][i1] = trace[i1];
+	    }
+	}
+
+	for (i1=0; i1 < n1; i1++) {
+	    trace[i1] = u[i0][i1];
+	}
+	for (i2=i0+1; i2 < n2; i2++) {
+	    predict_step(false,true,trace,pp[i2-1]);
+	    for (i1=0; i1 < n1; i1++) {
+		u[i2][i1] = trace[i1];
+	    }
+	}
+    
+    /*Below is the output part*/
+    PyArrayObject *vecout;
+	npy_intp dims[2];
+	dims[0]=n1*n2;dims[1]=1;
+	/* Parse tuples separately since args will differ between C fcns */
+	/* Make a new double vector of same dimension */
+	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
+	for(i=0;i<dims[0];i++)
+		(*((float*)PyArray_GETPTR1(vecout,i))) = u[0][i];
+
+	return PyArray_Return(vecout);
+	
+}
+
+static char paint2dcfun_document[] = "C-implementation of plane-wave painting";
 static PyMethodDef functions[] = {
-  {"csoint2d", csoint2d, METH_VARARGS, soint2dcfun_document},
+  {"cpaint2d", cpaint2d, METH_VARARGS, paint2dcfun_document},
+  {"cpaint3d", cpaint3d, METH_VARARGS, paint2dcfun_document},
   {NULL, NULL, 0, NULL}
 };
 
-// initializing our module informations and settings in this structure
-// for more informations, check head part of this file. there are some important links out there.
-static struct PyModuleDef soint2dcfunModule = {
-  PyModuleDef_HEAD_INIT, // head informations for Python C API. It is needed to be first member in this struct !!
-  "soint2dcfun",  // module name
-  NULL, // means that the module does not support sub-interpreters, because it has global state.
+static struct PyModuleDef paint2dcfunModule = {
+  PyModuleDef_HEAD_INIT, 
+  "paint2dcfun",  
+  NULL, 
   -1,
-  functions  // our functions list
+  functions 
 };
 
-// runs while initializing and calls module creation function.
-PyMODINIT_FUNC PyInit_soint2dcfun(void){
-  
-    PyObject *module = PyModule_Create(&soint2dcfunModule);
+PyMODINIT_FUNC PyInit_paint2dcfun(void){
+    PyObject *module = PyModule_Create(&paint2dcfunModule);
     import_array();
     return module;
 }
