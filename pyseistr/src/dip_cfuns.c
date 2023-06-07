@@ -675,7 +675,7 @@ void ps_trianglen_lop (bool adj, bool add, int nx, int ny, float* x, float* y)
     int i, j, i0;
 
 //     if (nx != ny || nx != nd) 
-// 	sf_error("%s: Wrong data dimensions: nx=%d, ny=%d, nd=%d",
+// 	ps_error("%s: Wrong data dimensions: nx=%d, ny=%d, nd=%d",
 // 		 __FILE__,nx,ny,nd);
 
     ps_adjnull (adj,add,nx,ny,x,y);
@@ -741,7 +741,7 @@ void ps_weight_lop (bool adj, bool add, int nx, int ny, float* xx, float* yy)
 {
     int i;
 
-//     if (ny!=nx) sf_error("%s: size mismatch: %d != %d",__FILE__,ny,nx);
+//     if (ny!=nx) ps_error("%s: size mismatch: %d != %d",__FILE__,ny,nx);
 
     ps_adjnull (adj, add, nx, ny, xx, yy);
   
@@ -1723,28 +1723,28 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	nr *= n[j];
     }
 
-//     if (!sf_getbool("both",&both)) 
+//     if (!ps_getbool("both",&both)) 
     both=false;
     /* if y, compute both left and right predictions */
 
 //     if (1 == n[2]) {
 // 	n4=0;
-// 	if (both) sf_putint(out,"n3",2);
+// 	if (both) ps_putint(out,"n3",2);
 //     } else {
-// 	if (!sf_getint("n4",&n4)) n4=2;
+// 	if (!ps_getint("n4",&n4)) n4=2;
 // 	/* what to compute in 3-D. 0: in-line, 1: cross-line, 2: both */ 
 // 	if (n4 > 2) n4=2;
 // 	if (2==n4) {
-// 	    sf_putint(out,"n4",both? 4:2);
+// 	    ps_putint(out,"n4",both? 4:2);
 // 	    for (j=3; j < dim; j++) {
 // 		snprintf(key,4,"n%d",both? j+4:j+2);
-// 		sf_putint(out,key,n[j]);
+// 		ps_putint(out,key,n[j]);
 // 	    }
 // 	} else if (both) {
-// 	    sf_putint(out,"n4",2);
+// 	    ps_putint(out,"n4",2);
 // 	    for (j=3; j < dim; j++) {
 // 		snprintf(key,4,"n%d",j+2);
-// 		sf_putint(out,key,n[j]);
+// 		ps_putint(out,key,n[j]);
 // 	    }
 // 	}
 //     }
@@ -1851,24 +1851,24 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 
     if (hasmask) {
 	mm = ps_boolalloc2(n123,both? 4:2);
-// 	mask = sf_input("mask");
+// 	mask = ps_input("mask");
     } else {
 	mm = (bool**) ps_alloc(4,sizeof(bool*));
 	mm[0] = mm[1] = mm[2] = mm[3] = NULL;
 // 	mask = NULL;
     }
 
-//     if (NULL != sf_getstring("idip")) {
+//     if (NULL != ps_getstring("idip")) {
 // 	/* initial in-line dip */
-// 	idip0 = sf_input("idip");
+// 	idip0 = ps_input("idip");
 // 	if (both) pi = ps_floatalloc(n123);
 //     } else {
 // 	idip0 = NULL;
 //     }
 
-//     if (NULL != sf_getstring("xdip")) {
+//     if (NULL != ps_getstring("xdip")) {
 // 	/* initial cross-line dip */
-// 	xdip0 = sf_input("xdip");
+// 	xdip0 = ps_input("xdip");
 // 	if (both) qi = ps_floatalloc(n123);
 //     } else {
 // 	xdip0 = NULL;
@@ -1877,7 +1877,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	nr=1;
     for (ir=0; ir < nr; ir++) {
     	if (hasmask) {
-// 	    sf_floatread(u,n123,mask);
+// 	    ps_floatread(u,n123,mask);
     	for (i=0; i<n123; i++)
         	um[i]=*((float*)PyArray_GETPTR1(arrf1,i+n123));
 	    mask32 (both, order, nj1, nj2, n[0], n[1], n[2], um, mm);
@@ -1887,12 +1887,12 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	    /* initialize t-x dip */
 // 	    if (NULL != idip0) {
 // 		if (both) {
-// // 		    sf_floatread(pi,n123,idip0);
+// // 		    ps_floatread(pi,n123,idip0);
 // 		    for(i=0; i < n123; i++) {
 // 			p[i] = pi[i];
 // 		    }
 // 		} else {
-// // 		    sf_floatread(p,n123,idip0);
+// // 		    ps_floatread(p,n123,idip0);
 // 		}
 // 	    } else {
 		for(i=0; i < n123; i++) {
@@ -1909,12 +1909,12 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	    /* initialize t-y dip */
 // 	    if (NULL != xdip0) {
 // 		if (both) {
-// 		    sf_floatread(qi,n123,xdip0);
+// 		    ps_floatread(qi,n123,xdip0);
 // 		    for(i=0; i < n123; i++) {
 // 			p[i] = qi[i];
 // 		    }
 // 		} else {
-// 		    sf_floatread(p,n123,xdip0);
+// 		    ps_floatread(p,n123,xdip0);
 // 		}
 // 	    } else {
 		for(i=0; i < n123; i++) {
@@ -1989,7 +1989,138 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 }
 
 
+void mcp(float *dst /*destination*/, 
+		float *src /*source*/,
+		int s1d /*starting index in dst*/,
+		int s1s /*starting index in src*/,
+		int l1  /*copy length in axis1*/)
+/*<memory copy in 1D case>*/
+{
+	int i1=0;
+	for(i1=0;i1<l1;i1++)
+	{
+		dst[s1d+i1]=src[s1s+i1];
+	}
+}
 
+static PyObject *smoothcf(PyObject *self, PyObject *args){
+    
+	/**initialize data input**/
+    int i2, n1, n2, n123, nd2;
+    float *data,*din;
+    int verb;
+    int r1,r2,r3,diff1,diff2,diff3,box1,box2,box3;
+    int repeat,adj;
+	ps_triangle tr;
+
+    PyObject *f1=NULL;
+    PyObject *arrf1=NULL;
+
+    
+	PyArg_ParseTuple(args, "Oiiiiiiiiiiiiii", &f1, &n1, &n2, &n3, &repeat, &adj, &r1, &r2, &r3, &diff1, &diff2, &diff3, &box1, &box2, &box3);
+    
+    printf("n1=%d,n2=%d,n3=%d,r1=%d,r2=%g,r3=%d\n",n1,n2,n3,r1,r2,r3);
+    printf("diff1=%d,diff2=%d,diff3=%d,box1=%d,box2=%g,box3=%d\n",diff1,diff2,diff3,box1,box2,box3);
+    printf("repeat=%d,adj=%d\n",repeat,adj);
+    
+	n123=n1*n2*n3;
+	
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+	
+    nd2=PyArray_NDIM(arrf1);
+    npy_intp *sp=PyArray_SHAPE(arrf1);
+	
+    if (*sp != n123)
+    {
+    	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
+    	return NULL;
+    }
+
+    int dim, dim1, i, j, n[PS_MAX_DIM], rect[PS_MAX_DIM], s[PS_MAX_DIM];
+    int nrep, irep, i0;
+    bool diff[PS_MAX_DIM], box[PS_MAX_DIM];
+    
+    
+	if(n3>1)
+		dim=3;
+	else
+		dim=2;
+		
+	if(r3>1)
+	dim1=2;
+	else
+	{
+	if(r2>1)
+	dim1=1;
+	else
+	dim1=0;
+	}
+	
+	n[0]=n1;n[1]=n2;n[2]=n3;
+	s[0]=1;s[1]=n1;s[2]=n1*n2;
+	diff[0]=diff1;diff[1]=diff2;diff[2]=diff3;
+	box[0]=box1;box[1]=box2;box[2]=box3;
+	rect[0]=r1;rect[1]=r2;rect[2]=r3;
+	nrep=repeat;
+	
+	if(dim1==0)
+	n2=n2*n3;
+	else
+	{
+	if(dim1==1)
+	{n1=n1*n2;n2=n3;}
+	else
+	{n1=n1*n2*n3;n2=1;}
+	}
+	
+	printf("dim=%d,dim1=%d\n",dim,dim1);
+	printf("n1=%d,n2=%d\n",n1,n2);
+
+    din = ps_floatalloc(n123);
+    data = ps_floatalloc(n1);
+    
+    /*reading data*/
+    for (i=0; i<n123; i++)
+    {
+        din[i]=*((float*)PyArray_GETPTR1(arrf1,i));
+    }
+    
+    for (i2=0; i2 < n2; i2++) {
+	
+	mcp(data,din,0,i2*n1,n1);
+	
+	for (i=0; i <= dim1; i++) {
+	    if (rect[i] <= 1) continue;
+	    tr = ps_triangle_init (rect[i],n[i],box[i]);
+	    for (j=0; j < n1/n[i]; j++) {
+		i0 = ps_first_index (i,j,dim1+1,n,s);
+		for (irep=0; irep < nrep; irep++) {
+		    if (adj) {
+			ps_smooth (tr,i0,s[i],diff[i],data);
+		    } else {
+			ps_smooth2 (tr,i0,s[i],diff[i],data);
+		    }
+		}
+	    }
+	    ps_triangle_close(tr);
+	}
+	
+	mcp(din,data,i2*n1,0,n1);
+    }   
+    
+    /*Below is the output part*/
+    PyArrayObject *vecout;
+	npy_intp dims[2];
+	dims[0]=n123;dims[1]=1;
+	/* Parse tuples separately since args will differ between C fcns */
+	/* Make a new double vector of same dimension */
+	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
+	for(i=0;i<dims[0];i++)
+		(*((float*)PyArray_GETPTR1(vecout,i))) = din[i];
+
+	return PyArray_Return(vecout);
+	
+}
 
 
 
@@ -2000,6 +2131,7 @@ static char dipcfun_document[] = "Document stuff for dip...";
 // function_name, function, METH_VARARGS flag, function documents
 static PyMethodDef functions[] = {
   {"dipc", dipc, METH_VARARGS, dipcfun_document},
+  {"smoothcf", smoothcf, METH_VARARGS, dipcfun_document},
   {NULL, NULL, 0, NULL}
 };
 

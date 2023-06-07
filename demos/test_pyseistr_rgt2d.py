@@ -1,13 +1,14 @@
 #This is example showing how to calculate RGT using pyseistr
 from pyseistr import smooth
+from pyseistr import smoothc
 from pyseistr import dip2dc
 from pyseistr import rgt
 import matplotlib.pyplot as plt;
 
 from pyseistr import sigmoid
 sig=sigmoid(n1=200,n2=210);
-sig=smooth(sig,rect=[3,1,1],diff=[1,0,0],adj=0);
-sig=smooth(sig,rect=[3,1,1])
+sig=smoothc(sig,rect=[3,1,1],diff=[1,0,0],adj=0);
+sig=smoothc(sig,rect=[3,1,1])
 
 sdip=dip2dc(sig,order=2,niter=10,rect=[4,4,1],verb=0)
 time=rgt(sdip,o1=0,d1=0.004,order=2,i0=50,eps=0.1);
