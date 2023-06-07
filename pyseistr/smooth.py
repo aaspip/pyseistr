@@ -1,17 +1,18 @@
 import numpy as np
 
-def smooth(din,rect=[1,1,1],diff=[0,0,0],repeat=1,adj=False,box=[0,0,0]):
+def smooth(din,rect=[1,1,1],diff=[0,0,0],box=[0,0,0],repeat=1,adj=1):
 	'''
 	
 	INPUT
-	din:	input data
+	din:	input noisy data
 	rect: 	smoothing radius on #-th axis
 	diff:	differentiation on #-th axis (default: 0)
+	box:	box (rather than triangle) on #-th axis )
 	repeat:	repeat filtering several times
 	adj:	run in the adjoint mode 
 	
 	OUTPUT
-	dout:	
+	dout:	smoothed data
 	
 	EXAMPLE 1
 	from pyseistr import smooth
@@ -32,6 +33,29 @@ def smooth(din,rect=[1,1,1],diff=[0,0,0],repeat=1,adj=False,box=[0,0,0]):
 	ax=plt.subplot(1,4,4)
 	plt.imshow(noisy-data1,cmap='jet',clim=(-0.2, 0.2),aspect='auto');ax.set_xticks([]);ax.set_yticks([]);plt.title('Noise');
 	plt.show()
+	
+	EXAMPLE 2 (set "static long int seed = 1996;" in "RSFSRC/user/gee/random.c")
+	from pyseistr import sigmoid
+	from pyseistr import smooth
+	data=sigmoid(n1=200,n2=210);
+	data1=smooth(data,rect=[3,3,1],diff=[1,0,0],adj=1);
+	
+	import m8r,os,numpy as np
+	os.system('sfsigmoid n1=200 n2=210 d2=0.008>tt.rsf')
+	os.system('sfsmooth<tt.rsf rect1=3 rect2=3 diff1=1 adj=y >tt2.rsf')
+	data2 = m8r.File('tt2.rsf')[:].transpose()
+	print('Difference between pyseistr and Madagascar:',np.linalg.norm(data1-data2))
+	
+	import matplotlib.pyplot as plt;
+	plt.figure(figsize=(12,8))
+	plt.subplot(1,3,1);
+	plt.imshow(data1,clim=(-0.05,0.05),aspect='auto');plt.xlabel('Trace');plt.ylabel('Time sample');plt.title('pyseistr');
+	plt.subplot(1,3,2);
+	plt.imshow(data2,clim=(-0.05,0.05),aspect='auto');plt.xlabel('Trace');plt.title('Madagascar');
+	plt.subplot(1,3,3);
+	plt.imshow(data1-data2,clim=(-0.05,0.05),aspect='auto');plt.xlabel('Trace');plt.title('Difference');
+	plt.show();
+	
 	'''
 	from .divne import smooth as smooth1
 	from .divne import triangle_init,first_index,smooth2
@@ -87,13 +111,13 @@ def smooth(din,rect=[1,1,1],diff=[0,0,0],repeat=1,adj=False,box=[0,0,0]):
 	return dout
 	
 	
-def smoothc(din,rect=[1,1,1],diff=[0,0,0],repeat=1,adj=True):
+def smoothc(din,rect=[1,1,1],diff=[0,0,0],repeat=1,adj=1):
 	'''
 	
 	'''
 	
 
-
+	
 
 
 
