@@ -56,7 +56,7 @@ from .sint import sint2d
 from .ricker import ricker
 from .bp import bandpass
 from .fk import fkdip
-from .plot import cseis
+from .plot import *
 from .pwsmooth import *
 from .pwspray2d import *
 
