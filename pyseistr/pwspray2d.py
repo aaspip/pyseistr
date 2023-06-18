@@ -1,7 +1,136 @@
 import numpy as np
+
+def pwspray_lop(din,par,adj,add):
+	'''
+	pwspray_lop: plane-wave smoothing operator
+	BY Yangkang Chen, Aug, 10, 2021
+	
+	INPUT
+	d: model/data
+	par: parameter (dip,ns,nt,nx,order,eps,nm,nd)
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	m: data/model
+	'''
+	from .operators import adjnull
+	
+	n1=par['nt']
+	n2=par['nx']
+	ns=par['ns']
+	ns2=2*ns+1;
+	p=par['dip']
+	eps=par['eps']
+	order=par['order']
+	nm=par['nm'];	 #int
+	nd=par['nd'];	 #int
+	
+	e=eps*eps;
+	nw=order;
+
+	if par['nm'] != n1*n2:
+		print('wrong size %d != %d*%d'%(nm,n1,n2))
+		
+	if par['nd'] != n1*n2*ns2:
+		print('wrong size %d != %d*%d*%d'%(nd,n1,n2,ns2))	
+
+	trace=np.zeros(n1);
+	
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+
+	m=m.flatten(order='F');
+	d=d.flatten(order='F');
+	[ u1,u ] = adjnull( adj,add,nm,nd,m,d );
+	
+# 	u1=m.flatten(order='F')
+	for i in range(0,n2):
+		if adj:
+			for i1 in range(0,n1):
+				trace[i1]=0;
+		
+			for iis in range(ns-1,-1,-1):
+				ip=i+iis+1;
+				if ip>=n2:
+					continue;
+				j=ip*ns2+ns+iis+1;
+				for i1 in range(0,n1):
+# 					print(trace.shape,u.shape,'nm',nm,'nd',nd,'ns2',ns2)
+					trace[i1]=trace[i1]+u[j*n1+i1];
+				[w,diag,offd,trace] = predict_step(e,nw,True,True,p[:,ip-1],trace);
+
+		
+			for i1 in range(0,n1):
+				u1[i*n1+i1]=u1[i*n1+i1]+trace[i1];
+				trace[i1]=0;
+				
+			for iis in range(ns-1,-1,-1):
+				ip=i-iis-1;
+				if ip<0:
+					continue;
+				j=ip*ns2+ns-iis-1;
+				for i1 in range(0,n1):
+					trace[i1]=trace[i1]+u[j*n1+i1];
+				[w,diag,offd,trace] = predict_step(e,nw,True,False,p[:,ip],trace);
+
+			for i1 in range(0,n1):
+				u1[i*n1+i1]=u1[i*n1+i1]+trace[i1];
+				trace[i1]=u[(i*ns2+ns)*n1+i1];
+				u1[i*n1+i1]=u1[i*n1+i1]+trace[i1];
+			
+		else:
+			for i1 in range(0,n1):
+				trace[i1]=u1[i*n1+i1];
+				u[(i*ns2+ns)*n1+i1] = u[(i*ns2+ns)*n1+i1] + trace[i1];
+	
+			#predict forward
+			#corresponding to the eq.24
+			for iis in range(0,ns):
+				ip=i-iis-1;
+				if ip<0:
+					break;
+				j=ip*ns2+ns-iis-1;
+				[w,diag,offd,trace] = predict_step(e,nw,False,False,p[:,ip],trace);
+				for i1 in range(0,n1):
+					u[j*n1+i1] = u[j*n1+i1] + trace[i1];
+	
+			for i1 in range(0,n1):
+				trace[i1]=u1[i*n1+i1];
+
+	
+			# predict backward
+			# 	#corresponding to the eq.25
+			for iis in range(0,ns):
+				ip=i+iis+1;
+				if ip>=n2:
+					break;
+				j=ip*ns2+ns+iis+1;
+				[w,diag,offd,trace] = predict_step(e,nw,False,True,p[:,ip-1],trace);
+				for i1 in range(0,n1):
+					u[j*n1+i1]= u[j*n1+i1]+trace[i1];
+	
+	if adj==1:
+		dout=u1;
+	else:
+		dout=u;
+		
+	return dout
+
 def pwspray2d(u1,dip,nr,order,eps):
 	'''
-	pwspray2d: 2D plane-wave spray operator
+	pwspray2d: 2D plane-wave spray operator (only forward)
+	This is the version Hang Wang initially published in Geophysics (MATseistr)
 	
 	INPUT
 	u1: noisy data  
@@ -46,7 +175,7 @@ def pwspray2d(u1,dip,nr,order,eps):
 			if ip<0:
 				break;
 			j=ip*ns2+ns-iis-1;
-			[w,diag,offd,trace] = predict_step(e,nw,0,p[:,ip],trace);
+			[w,diag,offd,trace] = predict_step(e,nw,False,0,p[:,ip],trace);
 			for i1 in range(0,n1):
 				u[j*n1+i1] = u[j*n1+i1] + trace[i1];
 	
@@ -61,19 +190,20 @@ def pwspray2d(u1,dip,nr,order,eps):
 			if ip>=n2:
 				break;
 			j=ip*ns2+ns+iis+1;
-			[w,diag,offd,trace] = predict_step(e,nw,1,p[:,ip-1],trace);
+			[w,diag,offd,trace] = predict_step(e,nw,False,1,p[:,ip-1],trace);
 			for i1 in range(0,n1):
 				u[j*n1+i1]= u[j*n1+i1]+trace[i1];
 
 	return u
 
-def predict_step(e,nw,forw,pp,trace1):
+def predict_step(e,nw,adj,forw,pp,trace1):
 	'''
 	predict_step: prediction step
 	
 	INPUT
 	e: regularization parameter (default, 0.01*0.01);
 	nw: accuracy order
+	adj: adjoint flag
 	forw: forward or backward
 	n1: trace length
 	pp: slope
@@ -101,12 +231,15 @@ def predict_step(e,nw,forw,pp,trace1):
 	w,diag,offd = pwd_define(forw,diag,offd,n1,nw,pp);
    
 
+	if adj == True:
+		trace1 = banded_solve(n1,nb,diag,offd,trace1);  
+		
 	t0=trace1[0];
 	t1=trace1[1];
 	t2=trace1[n1-2];
 	t3=trace1[n1-1];
 
-	trace = pwd_set(0,w,diag,offd,pp,trace1);
+	trace = pwd_set(adj,w,diag,offd,pp,trace1);
 
 
 	trace[0]=trace[0]+eps2*t0;
@@ -116,7 +249,8 @@ def predict_step(e,nw,forw,pp,trace1):
 	trace[n1-1]=trace[n1-1]+eps2*t3;
 
 
-	trace = banded_solve(n1,nb,diag,offd,trace);   
+	if adj == False:
+		trace = banded_solve(n1,nb,diag,offd,trace);   
 
 	return w,diag,offd,trace
 

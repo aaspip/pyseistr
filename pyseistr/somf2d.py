@@ -36,6 +36,14 @@ def somf2d(dn,dip,ns,order,eps,option=1):
 
 	#flattening
 	utmp=pwspray2d(dn,dip,ns,order,eps);
+	
+	## Or using a different implementation (operator-version)
+# 	from .pwspray2d import pwspray_lop
+# 	par={'nt':n1,'nx':n2,'dip':dip,'ns':ns,'eps':eps,'order':order,'nm':n1*n2,'nd':n1*n2*ns2}
+# 	utmp0=pwspray_lop(dn,par,False,False);
+# 	tmp=pwspray_lop(utmp0,par,True,False); #adjoint operation
+	print('error is',np.linalg.norm(utmp0-utmp))
+	
 	u=utmp.reshape(n1,ns2,n2,order='F')
 
 

@@ -149,6 +149,42 @@ def passfilter(p,nw):
 	return a,b
 
 
+
+def mask_lop(din,par,adj,add):
+
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+
+	nm=par['nm'];	 #int
+	nd=par['nd'];	 #int
+	mask=par['mask']
+
+	[ m,d ] = adjnull( adj,add,nm,nd,m,d );
+
+	for im in range(nm):
+		if mask[im]:
+			if adj:
+				m[im]=m[im]+d[im];
+			else:
+				d[im]=d[im]+m[im];
+	
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+		
+	return dout
+
 def adjnull( adj,add,nm,nd,m,d ):
 	'''
 	Claerbout-style adjoint zeroing Zeros out the output (unless add is true). 

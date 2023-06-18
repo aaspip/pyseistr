@@ -274,13 +274,13 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 		r=-dat;  
 
 	if ifhasp0:
-		x=op_S(p,par_S,0,0);
+		x=opS(p,par_S,0,0);
 		if opP  is not None:
 			d=opL(x,par_L,0,0);
 			par_P['d']=r;#initialize data
 			r=opP(d,par_P,0,1);
 		else:
-			par_P['d']=r;#initialize data
+			par_L['d']=r;#initialize data
 			r=opL(x,par_L,0,1);
 
 	else:

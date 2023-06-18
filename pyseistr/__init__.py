@@ -52,10 +52,13 @@ from .somf2d import somf2d
 from .somf3d import somf3d
 from .soint2d import soint2d #structure-oriented interpolation for 2D data
 from .soint3d import soint3d #structure-oriented interpolation for 3D data
+from .sint import sint2d
 from .ricker import ricker
 from .bp import bandpass
 from .fk import fkdip
 from .plot import cseis
+from .pwsmooth import *
+from .pwspray2d import *
 
 from .das import coh 
 from .das import cohc
@@ -73,6 +76,7 @@ from .somf2d import somf2dc
 from .somf3d import somf3dc
 from .soint2d import soint2dc
 from .soint3d import soint3dc
+from .sint import sint2dc
 from .bp import bandpassc
 
 from dipcfun import *

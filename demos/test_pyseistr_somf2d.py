@@ -46,7 +46,7 @@ r=2;
 eps=0.01;
 order=2;
 d1=ps.somean2dc(dn,dip,r,order,eps);
-d2=ps.somf2dc(dn,dip,r,order,eps,1);
+d2=ps.somf2d(dn,dip,r,order,eps,1);
 
 ## plot results
 fig = plt.figure(figsize=(10, 8))

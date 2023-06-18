@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <math.h>
+#include <float.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -12,9 +13,9 @@
 #define PS_PI (3.14159265358979323846264338328)
 
 
-#define ps_MAX(a,b) ((a) < (b) ? (b) : (a))
-#define ps_MIN(a,b) ((a) < (b) ? (a) : (b))
-#define ps_ABS(a)   ((a) >= 0  ? (a) : (-(a)))
+#define PS_MAX(a,b) ((a) < (b) ? (b) : (a))
+#define PS_MIN(a,b) ((a) < (b) ? (a) : (b))
+#define PS_ABS(a)   ((a) >= 0  ? (a) : (-(a)))
 
 /*sf functions*/
 typedef void (*operator)(bool,bool,int,int,float*,float*);
@@ -132,7 +133,7 @@ bool **ps_boolalloc2 (size_t n1 /* fast dimension */,
     return ptr;
 }
 
-
+/*mask.c*/
 static const bool *mmask;
 
 void ps_mask_init(const bool *m_in)
@@ -145,8 +146,6 @@ void ps_mask_lop(bool adj, bool add, int nx, int ny, float *x, float *y)
 /*< linear operator >*/
 {
     int ix;
-
-//     if (nx != ny) ps_error("%s: wrong size: %d != %d",nx,ny);
 
     ps_adjnull (adj,add,nx,ny,x,y);
 
@@ -840,6 +839,182 @@ void ps_solver (ps_operator oper   /* linear operator */,
     }
 }
 
+/*from conjugate*/
+static int np, nx, nr, nd;
+static float *r, *sp, *sx, *sr, *gp, *gx, *gr;
+static float eps, tol;
+static bool verb, hasp0;
+
+void ps_conjgrad_init(int np1     /* preconditioned size */, 
+		      int nx1     /* model size */, 
+		      int nd1     /* data size */, 
+		      int nr1     /* residual size */, 
+		      float eps1  /* scaling */,
+		      float tol1  /* tolerance */, 
+		      bool verb1  /* verbosity flag */, 
+		      bool hasp01 /* if has initial model */) 
+/*< solver constructor >*/
+{
+    np = np1; 
+    nx = nx1;
+    nr = nr1;
+    nd = nd1;
+    eps = eps1*eps1;
+    tol = tol1;
+    verb = verb1;
+    hasp0 = hasp01;
+
+    r = ps_floatalloc(nr);  
+    sp = ps_floatalloc(np);
+    gp = ps_floatalloc(np);
+    sx = ps_floatalloc(nx);
+    gx = ps_floatalloc(nx);
+    sr = ps_floatalloc(nr);
+    gr = ps_floatalloc(nr);
+}
+
+void ps_conjgrad_close(void) 
+/*< Free allocated space >*/
+{
+    free (r);
+    free (sp);
+    free (gp);
+    free (sx);
+    free (gx);
+    free (sr);
+    free (gr);
+}
+
+void ps_conjgrad(operator prec  /* data preconditioning */, 
+		 operator oper  /* linear operator */, 
+		 operator shape /* shaping operator */, 
+		 float* p          /* preconditioned model */, 
+		 float* x          /* estimated model */, 
+		 float* dat        /* data */, 
+		 int niter         /* number of iterations */) 
+/*< Conjugate gradient solver with shaping >*/
+{
+    double gn, gnp, alpha, beta, g0, dg, r0;
+    float *d=NULL;
+    int i, iter;
+    
+    if (NULL != prec) {
+	d = ps_floatalloc(nd); 
+	for (i=0; i < nd; i++) {
+	    d[i] = - dat[i];
+	}
+	prec(false,false,nd,nr,d,r);
+    } else {
+	for (i=0; i < nr; i++) {
+	    r[i] = - dat[i];
+	}
+    }
+    
+    if (hasp0) { /* initial p */
+	shape(false,false,np,nx,p,x);
+	if (NULL != prec) {
+	    oper(false,false,nx,nd,x,d);
+	    prec(false,true,nd,nr,d,r);
+	} else {
+	    oper(false,true,nx,nr,x,r);
+	}
+    } else {
+	for (i=0; i < np; i++) {
+	    p[i] = 0.;
+	}
+	for (i=0; i < nx; i++) {
+	    x[i] = 0.;
+	}
+    } 
+    
+    dg = g0 = gnp = 0.;
+    r0 = ps_cblas_dsdot(nr,r,1,r,1);
+    if (r0 == 0.) {
+	if (verb) printf("zero residual: r0=%g \n",r0);
+	return;
+    }
+
+    for (iter=0; iter < niter; iter++) {
+	for (i=0; i < np; i++) {
+	    gp[i] = eps*p[i];
+	}
+	for (i=0; i < nx; i++) {
+	    gx[i] = -eps*x[i];
+	}
+
+	if (NULL != prec) {
+	    prec(true,false,nd,nr,d,r);
+	    oper(true,true,nx,nd,gx,d);
+	} else {
+	    oper(true,true,nx,nr,gx,r);
+	}
+
+	shape(true,true,np,nx,gp,gx);
+	shape(false,false,np,nx,gp,gx);
+
+	if (NULL != prec) {
+	    oper(false,false,nx,nd,gx,d);
+	    prec(false,false,nd,nr,d,gr);
+	} else {
+	    oper(false,false,nx,nr,gx,gr);
+	}
+
+	gn = ps_cblas_dsdot(np,gp,1,gp,1);
+
+	if (iter==0) {
+	    g0 = gn;
+
+	    for (i=0; i < np; i++) {
+		sp[i] = gp[i];
+	    }
+	    for (i=0; i < nx; i++) {
+		sx[i] = gx[i];
+	    }
+	    for (i=0; i < nr; i++) {
+		sr[i] = gr[i];
+	    }
+	} else {
+	    alpha = gn / gnp;
+	    dg = gn / g0;
+
+	    if (alpha < tol || dg < tol) {
+		if (verb) 
+		    printf(
+			"convergence in %d iterations, alpha=%g, gd=%g \n",
+			iter,alpha,dg);
+		break;
+	    }
+
+	    ps_cblas_saxpy(np,alpha,sp,1,gp,1);
+	    ps_cblas_sswap(np,sp,1,gp,1);
+
+	    ps_cblas_saxpy(nx,alpha,sx,1,gx,1);
+	    ps_cblas_sswap(nx,sx,1,gx,1);
+
+	    ps_cblas_saxpy(nr,alpha,sr,1,gr,1);
+	    ps_cblas_sswap(nr,sr,1,gr,1);
+	}
+
+	beta = ps_cblas_dsdot(nr,sr,1,sr,1) + eps*(ps_cblas_dsdot(np,sp,1,sp,1) - ps_cblas_dsdot(nx,sx,1,sx,1));
+	
+	if (verb) printf("iteration %d res: %f grad: %f\n",
+			     iter,ps_cblas_snrm2(nr,r,1)/r0,dg);
+
+	alpha = - gn / beta;
+
+	ps_cblas_saxpy(np,alpha,sp,1,p,1);
+	ps_cblas_saxpy(nx,alpha,sx,1,x,1);
+	ps_cblas_saxpy(nr,alpha,sr,1,r,1);
+
+	gnp = gn;
+    }
+
+    if (NULL != prec) free (d);
+
+}
+
+
+
 /*from pwd.c*/
 #ifndef _pwd_h
 
@@ -1023,14 +1198,14 @@ void ps_banded_define (ps_bands slv,
     
     for (k = 0; k < slv->n; k++) {
 	t = diag[k];
-	m1 = ps_MIN(k,slv->band);
+	m1 = PS_MIN(k,slv->band);
 	for (m = 0; m < m1; m++)
 	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
 	slv->d[k] = t;
-	n1 = ps_MIN(slv->n-k-1,slv->band);
+	n1 = PS_MIN(slv->n-k-1,slv->band);
 	for (n = 0; n < n1; n++) {
 	    t = offd[n][k];
-	    m1 = ps_MIN(k,slv->band-n-1);
+	    m1 = PS_MIN(k,slv->band-n-1);
 	    for (m = 0; m < m1; m++) {
 		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
 	    }
@@ -1050,14 +1225,14 @@ void ps_banded_const_define (ps_bands slv,
     
     for (k = 0; k < slv->n; k++) {   
 	t = diag;
-	m1 = ps_MIN(k,slv->band);
+	m1 = PS_MIN(k,slv->band);
 	for (m = 0; m < m1; m++)
 	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
 	slv->d[k] = t;
-	n1 = ps_MIN(slv->n-k-1,slv->band);
+	n1 = PS_MIN(slv->n-k-1,slv->band);
 	for (n = 0; n < n1; n++) {
 	    t = offd[n];
-	    m1 = ps_MIN(k,slv->band-n-1);
+	    m1 = PS_MIN(k,slv->band-n-1);
 	    for (m = 0; m < m1; m++) {
 		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
 	    }
@@ -1080,14 +1255,14 @@ void ps_banded_const_define_eps (ps_bands slv,
     for (k = 0; k < slv->n; k++) {   
 	t = diag;
 	if (k < nb || slv->n-k-1 < nb) t += eps;
-	m1 = ps_MIN(k,slv->band);
+	m1 = PS_MIN(k,slv->band);
 	for (m = 0; m < m1; m++)
 	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
 	slv->d[k] = t;
-	n1 = ps_MIN(slv->n-k-1,slv->band);
+	n1 = PS_MIN(slv->n-k-1,slv->band);
 	for (n = 0; n < n1; n++) {
 	    t = offd[n];
-	    m1 = ps_MIN(k,slv->band-n-1);
+	    m1 = PS_MIN(k,slv->band-n-1);
 	    for (m = 0; m < m1; m++) {
 		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
 	    }
@@ -1147,14 +1322,14 @@ void ps_banded_solve (const ps_bands slv, float* b)
 
     for (k = 1; k < slv->n; k++) {
 	t = b[k];
-	m1 = ps_MIN(k,slv->band);
+	m1 = PS_MIN(k,slv->band);
 	for (m = 0; m < m1; m++)
 	    t -= (slv->o[m][k-m-1]) * b[k-m-1];
 	b[k] = t;
     }
     for (k = slv->n-1; k >= 0; k--) {
 	t = b[k]/slv->d[k];
-	m1 = ps_MIN(slv->n -k-1,slv->band);
+	m1 = PS_MIN(slv->n -k-1,slv->band);
 	for (m = 0; m < m1; m++)
 	    t -= slv->o[m][k] * b[k+m+1];
 	b[k] = t;
@@ -1178,7 +1353,7 @@ void ps_banded_close (ps_bands slv)
 /*from predict.c*/
 static int n1, n2, nb, k2;
 static ps_bands slv;
-static float *diag, **offd, eps, eps2, **dip, *tt;
+static float *diag, **offd, eps0, eps2, **dip, *tt;
 static pwd w1, w2;
 
 static void stepper(bool adj /* adjoint flag */,
@@ -1195,7 +1370,7 @@ void predict_init (int nx, int ny /* data size */,
     n2 = ny;
     nb = 2*nw;
 
-    eps = e;
+    eps0 = e;
     eps2 = e;
 
     slv = ps_banded_init (n1, nb);
@@ -1231,17 +1406,17 @@ static void regularization(void)
     int i1, ib;
 
     for (i1=0; i1 < n1; i1++) {
-	diag[i1] = 6.*eps;
-    	offd[0][i1] = -4.*eps;
-    	offd[1][i1] = eps;
+	diag[i1] = 6.*eps0;
+    	offd[0][i1] = -4.*eps0;
+    	offd[1][i1] = eps0;
 	for (ib=2; ib < nb; ib++) {
 	    offd[ib][i1] = 0.0;
 	}
     }
 
-    diag[0] = diag[n1-1] = eps2+eps;
-    diag[1] = diag[n1-2] = eps2+5.*eps;
-    offd[0][0] = offd[0][n1-2] = -2.*eps;
+    diag[0] = diag[n1-1] = eps2+eps0;
+    diag[1] = diag[n1-2] = eps2+5.*eps0;
+    offd[0][0] = offd[0][n1-2] = -2.*eps0;
 }
 
 void predict_step(bool adj            /* adjoint flag */,
@@ -1857,6 +2032,230 @@ void ps_solver_prec (ps_operator oper   /* linear operator */,
 
 }
 
+/*pwspray.c*/
+static int n1, n2, ns, ns2;
+static float *trace, **pspr;
+int pwspray_init(int nr      /* spray radius */, 
+		 int nt      /* trace length */, 
+		 int n       /* number of traces */,
+		 int order   /* PWD order */,
+		 float eps   /* regularization */)		 
+/*< initialize >*/
+{
+    n1=nt;
+    n2=n;
+
+    ns=nr;
+    ns2=2*ns+1;
+
+    predict_init (n1, n2, eps*eps, order, 1, false);
+    trace = ps_floatalloc(n1);
+    return ns2;
+}
+
+void pwspray_set(float **dip /* local slope */)
+/*< set local slope >*/
+{
+    pspr = dip;
+}
+
+
+void pwspray_close(void)
+/*< free allocated storage >*/
+{
+    predict_close();
+    free(trace);
+}
+
+void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
+/*< linear operator >*/
+{
+    int i, is, ip, j, i1;
+
+//     if (n  != n1*n2) sf_error("%s: wrong size %d != %d*%d",__FILE__,n, n1,n2);
+//     if (nu != n*ns2) sf_error("%s: wrong size %d != %d*%d",__FILE__,nu,n,ns2);
+
+    ps_adjnull(adj,add,n,nu,u1,u);
+
+    for (i=0; i < n2; i++) { 	
+	if (adj) {
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = 0.0f;
+	    }
+
+	    /* predict forward */
+	    for (is=ns-1; is >= 0; is--) {
+		ip = i+is+1;
+		if (ip >= n2) continue;
+		j = ip*ns2+ns+is+1;
+		for (i1=0; i1 < n1; i1++) {
+		    trace[i1] += u[j*n1+i1];
+		}
+		predict_step(true,true,trace,pspr[ip-1]);
+	    }
+
+	    for (i1=0; i1 < n1; i1++) {
+		u1[i*n1+i1] += trace[i1];
+		trace[i1] = 0.0f;
+	    }
+
+	    /* predict backward */
+	    for (is=ns-1; is >= 0; is--) {
+		ip = i-is-1;
+		if (ip < 0) continue;
+		j = ip*ns2+ns-is-1;
+		for (i1=0; i1 < n1; i1++) {
+		    trace[i1] += u[j*n1+i1];
+		}
+		predict_step(true,false,trace,pspr[ip]);
+	    }
+	    
+	    for (i1=0; i1 < n1; i1++) {
+		u1[i*n1+i1] += trace[i1];
+		trace[i1] = u[(i*ns2+ns)*n1+i1];
+		u1[i*n1+i1] += trace[i1];
+	    }
+	    
+	} else {
+
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = u1[i*n1+i1];
+		u[(i*ns2+ns)*n1+i1] += trace[i1];
+	    }
+
+            /* predict forward */
+	    for (is=0; is < ns; is++) {
+		ip = i-is-1;
+		if (ip < 0) break;
+		j = ip*ns2+ns-is-1;
+		predict_step(false,false,trace,pspr[ip]);
+		for (i1=0; i1 < n1; i1++) {
+		    u[j*n1+i1] += trace[i1];
+		}
+	    }
+
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = u1[i*n1+i1];
+	    }
+	    
+	    /* predict backward */
+	    for (is=0; is < ns; is++) {
+		ip = i+is+1;
+		if (ip >= n2) break;
+		j = ip*ns2+ns+is+1;
+		predict_step(false,true,trace,pspr[ip-1]);
+		for (i1=0; i1 < n1; i1++) {
+		    u[j*n1+i1] += trace[i1];
+		}
+	    }
+	}
+    }
+}
+
+// static int n1, n2, ns2, n12;
+static int n12;
+static float ***u, *w, **ww1, *t;
+static float **p1, **p2, *smooth1, *smooth2, *smooth3;
+
+void pwsmooth_init(int nr      /* spray radius */,
+		   int m1      /* trace length */,
+		   int m2      /* number of traces */,
+		   int order   /* PWD order */,
+		   float eps   /* regularization */)
+/*< initialize >*/
+{
+    int is;
+
+	ns=nr;
+    n1 = m1;
+    n2 = m2;
+    n12 = n1*n2;
+
+    ns2 = pwspray_init(nr,n1,n2,order,eps);
+
+    u = ps_floatalloc3(n1,ns2,n2);
+    w = ps_floatalloc(ns2);
+    ww1 = ps_floatalloc2(n1,n2);
+
+    for (is=0; is < ns2; is++) {
+	w[is]=ns+1-PS_ABS(is-ns);
+    }
+
+    /* Normalization */
+    t = ps_floatalloc(n12);
+
+}
+
+void pwsmooth_lop(bool adj, bool add, 
+		  int nin, int nout, float* trace, float *smooth)
+/*< linear operator >*/
+{
+    int i1, i2, is;
+    float ws;
+    
+    ps_adjnull(adj,add,nin,nout,trace,smooth);
+
+    if (adj) {
+	for (i2=0; i2 < n2; i2++) {
+	    for (i1=0; i1 < n1; i1++) {
+		ws=ww1[i2][i1]; 
+		for (is=0; is < ns2; is++) {
+		    u[i2][is][i1] = smooth[i2*n1+i1]*w[is]*ws;
+		}
+	    }
+	}
+
+	pwspray_lop(true,  true,  nin, nin*ns2, trace, u[0][0]);
+    } else {
+	pwspray_lop(false, false, nin, nin*ns2, trace, u[0][0]);
+
+	for (i2=0; i2 < n2; i2++) {
+	    for (i1=0; i1 < n1; i1++) {
+		ws=ww1[i2][i1]; 
+		for (is=0; is < ns2; is++) {
+		    smooth[i2*n1+i1] += u[i2][is][i1]*w[is]*ws;
+		}
+	    }
+	}
+    }
+}
+
+
+void pwsmooth_set(float **dip /* local slope */)
+/*< set local slope >*/
+{
+    int i1;
+    
+    pwspray_set(dip);
+
+    for (i1=0; i1 < n12; i1++) {
+	ww1[0][i1]=1.0f;
+    }
+
+    pwsmooth_lop(false,false,n12,n12,ww1[0],t);
+
+    for (i1=0; i1 < n12; i1++) {
+	if (0.0f != t[i1]) {
+	    ww1[0][i1]=1.0/t[i1];
+	} else {
+	    ww1[0][i1]=0.0f;
+	}
+    }
+}
+
+void pwsmooth_close(void)
+/*< free allocated storage >*/
+{
+    free(**u);
+    free(*u);
+    free(u);
+    free(w);
+    free(*ww1);
+    free(ww1);
+    free(t);
+    pwspray_close();
+}
+
 
 static PyObject *csoint2d(PyObject *self, PyObject *args){
     
@@ -1951,48 +2350,6 @@ static PyObject *csoint2d(PyObject *self, PyObject *args){
     
     /*NOTE: if twoplane==0, pp = qq eactly*/
 
-//     allpass3_init(allpass_init(nw, nj1, n1,n2,n3, drift, pp),
-// 		  allpass_init(nw, nj2, n1,n2,n3, drift, qq));
-	
-//     if (!ps_getint("niter",&niter)) niter=100;
-//     /* number of iterations */
-// 
-//     if (!ps_getint("order",&nw)) nw=1;
-//     /* accuracy order */
-//     if (!ps_getint("nj1",&nj1)) nj1=1;
-//     /* antialiasing for first dip */
-//     if (!ps_getint("nj2",&nj2)) nj2=1;
-//     /* antialiasing for second dip */
-// 
-//     if (!ps_getbool("drift",&drift)) drift=false;
-//     /* if shift filter */
-// 
-//     if (!ps_getbool("prec",&prec)) prec = false;
-//     /* if y, apply preconditioning */
-// 
-//     if (!ps_getbool("verb",&verb)) verb = false;
-//     /* verbosity flag */
-
-//     np = ps_leftsize(dip,2);
-
-//     pp = ps_floatalloc2(n1,n2);
-
-//     if (np > n3) {
-// 	qq = ps_floatalloc2(n1,n2);
-//     } else {
-// 	qq = NULL;
-//     }
-
-//     mm = ps_floatalloc(n12);
-//     dd = ps_floatalloc(n12);
-//     known = ps_boolalloc(n12);
-    
-//     if (NULL != ps_getstring ("mask")) {
-// 	mask = ps_input("mask");
-//     } else {
-// 	mask = NULL;
-//     }
-
     if (twoplane) {
 	if (prec) {
 	    predict2_init(n1,n2,0.0001,nw,pp,qq);
@@ -2022,35 +2379,9 @@ static PyObject *csoint2d(PyObject *self, PyObject *args){
 		dd[i] = 0.;
 	    }
 	}
-	
-// 	for (i=0; i < 2*n123; i++) {
-// 	    dd[i] = a*ps_randn_one_bm();
-// 	}
-	
-// 	if (NULL != mask) {
-// 	    ps_floatread(dd,n12,mask);
-// 
-// 	    for (i=0; i < n12; i++) {
-// 		known[i] = (bool) (dd[i] != 0.);
-// 		dd[i] = 0.;
-// 	    }
-// 	} else {
-// 	    for (i=0; i < n12; i++) {
-// 		known[i] = (bool) (mm[i] != 0.);
-// 		dd[i] = 0.;
-// 	    }
-// 	}	
-	
-// 	ps_solver(allpass3_lop, ps_cgstep, n123, 2*n123, mm, dd, niter,
-// 		  "known", known, "x0", mm, "verb", verb, "end");
-// 	ps_cgstep_close();
-
-// 	n12=n123;
-// 	ps_floatread(pp[0],n12,dip);
 
 	
 	if (NULL != qq) {
-// 	    ps_floatread(qq[0],n12,dip);
 
 	    if (prec) {
 		ps_solver_prec(ps_mask_lop, ps_cgstep, predict2_lop, 
@@ -2087,6 +2418,125 @@ static PyObject *csoint2d(PyObject *self, PyObject *args){
 	
 }
 
+static PyObject *csint2d(PyObject *self, PyObject *args){
+    
+	/**initialize data input**/
+    int nd, nd2;
+    int i, niter, nw, n1, n2, n12, i4, n4;
+    float *mm, *dd, *xx, **pp, **qq, a, lam, eps;
+    bool *known;
+    int verb, drift, hasmask, twoplane, prec;
+    
+    PyObject *f1=NULL;
+    PyObject *f2=NULL;
+    PyObject *f3=NULL;
+    PyObject *arrf1=NULL;
+    PyObject *arrf2=NULL;
+    PyObject *arrf3=NULL;
+    
+	PyArg_ParseTuple(args, "OOOiiiiiif", &f1, &f2, &f3, &n1, &n2, &niter, &ns, &nw, &verb, &eps);
+	/*f1:din*/
+	/*f2:dip*/
+	/*f3:mask*/
+	/*pp: slope*/
+	/*qq: second slope*/
+	/*n1/n2: first/second dimension*/
+	/*nw: accuracy order*/
+	/*niter: number of iterations*/
+	/*verb: verbosity flag*/
+	/*eps: */
+    
+    printf("n1=%d,n2=%d,nw=%d,niter=%d,verb=%d,eps=%g\n",n1,n2,nw,niter,verb,eps);
+    
+	n12=n1*n2;
+	
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
+	
+    nd2=PyArray_NDIM(arrf1);
+    npy_intp *sp=PyArray_SHAPE(arrf1);
+	
+    if (*sp != n12)
+    {
+    	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n12);
+    	return NULL;
+    }   
+    
+	qq=NULL;
+	
+    pp = ps_floatalloc2(n1,n2);
+    mm = ps_floatalloc(n12);
+    xx = ps_floatalloc(n12);
+    dd = ps_floatalloc(n12);
+    known = ps_boolalloc(n12);
+
+    /*reading data*/
+    for (i=0; i<n12; i++)
+    {
+        mm[i]=*((float*)PyArray_GETPTR1(arrf1,i));
+    }
+
+    for (i=0; i<n12; i++)
+    {
+        pp[0][i]=*((float*)PyArray_GETPTR1(arrf2,i));
+    }
+    
+    for (i=0; i<n12; i++)
+    {
+        dd[i]=*((float*)PyArray_GETPTR1(arrf3,i)); /*mask*/
+    }
+
+    ps_mask_init(known);
+
+    if (NULL != qq) {
+// 	pwsmooth2_init(ns, n1, n2, order, eps);
+    } else {
+	pwsmooth_init(ns, n1, n2, nw, eps);
+    }
+    
+	for (i=0; i < n12; i++) {
+	    xx[i] = mm[i];
+	}
+
+	/* figure out scaling and make known data mask */
+	lam = 0.;
+	for (i=0; i < n12; i++) {
+	    if (dd[i] != 0.) {
+		known[i] = true;
+		lam += 1.;
+	    } else {
+		known[i] = false;
+	    }
+	}
+	lam = sqrtf(lam/n12);
+	
+	ps_conjgrad_init(n12, n12, n12, n12, lam, 10*FLT_EPSILON, true, true); 
+
+	if (NULL != qq) {
+// 	    ps_floatread(qq[0],n12,dip);
+// 	    pwsmooth2_set(pp, qq);
+// 	    ps_conjgrad(NULL,ps_mask_lop,pwsmooth2_lop,xx,mm,mm,niter);
+	} else {
+	    pwsmooth_set(pp);
+	    ps_conjgrad(NULL,ps_mask_lop,pwsmooth_lop,xx,mm,mm,niter);
+	}
+	ps_conjgrad_close();
+    
+    /*Below is the output part*/
+    PyArrayObject *vecout;
+	npy_intp dims[2];
+	dims[0]=n12;dims[1]=1;
+	/* Parse tuples separately since args will differ between C fcns */
+	/* Make a new double vector of same dimension */
+	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
+	for(i=0;i<dims[0];i++)
+		(*((float*)PyArray_GETPTR1(vecout,i))) = mm[i];
+
+	return PyArray_Return(vecout);
+	
+}
+
 // documentation for each functions.
 static char soint2dcfun_document[] = "C-implementation of 2D structure-oriented interpolation";
 
@@ -2094,6 +2544,7 @@ static char soint2dcfun_document[] = "C-implementation of 2D structure-oriented 
 // function_name, function, METH_VARARGS flag, function documents
 static PyMethodDef functions[] = {
   {"csoint2d", csoint2d, METH_VARARGS, soint2dcfun_document},
+  {"csint2d", csint2d, METH_VARARGS, soint2dcfun_document},
   {NULL, NULL, 0, NULL}
 };
 

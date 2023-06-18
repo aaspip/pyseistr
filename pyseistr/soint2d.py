@@ -2,7 +2,7 @@ from soint2dcfun import *
 
 def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	'''
-	soint2d: 2D structure-oriented interpolation
+	soint2d: 2D structure-oriented interpolation (unfinished)
 	
 	by Yangkang Chen, 2022
 	
