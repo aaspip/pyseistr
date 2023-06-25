@@ -46,23 +46,25 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,figname=None,showf=True,**kwargs
     'levels': np.linspace(d3d.min(), d3d.max(), 100),
     'cmap':cseis()
 	}
+	kw.update(kwargs)
 	
 	fig = plt.figure(figsize=(8, 8))
 	
-	
 	ax = fig.add_subplot(111, aspect='auto',projection='3d')
 	plt.jet()
+
 	# Plot contour surfaces
 	_ = ax.contourf(
-	X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]], #x,y,z
+	X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
 	zdir='z', offset=0, alpha=1, **kw
 	)
+
 	_ = ax.contourf(
-	X[0, :, :], d3d[frames[2], :, :], Z[0, :, :],
+	X[0, :, :], d3d[:, frames[2], :], Z[0, :, :],
 	zdir='y', offset=0, alpha=1, **kw
 	)
 	C = ax.contourf(
-	d3d[:, frames[1], :], Y[:, -1, :], Z[:, -1, :],
+	d3d[frames[1], :, :], Y[:, -1, :], Z[:, -1, :],
 	zdir='x', offset=X.max(), alpha=1.0, **kw
 	)
 

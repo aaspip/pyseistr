@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <math.h>
+#include <float.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -100,6 +101,24 @@ float ***ps_floatalloc3 (size_t n1 /* fast dimension */,
     }
     return ptr;
 }
+
+float ****ps_floatalloc4 (size_t n1 /* fast dimension */, 
+				    size_t n2 /* slower dimension */, 
+				    size_t n3 /* slower dimension */, 
+				    size_t n4 /* slowest dimension */)
+/*< float 4-D allocation, out[0][0][0] points to a contiguous array >*/ 
+{
+    size_t i4;
+    float ****ptr;
+    
+    ptr = (float****) ps_alloc (n4,sizeof(float***));
+    ptr[0] = ps_floatalloc3 (n1,n2,n3*n4);
+    for (i4=1; i4 < n4; i4++) {
+	ptr[i4] = ptr[0]+i4*n3;
+    }
+    return ptr;
+}
+
 
 int *ps_intalloc (size_t n /* number of elements */)
 	  /*< int allocation >*/  
@@ -608,7 +627,7 @@ void allpass3_lop (bool adj, bool add, int n1, int n2, float* xx, float* yy)
 {
     int i, ix, iy, iz, iw, is, nx, ny, nz, nw, nj, id;
 
-//     if (n2 != 2*n1) sf_error("%s: size mismatch: %d != 2*%d",__FILE__,n2,n1);
+//     if (n2 != 2*n1) ps_error("%s: size mismatch: %d != 2*%d",__FILE__,n2,n1);
 
     ps_adjnull(adj, add, n1, n2, xx, yy);
 
@@ -618,7 +637,7 @@ void allpass3_lop (bool adj, bool add, int n1, int n2, float* xx, float* yy)
     nw = ap1->nw;
     nj = ap1->nj;
 
-//     if (nx*ny*nz != n1) sf_error("%s: size mismatch",__FILE__);
+//     if (nx*ny*nz != n1) ps_error("%s: size mismatch",__FILE__);
     
     for (iz=0; iz < nz; iz++) {
 	for (iy=0; iy < ny-1; iy++) {
@@ -666,7 +685,7 @@ void allpass3_lop (bool adj, bool add, int n1, int n2, float* xx, float* yy)
     nw = ap2->nw;
     nj = ap2->nj;
 
-//     if (nx*ny*nz != n1) sf_error("%s: size mismatch",__FILE__);
+//     if (nx*ny*nz != n1) ps_error("%s: size mismatch",__FILE__);
     
     for (iz=0; iz < nz-1; iz++) {
 	for (iy=0; iy < ny; iy++) {
@@ -1154,6 +1173,1132 @@ void ps_solver (ps_operator oper   /* linear operator */,
     }
 }
 
+/*from conjugate*/
+static int np, nx, nr, nd;
+static float *r, *sp, *sx, *sr, *gp, *gx, *gr;
+static float eps, tol;
+static bool verb, hasp0;
+
+void ps_conjgrad_init(int np1     /* preconditioned size */, 
+		      int nx1     /* model size */, 
+		      int nd1     /* data size */, 
+		      int nr1     /* residual size */, 
+		      float eps1  /* scaling */,
+		      float tol1  /* tolerance */, 
+		      bool verb1  /* verbosity flag */, 
+		      bool hasp01 /* if has initial model */) 
+/*< solver constructor >*/
+{
+    np = np1; 
+    nx = nx1;
+    nr = nr1;
+    nd = nd1;
+    eps = eps1*eps1;
+    tol = tol1;
+    verb = verb1;
+    hasp0 = hasp01;
+
+    r = ps_floatalloc(nr);  
+    sp = ps_floatalloc(np);
+    gp = ps_floatalloc(np);
+    sx = ps_floatalloc(nx);
+    gx = ps_floatalloc(nx);
+    sr = ps_floatalloc(nr);
+    gr = ps_floatalloc(nr);
+}
+
+void ps_conjgrad_close(void) 
+/*< Free allocated space >*/
+{
+    free (r);
+    free (sp);
+    free (gp);
+    free (sx);
+    free (gx);
+    free (sr);
+    free (gr);
+}
+
+void ps_conjgrad(operator prec  /* data preconditioning */, 
+		 operator oper  /* linear operator */, 
+		 operator shape /* shaping operator */, 
+		 float* p          /* preconditioned model */, 
+		 float* x          /* estimated model */, 
+		 float* dat        /* data */, 
+		 int niter         /* number of iterations */) 
+/*< Conjugate gradient solver with shaping >*/
+{
+    double gn, gnp, alpha, beta, g0, dg, r0;
+    float *d=NULL;
+    int i, iter;
+    
+    if (NULL != prec) {
+	d = ps_floatalloc(nd); 
+	for (i=0; i < nd; i++) {
+	    d[i] = - dat[i];
+	}
+	prec(false,false,nd,nr,d,r);
+    } else {
+	for (i=0; i < nr; i++) {
+	    r[i] = - dat[i];
+	}
+    }
+    
+    if (hasp0) { /* initial p */
+	shape(false,false,np,nx,p,x);
+	if (NULL != prec) {
+	    oper(false,false,nx,nd,x,d);
+	    prec(false,true,nd,nr,d,r);
+	} else {
+	    oper(false,true,nx,nr,x,r);
+	}
+    } else {
+	for (i=0; i < np; i++) {
+	    p[i] = 0.;
+	}
+	for (i=0; i < nx; i++) {
+	    x[i] = 0.;
+	}
+    } 
+    
+    dg = g0 = gnp = 0.;
+    r0 = ps_cblas_dsdot(nr,r,1,r,1);
+    if (r0 == 0.) {
+	if (verb) printf("zero residual: r0=%g \n",r0);
+	return;
+    }
+
+    for (iter=0; iter < niter; iter++) {
+	for (i=0; i < np; i++) {
+	    gp[i] = eps*p[i];
+	}
+	for (i=0; i < nx; i++) {
+	    gx[i] = -eps*x[i];
+	}
+
+	if (NULL != prec) {
+	    prec(true,false,nd,nr,d,r);
+	    oper(true,true,nx,nd,gx,d);
+	} else {
+	    oper(true,true,nx,nr,gx,r);
+	}
+
+	shape(true,true,np,nx,gp,gx);
+	shape(false,false,np,nx,gp,gx);
+
+	if (NULL != prec) {
+	    oper(false,false,nx,nd,gx,d);
+	    prec(false,false,nd,nr,d,gr);
+	} else {
+	    oper(false,false,nx,nr,gx,gr);
+	}
+
+	gn = ps_cblas_dsdot(np,gp,1,gp,1);
+
+	if (iter==0) {
+	    g0 = gn;
+
+	    for (i=0; i < np; i++) {
+		sp[i] = gp[i];
+	    }
+	    for (i=0; i < nx; i++) {
+		sx[i] = gx[i];
+	    }
+	    for (i=0; i < nr; i++) {
+		sr[i] = gr[i];
+	    }
+	} else {
+	    alpha = gn / gnp;
+	    dg = gn / g0;
+
+	    if (alpha < tol || dg < tol) {
+		if (verb) 
+		    printf(
+			"convergence in %d iterations, alpha=%g, gd=%g \n",
+			iter,alpha,dg);
+		break;
+	    }
+
+	    ps_cblas_saxpy(np,alpha,sp,1,gp,1);
+	    ps_cblas_sswap(np,sp,1,gp,1);
+
+	    ps_cblas_saxpy(nx,alpha,sx,1,gx,1);
+	    ps_cblas_sswap(nx,sx,1,gx,1);
+
+	    ps_cblas_saxpy(nr,alpha,sr,1,gr,1);
+	    ps_cblas_sswap(nr,sr,1,gr,1);
+	}
+
+	beta = ps_cblas_dsdot(nr,sr,1,sr,1) + eps*(ps_cblas_dsdot(np,sp,1,sp,1) - ps_cblas_dsdot(nx,sx,1,sx,1));
+	
+	if (verb) printf("iteration %d res: %f grad: %f\n",
+			     iter,ps_cblas_snrm2(nr,r,1)/r0,dg);
+
+	alpha = - gn / beta;
+
+	ps_cblas_saxpy(np,alpha,sp,1,p,1);
+	ps_cblas_saxpy(nx,alpha,sx,1,x,1);
+	ps_cblas_saxpy(nr,alpha,sr,1,r,1);
+
+	gnp = gn;
+    }
+
+    if (NULL != prec) free (d);
+
+}
+
+/*mask.c*/
+static const bool *mmask;
+
+void ps_mask_init(const bool *m_in)
+/*< initialize with mask >*/
+{
+    mmask = m_in;
+}
+
+void ps_mask_lop(bool adj, bool add, int nx, int ny, float *x, float *y)
+/*< linear operator >*/
+{
+    int ix;
+
+    ps_adjnull (adj,add,nx,ny,x,y);
+
+    for (ix=0; ix < nx; ix++) {
+	if (mmask[ix]) {
+	    if (adj) x[ix] += y[ix];
+	    else     y[ix] += x[ix];
+	}
+    }
+}
+
+/*from pwd.c*/
+#ifndef _pwd_h
+
+typedef struct Pwd *pwd; /* abstract data type */
+/*^*/
+
+#endif
+
+struct Pwd {
+    int n, na;
+    float **a, *b;
+};
+
+pwd pwd_init(int n1 /* trace length */, 
+	     int nw /* filter order */)
+/*< initialize >*/
+{
+    pwd w;
+
+    w = (pwd) ps_alloc(1,sizeof(*w));
+    w->n = n1;
+    w->na = 2*nw+1;
+ 
+    w->a = ps_floatalloc2 (n1,w->na);
+    w->b = ps_floatalloc (w->na);
+
+    apfilt_init(nw);
+
+    return w;
+}
+
+void pwd_close (pwd w)
+/*< free allocated storage >*/
+{
+    free (w->a[0]);
+    free (w->a);
+    free (w->b);
+    free (w);
+    apfilt_close();
+}
+
+void pwd_define (bool adj        /* adjoint flag */, 
+		 pwd w           /* pwd object */, 
+		 const float* pp /* slope */, 
+		 float* diag     /* defined diagonal */, 
+		 float** offd    /* defined off-diagonal */)
+/*< fill the matrix >*/
+{
+    int i, j, k, m, n, nw;
+    float am, aj;
+    
+    nw = (w->na-1)/2;
+    n = w->n;
+
+    for (i=0; i < n; i++) {
+	passfilter (pp[i], w->b);
+	
+	for (j=0; j < w->na; j++) {
+	    if (adj) {
+		w->a[j][i] = w->b[w->na-1-j];
+	    } else {
+		w->a[j][i] = w->b[j];
+	    }
+	}
+    }
+    
+    for (i=0; i < n; i++) {
+	for (j=0; j < w->na; j++) {
+	    k = i+j-nw;
+	    if (k >= nw && k < n-nw) {
+		aj = w->a[j][k];
+		diag[i] += aj*aj;
+	    }
+	} 
+	for (m=0; m < 2*nw; m++) {
+	    for (j=m+1; j < w->na; j++) {
+		k = i+j-nw;
+		if (k >= nw && k < n-nw) {
+		    aj = w->a[j][k];
+		    am = w->a[j-m-1][k];
+		    offd[m][i] += am*aj;
+		}
+	    }
+	}
+    }
+}
+
+void pwd_set (bool adj   /* adjoint flag */,
+	      pwd w      /* pwd object */, 
+	      float* inp /* input */, 
+	      float* out /* output */, 
+	      float* tmp /* temporary storage */)
+/*< matrix multiplication >*/
+{
+    int i, j, k, n, nw;
+
+    nw = (w->na-1)/2;
+    n = w->n;
+
+    if (adj) {
+	for (i=0; i < n; i++) {
+	    tmp[i]=0.;
+	}
+	for (i=0; i < n; i++) {
+	    for (j=0; j < w->na; j++) {
+		k = i+j-nw;
+		if (k >= nw && k < n-nw) 
+		    tmp[k] += w->a[j][k]*out[i];
+	    }
+	}
+	for (i=0; i < n; i++) {
+	    inp[i]=0.;
+	}
+	for (i=nw; i < n-nw; i++) {
+	    for (j=0; j < w->na; j++) {
+		k = i+j-nw;
+		inp[k] += w->a[j][i]*tmp[i];
+	    }
+	}
+    } else {
+	for (i=0; i < n; i++) {
+	    tmp[i] = 0.;
+	}
+	for (i=nw; i < n-nw; i++) {
+	    for (j=0; j < w->na; j++) {
+		k = i+j-nw;
+		tmp[i] += w->a[j][i]*inp[k];
+	    }
+	}
+	for (i=0; i < n; i++) {
+	    out[i] = 0.;
+	    for (j=0; j < w->na; j++) {
+		k = i+j-nw;
+		if (k >= nw && k < n-nw) 
+		    out[i] += w->a[j][k]*tmp[k];
+	    }
+	}
+    }
+}
+
+/*from api/c/banded.c*/
+#ifndef _ps_banded_h
+
+typedef struct ps_Bands *ps_bands;
+/* abstract data type */
+/*^*/
+
+#endif
+
+struct ps_Bands {
+    int n, band;
+    float *d, **o;
+};
+
+ps_bands ps_banded_init (int n    /* matrix size */, 
+			 int band /* band size */)
+/*< initialize >*/
+{
+    ps_bands slv;
+    int i;
+    
+    slv = (ps_bands) ps_alloc (1,sizeof(*slv));
+    slv->o = (float**) ps_alloc (band,sizeof(float*));
+    for (i = 0; i < band; i++) {
+	slv->o[i] = ps_floatalloc (n-1-i);
+    }
+    slv->d = ps_floatalloc (n);
+    slv->n = n;
+    slv->band = band;
+
+    return slv;
+}
+
+void ps_banded_define (ps_bands slv, 
+		       float* diag  /* diagonal [n] */, 
+		       float** offd /* off-diagonal [band][n] */)
+/*< define the matrix >*/
+{
+    int k, m, m1, n, n1;
+    float t;
+    
+    for (k = 0; k < slv->n; k++) {
+	t = diag[k];
+	m1 = PS_MIN(k,slv->band);
+	for (m = 0; m < m1; m++)
+	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
+	slv->d[k] = t;
+	n1 = PS_MIN(slv->n-k-1,slv->band);
+	for (n = 0; n < n1; n++) {
+	    t = offd[n][k];
+	    m1 = PS_MIN(k,slv->band-n-1);
+	    for (m = 0; m < m1; m++) {
+		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
+	    }
+	    slv->o[n][k] = t/slv->d[k];
+	}
+    }
+}
+
+
+void ps_banded_const_define (ps_bands slv, 
+			     float diag        /* diagonal */, 
+			     const float* offd /* off-diagonal [band] */)
+/*< define matrix with constant diagonal coefficients >*/
+{
+    int k, m, m1, n, n1;
+    float t;
+    
+    for (k = 0; k < slv->n; k++) {   
+	t = diag;
+	m1 = PS_MIN(k,slv->band);
+	for (m = 0; m < m1; m++)
+	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
+	slv->d[k] = t;
+	n1 = PS_MIN(slv->n-k-1,slv->band);
+	for (n = 0; n < n1; n++) {
+	    t = offd[n];
+	    m1 = PS_MIN(k,slv->band-n-1);
+	    for (m = 0; m < m1; m++) {
+		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
+	    }
+	    slv->o[n][k] = t/slv->d[k];
+	}
+    }
+}
+
+void ps_banded_const_define_eps (ps_bands slv, 
+				 float diag        /* diagonal */, 
+				 const float* offd /* off-diagonal [band] */, 
+				 int nb            /* size of the boundary */,
+				 float eps         /* regularization parameter */)
+/*< define matrix with constant diagonal coefficients 
+  and regularized b.c. >*/
+{
+    int k, m, m1, n, n1;
+    float t;
+    
+    for (k = 0; k < slv->n; k++) {   
+	t = diag;
+	if (k < nb || slv->n-k-1 < nb) t += eps;
+	m1 = PS_MIN(k,slv->band);
+	for (m = 0; m < m1; m++)
+	    t -= (slv->o[m][k-m-1])*(slv->o[m][k-m-1])*(slv->d[k-m-1]);
+	slv->d[k] = t;
+	n1 = PS_MIN(slv->n-k-1,slv->band);
+	for (n = 0; n < n1; n++) {
+	    t = offd[n];
+	    m1 = PS_MIN(k,slv->band-n-1);
+	    for (m = 0; m < m1; m++) {
+		t -= (slv->o[m][k-m-1])*(slv->o[n+m+1][k-m-1])*(slv->d[k-m-1]);
+	    }
+	    slv->o[n][k] = t/slv->d[k];
+	}
+    }
+}
+
+
+void ps_banded_const_define_reflect (ps_bands slv, 
+				     float diag        /* diagonal */, 
+				     const float* offd /* off-diagonal [band] */)
+/*< define matrix with constant diagonal coefficients  
+  and reflecting b.c. >*/
+{
+    int k, m, n, b, i;
+    float t;
+    
+    b = slv->band;
+    
+    slv->d[0] = diag+offd[0];
+    for (k = 0; k < b-1; k++) {
+	for (m = k; m >= 0; m--) {
+	    i = 2*k-m+1;
+	    t = (i < b)? offd[m]+offd[i]: offd[m];
+	    for (n = m+1; n < k-1; n++) 
+		t -= (slv->o[n][k-n])*(slv->o[n-m-1][k-n])*(slv->d[k-n]);
+	    slv->o[m][k-m] = t/slv->d[k-m];
+	}
+	i = 2*(k+1);
+	t = (i < b)? diag + offd[i]: diag;
+	for (m = 0; m <= k; m++)
+	    t -= (slv->o[m][k-m])*(slv->o[m][k-m])*(slv->d[k-m]);
+	slv->d[k+1] = t;
+    }
+    for (k = b-1; k < slv->n-1; k++) {
+	for (m = b-1; m >= 0; m--) {
+	    i = 2*k-m+1;
+	    t = (i < b)? offd[m]+offd[i]: offd[m];
+	    for (n = m+1; n < b; n++) 
+		t -= (slv->o[n][k-n])*(slv->o[n-m-1][k-n])*(slv->d[k-n]);
+	    slv->o[m][k-m] = t/(slv->d[k-m]);
+	}
+	i = 2*(k+1);
+	t = (i < b)? diag + offd[i]: diag;
+	for (m = 0; m < b; m++) 
+	    t -= (slv->o[m][k-m])*(slv->o[m][k-m])*slv->d[k-m];
+	slv->d[k+1] = t;
+    }
+}
+
+void ps_banded_solve (const ps_bands slv, float* b)
+/*< invert (in place) >*/
+{
+    int k, m, m1;
+    float t;
+
+    for (k = 1; k < slv->n; k++) {
+	t = b[k];
+	m1 = PS_MIN(k,slv->band);
+	for (m = 0; m < m1; m++)
+	    t -= (slv->o[m][k-m-1]) * b[k-m-1];
+	b[k] = t;
+    }
+    for (k = slv->n-1; k >= 0; k--) {
+	t = b[k]/slv->d[k];
+	m1 = PS_MIN(slv->n -k-1,slv->band);
+	for (m = 0; m < m1; m++)
+	    t -= slv->o[m][k] * b[k+m+1];
+	b[k] = t;
+    }
+}
+
+void ps_banded_close (ps_bands slv)
+/*< free allocated storage >*/
+{
+    int i;
+
+    for (i = 0; i < slv->band; i++) {
+	free(slv->o[i]);
+    }
+    free (slv->o);
+    free (slv->d);
+    free (slv);
+}
+
+/*from predict.c*/
+static int n1, n2, nb, k2;
+static ps_bands slv;
+static float *diag, **offd, eps0, eps2, **dip, *tt;
+static pwd w1, w2;
+
+static void stepper(bool adj /* adjoint flag */,
+		    int i2   /* trace number */);
+
+void predict_init (int nx, int ny /* data size */, 
+		   float e        /* regularization parameter */,
+		   int nw         /* accuracy order */,
+		   int k          /* radius */,
+		   bool two       /* if two predictions */)
+/*< initialize >*/
+{
+    n1 = nx;
+    n2 = ny;
+    nb = 2*nw;
+
+    eps0 = e;
+    eps2 = e;
+
+    slv = ps_banded_init (n1, nb);
+    diag = ps_floatalloc (n1);
+    offd = ps_floatalloc2 (n1,nb);
+
+    w1 = pwd_init (n1, nw);
+    w2 = two? pwd_init(n1,nw): NULL;
+
+    tt = NULL;
+
+    k2 = k;
+//     if (k2 > n2-1) ps_error("%s: k2=%d > n2-1=%d",__FILE__,k2,n2-1);
+}
+
+
+
+void predict_close (void)
+/*< free allocated storage >*/
+{
+    ps_banded_close (slv);
+    free (diag);
+    free (*offd);
+    free (offd);
+    pwd_close (w1);
+    if (NULL != w2) pwd_close (w2);
+    if (NULL != tt) free(tt);
+}
+
+static void regularization(void)
+/* fill diag and offd using regularization */ 
+{
+    int i1, ib;
+
+    for (i1=0; i1 < n1; i1++) {
+	diag[i1] = 6.*eps0;
+    	offd[0][i1] = -4.*eps0;
+    	offd[1][i1] = eps0;
+	for (ib=2; ib < nb; ib++) {
+	    offd[ib][i1] = 0.0;
+	}
+    }
+
+    diag[0] = diag[n1-1] = eps2+eps0;
+    diag[1] = diag[n1-2] = eps2+5.*eps0;
+    offd[0][0] = offd[0][n1-2] = -2.*eps0;
+}
+
+void predict_step(bool adj            /* adjoint flag */,
+		  bool forw           /* forward or backward */, 
+		  float* trace        /* input/output trace */,
+		  const float* pp    /* slope */)
+/*< prediction step >*/
+{
+    float t0, t1, t2, t3;
+    
+    regularization();
+    pwd_define (forw, w1, pp, diag, offd);
+    ps_banded_define (slv, diag, offd);
+
+    if (adj) ps_banded_solve (slv, trace);
+
+    t0 = trace[0];
+    t1 = trace[1];
+    t2 = trace[n1-2];
+    t3 = trace[n1-1];
+
+    pwd_set (adj, w1, trace, trace, diag);
+
+    trace[0] += eps2*t0;
+    trace[1] += eps2*t1;
+    trace[n1-2] += eps2*t2;
+    trace[n1-1] += eps2*t3;
+
+    if (!adj) ps_banded_solve (slv, trace);
+}
+
+void predict1_step(bool forw      /* forward or backward */, 
+		   float* trace1  /* input trace */,
+		   const float* pp /* slope */,
+		   float* trace /* output trace */)
+/*< prediction step from one trace >*/
+{
+    float t0, t1, t2, t3;
+    
+    regularization();
+
+    pwd_define (forw, w1, pp, diag, offd);
+    ps_banded_define (slv, diag, offd);
+
+    t0 = trace1[0];
+    t1 = trace1[1];
+    t2 = trace1[n1-2];
+    t3 = trace1[n1-1];
+
+    pwd_set (false, w1, trace1, trace, diag);
+
+    trace[0] += eps2*t0;
+    trace[1] += eps2*t1;
+    trace[n1-2] += eps2*t2;
+    trace[n1-1] += eps2*t3;
+
+    ps_banded_solve (slv, trace);
+}
+
+void predict2_step(bool forw1        /* forward or backward */, 
+		   bool forw2,
+		   float* trace1     /* input trace */,
+		   float* trace2,
+		   const float* pp1  /* slope */,
+		   const float* pp2,
+		   float *trace      /* output trace */)
+/*< prediction step from two traces>*/
+{
+    int i1;
+    float t0, t1, t2, t3;
+    
+    regularization();
+
+    pwd_define (forw1, w1, pp1, diag, offd);
+    pwd_define (forw2, w2, pp2, diag, offd);
+
+    ps_banded_define (slv, diag, offd);
+
+    t0 = 0.5*(trace1[0]+trace2[0]);
+    t1 = 0.5*(trace1[1]+trace2[1]);
+    t2 = 0.5*(trace1[n1-2]+trace2[n1-2]);
+    t3 = 0.5*(trace1[n1-1]+trace2[n1-1]);
+
+    pwd_set (false, w1, trace1, offd[0], trace);
+    pwd_set (false, w2, trace2, offd[1], trace);
+
+    for (i1=0; i1 < n1; i1++) {
+	trace[i1] = offd[0][i1]+offd[1][i1];
+    }
+
+    trace[0] += eps2*t0;
+    trace[1] += eps2*t1;
+    trace[n1-2] += eps2*t2;
+    trace[n1-1] += eps2*t3;
+
+    ps_banded_solve (slv, trace);
+}
+
+void predict_set(float **dip1 /* dip field [n2][n1] */)
+/*< set the local slopes for applying the linear operator >*/
+{
+    dip=dip1;
+    if (NULL == tt) tt = ps_floatalloc(n1);
+}
+
+static void stepper(bool adj /* adjoint flag */,
+		    int i2   /* trace number */)
+{
+    if (i2 < k2) {
+	predict_step(adj,false,tt,dip[k2-1-i2]);
+    } else if (i2 < n2+k2-1) {
+	predict_step(adj,true,tt,dip[i2-k2]);
+    } else {
+	predict_step(adj,false,tt,dip[2*n2+k2-3-i2]);
+    }
+}
+
+void predict_lop(bool adj, bool add, int nx, int ny, float *xx, float *yy)
+/*< linear operator >*/
+{
+    int i1, i2;
+
+//     if (nx != ny || nx != n1*n2) ps_error("%s: Wrong dimensions",__FILE__);
+
+    ps_adjnull(adj,add,nx,ny,xx,yy);
+
+    for (i1=0; i1 < n1; i1++) {
+	tt[i1] = 0.;
+    }
+
+    if (adj) {
+	for (i2=n2-1; i2 >= 0; i2--) {
+	    predict_step(true,true,tt,dip[i2]);
+	    for (i1=0; i1 < n1; i1++) {
+		tt[i1] += yy[i1+i2*n1];
+	    }
+	    for (i1=0; i1 < n1; i1++) {
+		xx[i1+i2*n1] += tt[i1];
+	    }
+	}
+    } else {
+	for (i2=0; i2 < n2; i2++) {
+	    for (i1=0; i1 < n1; i1++) {
+		tt[i1] += xx[i1+i2*n1];
+	    }
+	    for (i1=0; i1 < n1; i1++) {
+		yy[i1+i2*n1] += tt[i1];
+	    }
+	    predict_step(false,true,tt,dip[i2]);
+	}
+    }
+}
+
+/*pwspray.c*/
+static int n1, n2, ns, ns2sp;
+static float *trace, **pspr;
+int pwspray_init(int nr      /* spray radius */, 
+		 int nt      /* trace length */, 
+		 int n       /* number of traces */,
+		 int order   /* PWD order */,
+		 float eps   /* regularization */)		 
+/*< initialize >*/
+{
+    n1=nt;
+    n2=n;
+
+    ns=nr;
+    ns2sp=2*ns+1;
+
+    predict_init (n1, n2, eps*eps, order, 1, false);
+    trace = ps_floatalloc(n1);
+    return ns2sp;
+}
+
+void pwspray_set(float **dip /* local slope */)
+/*< set local slope >*/
+{
+    pspr = dip;
+}
+
+
+void pwspray_close(void)
+/*< free allocated storage >*/
+{
+    predict_close();
+    free(trace);
+}
+
+void pwspray_lop(bool adj, bool add, int n, int nu, float* u1, float *u)
+/*< linear operator >*/
+{
+    int i, is, ip, j, i1;
+
+//     if (n  != n1*n2) sf_error("%s: wrong size %d != %d*%d",__FILE__,n, n1,n2);
+//     if (nu != n*ns2) sf_error("%s: wrong size %d != %d*%d",__FILE__,nu,n,ns2);
+
+    ps_adjnull(adj,add,n,nu,u1,u);
+
+    for (i=0; i < n2; i++) { 	
+	if (adj) {
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = 0.0f;
+	    }
+
+	    /* predict forward */
+	    for (is=ns-1; is >= 0; is--) {
+		ip = i+is+1;
+		if (ip >= n2) continue;
+		j = ip*ns2sp+ns+is+1;
+		for (i1=0; i1 < n1; i1++) {
+		    trace[i1] += u[j*n1+i1];
+		}
+		predict_step(true,true,trace,pspr[ip-1]);
+	    }
+
+	    for (i1=0; i1 < n1; i1++) {
+		u1[i*n1+i1] += trace[i1];
+		trace[i1] = 0.0f;
+	    }
+
+	    /* predict backward */
+	    for (is=ns-1; is >= 0; is--) {
+		ip = i-is-1;
+		if (ip < 0) continue;
+		j = ip*ns2sp+ns-is-1;
+		for (i1=0; i1 < n1; i1++) {
+		    trace[i1] += u[j*n1+i1];
+		}
+		predict_step(true,false,trace,pspr[ip]);
+	    }
+	    
+	    for (i1=0; i1 < n1; i1++) {
+		u1[i*n1+i1] += trace[i1];
+		trace[i1] = u[(i*ns2sp+ns)*n1+i1];
+		u1[i*n1+i1] += trace[i1];
+	    }
+	    
+	} else {
+
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = u1[i*n1+i1];
+		u[(i*ns2sp+ns)*n1+i1] += trace[i1];
+	    }
+
+            /* predict forward */
+	    for (is=0; is < ns; is++) {
+		ip = i-is-1;
+		if (ip < 0) break;
+		j = ip*ns2sp+ns-is-1;
+		predict_step(false,false,trace,pspr[ip]);
+		for (i1=0; i1 < n1; i1++) {
+		    u[j*n1+i1] += trace[i1];
+		}
+	    }
+
+	    for (i1=0; i1 < n1; i1++) {
+		trace[i1] = u1[i*n1+i1];
+	    }
+	    
+	    /* predict backward */
+	    for (is=0; is < ns; is++) {
+		ip = i+is+1;
+		if (ip >= n2) break;
+		j = ip*ns2sp+ns+is+1;
+		predict_step(false,true,trace,pspr[ip-1]);
+		for (i1=0; i1 < n1; i1++) {
+		    u[j*n1+i1] += trace[i1];
+		}
+	    }
+	}
+    }
+}
+
+// static int n1, n2, ns2, n12;
+static int n12;
+static float ***u, *w, **ww1, *t;
+static float **p1, **p2, *smooth1, *smooth2, *smooth3;
+
+void pwsmooth_init(int nr      /* spray radius */,
+		   int m1      /* trace length */,
+		   int m2      /* number of traces */,
+		   int order   /* PWD order */,
+		   float eps   /* regularization */)
+/*< initialize >*/
+{
+    int is;
+
+	ns=nr;
+    n1 = m1;
+    n2 = m2;
+    n12 = n1*n2;
+
+    ns2sp = pwspray_init(nr,n1,n2,order,eps);
+
+    u = ps_floatalloc3(n1,ns2sp,n2);
+    w = ps_floatalloc(ns2sp);
+    ww1 = ps_floatalloc2(n1,n2);
+
+    for (is=0; is < ns2sp; is++) {
+	w[is]=ns+1-PS_ABS(is-ns);
+    }
+
+    /* Normalization */
+    t = ps_floatalloc(n12);
+
+}
+
+void pwsmooth_lop(bool adj, bool add, 
+		  int nin, int nout, float* trace, float *smooth)
+/*< linear operator >*/
+{
+    int i1, i2, is;
+    float ws;
+    
+    ps_adjnull(adj,add,nin,nout,trace,smooth);
+
+    if (adj) {
+	for (i2=0; i2 < n2; i2++) {
+	    for (i1=0; i1 < n1; i1++) {
+		ws=ww1[i2][i1]; 
+		for (is=0; is < ns2sp; is++) {
+		    u[i2][is][i1] = smooth[i2*n1+i1]*w[is]*ws;
+		}
+	    }
+	}
+
+	pwspray_lop(true,  true,  nin, nin*ns2sp, trace, u[0][0]);
+    } else {
+	pwspray_lop(false, false, nin, nin*ns2sp, trace, u[0][0]);
+
+	for (i2=0; i2 < n2; i2++) {
+	    for (i1=0; i1 < n1; i1++) {
+		ws=ww1[i2][i1]; 
+		for (is=0; is < ns2sp; is++) {
+		    smooth[i2*n1+i1] += u[i2][is][i1]*w[is]*ws;
+		}
+	    }
+	}
+    }
+}
+
+
+void pwsmooth_set(float **dip /* local slope */)
+/*< set local slope >*/
+{
+    int i1;
+    
+    pwspray_set(dip);
+
+    for (i1=0; i1 < n12; i1++) {
+	ww1[0][i1]=1.0f;
+    }
+
+    pwsmooth_lop(false,false,n12,n12,ww1[0],t);
+
+    for (i1=0; i1 < n12; i1++) {
+	if (0.0f != t[i1]) {
+	    ww1[0][i1]=1.0/t[i1];
+	} else {
+	    ww1[0][i1]=0.0f;
+	}
+    }
+}
+
+void pwsmooth_close(void)
+/*< free allocated storage >*/
+{
+    free(**u);
+    free(*u);
+    free(u);
+    free(w);
+    free(*ww1);
+    free(ww1);
+    free(t);
+    pwspray_close();
+}
+
+/*pwsmooth3.c*/
+static int ps3n1,ps3n2,ps3n3,ps3n12,ps3n13, ns1,ns2, order1,order2;
+static float ***idip, ***xdip, ***itmp, ***itmp2, ***xtmp;
+static float ps3eps;
+
+void pwsmooth3_init(int ns1_in      /* spray radius */,
+		    int ns2_in      /* spray radius */,
+		    int m1          /* trace length */,
+		    int m2          /* number of traces */,
+		    int m3          /* number of traces */,
+		    int order1_in   /* PWD order */,
+		    int order2_in   /* PWD order */,
+		    float eps_in    /* regularization */,
+		    float ****dip   /* local slope */)
+/*< initialize >*/
+{
+    int i2, i3;
+
+    ps3n1 = m1;
+    ps3n2 = m2;
+    ps3n3 = m3;
+    ps3n12 = ps3n1*ps3n2;
+    ps3n13 = ps3n1*ps3n3;
+
+
+    ns1 = ns1_in;
+    ns2 = ns2_in;
+	
+    order1 = order1_in;
+    order2 = order2_in;
+    
+    ps3eps = eps_in;
+
+    idip = dip[0];
+    xdip = (float***) ps_alloc(ps3n2,sizeof(float**));
+    for (i2=0; i2 < ps3n2; i2++) {
+	xdip[i2] = (float**) ps_alloc(ps3n3,sizeof(float*));
+	for (i3=0; i3 < ps3n3; i3++) {
+	    xdip[i2][i3] = dip[1][i3][i2];
+	}
+    }
+    
+    itmp = ps_floatalloc3(ps3n1,ps3n2,ps3n3);
+    xtmp = ps_floatalloc3(ps3n1,ps3n3,ps3n2);
+    itmp2 = ps_floatalloc3(ps3n1,ps3n3,ps3n2);
+
+//     xtmp2 = (float***) ps_alloc(n3,sizeof(float**));
+//     for (i3=0; i3 < n3; i3++) {
+// 	xtmp2[i3] = (float**) ps_alloc(n2,sizeof(float*));
+// 	for (i2=0; i2 < n2; i2++) {
+// 	    xtmp2[i3][i2] = xtmp[i2][i3];
+// 	}
+//     }
+}
+
+void pwsmooth3_close(void)
+/*< free allocated storage >*/
+{
+    int i2, i3;
+
+    for (i2=0; i2 < ps3n2; i2++) {
+	free(xdip[i2]);
+    }
+    free(xdip);
+    free(**itmp);
+    free(*itmp);
+    free(itmp);
+    free(**xtmp);
+    free(*xtmp);
+    free(xtmp);
+    free(**itmp2);
+    free(*itmp2);
+    free(itmp2);
+//     for (i3=0; i3 < n3; i3++) {
+// 	free(xtmp2[i3]);
+//     }
+//     free(xtmp2);
+}
+
+void pwsmooth3_lop(bool adj, bool add, 
+		  int nin, int nout, float* trace, float *smooth)
+/*< linear operator >*/
+{
+    int i1, i2, i3;
+
+    ps_adjnull(adj,add,nin,nout,trace,smooth);
+
+    if (adj) {
+	for (i3=0; i3 < ps3n3; i3++) {
+	    for (i2=0; i2 < ps3n2; i2++) {
+		for (i1=0; i1 < ps3n1; i1++) {
+		    xtmp[i2][i3][i1] = smooth[i1+ps3n1*(i2+ps3n2*i3)];
+		}
+	    }
+	}
+	/* crossline */
+	pwsmooth_init(ns2,ps3n1,ps3n3,order2,ps3eps);
+	for (i2=0; i2 < ps3n2; i2++) {
+	    pwsmooth_set(xdip[i2]);
+	    pwsmooth_lop(true,false,ps3n13,ps3n13,itmp2[i2][0],xtmp[i2][0]);
+	}
+	pwsmooth_close();
+	/* transpose */
+	for (i3=0; i3 < ps3n3; i3++) {
+	    for (i2=0; i2 < ps3n2; i2++) {
+		for (i1=0; i1 < ps3n1; i1++) {
+		    itmp[i3][i2][i1] = itmp2[i2][i3][i1];
+		}
+	    }
+	}
+	/* inline */
+	pwsmooth_init(ns1,ps3n1,ps3n2,order1,ps3eps);
+	for (i3=0; i3 < ps3n3; i3++) {
+	    pwsmooth_set(idip[i3]);
+	    pwsmooth_lop(true,true,ps3n12,ps3n12,trace+i3*ps3n12,itmp[i3][0]);
+	}
+	pwsmooth_close();
+    } else {
+	/* inline */
+	pwsmooth_init(ns1,ps3n1,ps3n2,order1,ps3eps);
+	for (i3=0; i3 < ps3n3; i3++) {
+	    pwsmooth_set(idip[i3]);
+	    pwsmooth_lop(false,false,ps3n12,ps3n12,trace+i3*ps3n12,itmp[i3][0]);
+	}
+	pwsmooth_close();
+	/* transpose */
+	for (i3=0; i3 < ps3n3; i3++) {
+	    for (i2=0; i2 < ps3n2; i2++) {
+		for (i1=0; i1 < ps3n1; i1++) {
+		    itmp2[i2][i3][i1] = itmp[i3][i2][i1];
+		}
+	    }
+	}
+	/* crossline */
+	pwsmooth_init(ns2,ps3n1,ps3n3,order2,ps3eps);
+	for (i2=0; i2 < ps3n2; i2++) {
+	    pwsmooth_set(xdip[i2]);
+	    pwsmooth_lop(false,false,ps3n13,ps3n13,itmp2[i2][0],xtmp[i2][0]);
+	}
+	pwsmooth_close();
+	for (i3=0; i3 < ps3n3; i3++) {
+	    for (i2=0; i2 < ps3n2; i2++) {
+		for (i1=0; i1 < ps3n1; i1++) {
+		    smooth[i1+ps3n1*(i2+ps3n2*i3)] += xtmp[i2][i3][i1];
+		}
+	    }
+	}
+    }
+}
+
 
 /* Period parameters */  
 #define N 624
@@ -1362,6 +2507,113 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
 	
 }
 
+static PyObject *csint3d(PyObject *self, PyObject *args){
+    
+	/**initialize data input**/
+    int nd, nd2;
+    int i, niter, nw1, nw2, ns1, ns2, n1, n2, n3, n123, nj1, nj2, seed, i4, n4;
+    float *mm, *dd, ****pp, *qq, *xx, eps, var, lam;
+    bool *known;
+    int verb, drift, hasmask;
+    
+    PyObject *f1=NULL;/*input data*/
+    PyObject *f2=NULL;/*inline dip*/
+    PyObject *f3=NULL;/*xline dip*/
+    PyObject *f4=NULL;/*mask*/
+    PyObject *arrf1=NULL;
+    PyObject *arrf2=NULL;
+    PyObject *arrf3=NULL;
+    PyObject *arrf4=NULL;
+    
+	PyArg_ParseTuple(args, "OOOOiiiiiiiiif", &f1, &f2, &f3, &f4, &n1, &n2, &n3, &niter, &ns1, &ns2, &nw1, &nw2, &verb, &eps);
+	/*n1/n2/n3: first/second/third dimension*/
+	/*nw1/nw2: accuracy order*/
+	/*niter: number of iterations*/
+	/*verb: verbosity flag*/
+	/*eps: stability factor*/
+	
+    printf("n1=%d,n2=%d,n3=%d,ns1=%d,ns2=%d,nw1=%d,nw2=%d,niter=%d,verb=%d,eps=%g\n",n1,n2,n3,ns1,ns2,nw1,nw2,niter,verb,eps);
+    
+	n123=n1*n2*n3;
+
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
+	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_IN_ARRAY);
+	
+    nd2=PyArray_NDIM(arrf1);
+    npy_intp *sp=PyArray_SHAPE(arrf1);
+
+    if (*sp != n123)
+    {
+    	printf("Dimension mismatch, N_input = %d, N_data = %d\n", *sp, n123);
+    	return NULL;
+    }
+
+    pp = ps_floatalloc4(n1,n2,n3,2);
+    mm = ps_floatalloc(n123);
+    xx = ps_floatalloc(n123);
+    known = ps_boolalloc(n123);
+    dd = ps_floatalloc(n123);
+
+    /*reading data*/
+    for (i=0; i<n123; i++)
+    {
+        mm[i]=*((float*)PyArray_GETPTR1(arrf1,i));
+    }
+
+	for (i=0; i < n123; i++) {
+	    xx[i] = mm[i];
+	}
+	
+    for (i=0; i<n123; i++)
+    {
+        dd[i]=*((float*)PyArray_GETPTR1(arrf4,i));
+    }
+    
+    for (i=0; i<n123; i++)
+    {
+        pp[0][0][0][i]=*((float*)PyArray_GETPTR1(arrf2,i));
+    }
+    for (i=0; i<n123; i++)
+    {
+        pp[0][0][0][i+n123]=*((float*)PyArray_GETPTR1(arrf3,i));
+    }
+    
+    ps_mask_init(known);
+    
+	/* figure out scaling and make known data mask */
+	lam = 0.;
+	for (i=0; i < n123; i++) {
+	    if (dd[i] != 0.) {
+		known[i] = true;
+		lam += 1.;
+	    } else {
+		known[i] = false;
+	    }
+	}
+	lam = sqrtf(lam/n123);
+	
+	pwsmooth3_init(ns1,ns2, n1, n2, n3, nw1, nw2, eps, pp);
+	ps_conjgrad_init(n123, n123, n123, n123, lam, 10*FLT_EPSILON, true, true); 
+	ps_conjgrad(NULL,ps_mask_lop,pwsmooth3_lop,xx,mm,mm,niter);
+	ps_conjgrad_close();
+
+	pwsmooth3_close();
+    /*Below is the output part*/
+    PyArrayObject *vecout;
+	npy_intp dims[2];
+	dims[0]=n123;dims[1]=1;
+	/* Parse tuples separately since args will differ between C fcns */
+	/* Make a new double vector of same dimension */
+	vecout=(PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_FLOAT);
+	for(i=0;i<dims[0];i++)
+		(*((float*)PyArray_GETPTR1(vecout,i))) = mm[i];
+
+	return PyArray_Return(vecout);
+	
+}
+
 // documentation for each functions.
 static char soint3dcfun_document[] = "Document stuff for dip...";
 
@@ -1369,6 +2621,7 @@ static char soint3dcfun_document[] = "Document stuff for dip...";
 // function_name, function, METH_VARARGS flag, function documents
 static PyMethodDef functions[] = {
   {"csoint3d", csoint3d, METH_VARARGS, soint3dcfun_document},
+  {"csint3d", csint3d, METH_VARARGS, soint3dcfun_document},
   {NULL, NULL, 0, NULL}
 };
 

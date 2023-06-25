@@ -1,7 +1,8 @@
 import numpy as np
 from soint2dcfun import *
+from soint3dcfun import *
 
-def sint2d(din,dip,mask,niter=100,eps=0.01,ns=1,order=1,verb=1):
+def sint2d(din,mask,dip,niter=100,eps=0.01,ns=1,order=1,verb=1):
 	'''
 	
 	sint2d: Interpolation for sparse data in 2D, e.g., well logs
@@ -57,7 +58,7 @@ def sint2d(din,dip,mask,niter=100,eps=0.01,ns=1,order=1,verb=1):
 	
 	
 	
-def sint2dc(din,dip,mask,niter=100,eps=0.01,ns=1,order=1,verb=1):
+def sint2dc(din,mask,dip,niter=100,eps=0.01,ns=1,order=1,verb=1):
 	'''
 	
 	sint2dc: Interpolation for sparse data in 2D, e.g., well logs
@@ -93,4 +94,38 @@ def sint2dc(din,dip,mask,niter=100,eps=0.01,ns=1,order=1,verb=1):
 	return dout	
 	
 	
+def sint3dc(din,mask,dipi,dipx,niter=100,eps=0.01,ns1=1,ns2=1,order1=1,order2=1,verb=1):
+	'''
+	
+	sint3dc: Interpolation for sparse data in 2D, e.g., well logs
 
+	Yangkang Chen
+	Aug, 11, 2021
+	Ported to Python in Jun, 15, 2023
+	
+	INPUT
+	din:
+	mask:
+	dip:
+	eps:
+	ns:
+	order:
+	
+	OUTPUT
+	dout
+	
+	EXAMPLE
+	
+	
+	'''
+	
+	[n1,n2,n3]=din.shape;	
+	din=np.float32(din).flatten(order='F');
+	mask=np.float32(mask).flatten(order='F');
+	dipi=np.float32(dipi).flatten(order='F');
+	dipx=np.float32(dipx).flatten(order='F');
+	
+	dout=csint3d(din,dipi,dipx,mask,n1,n2,n3,niter,ns1,ns2,order1,order2,verb,eps);
+	dout=dout.reshape(n1,n2,n3,order='F');
+	
+	return dout	

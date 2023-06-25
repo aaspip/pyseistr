@@ -38,8 +38,8 @@ datam[np.where(data==0)]=0;
 # dip=ps.dip2dc(ps.bandpassc(data,0.004,flo=0,fhi=10),mask=datam,order=2,rect=[10,10,1],verb=0);
 dip=ps.dip2dc(ps.bandpassc(data,0.004,flo=0,fhi=10),mask=datam,order=2,rect=[10,10,1],verb=0);
 
-# recon=ps.sint2d(data,dip,datam,niter=8,ns=5,order=1,eps=0.01);
-recon=ps.sint2dc(data,dip,datam,niter=8,ns=5,order=1,eps=0.01);
+# recon=ps.sint2d(data,datam,dip,niter=8,ns=5,order=1,eps=0.01);
+recon=ps.sint2dc(data,datam,dip,niter=8,ns=5,order=1,eps=0.01);
 
 ## plot results
 fig = plt.figure(figsize=(8, 6))

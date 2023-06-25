@@ -77,6 +77,7 @@ from .somf3d import somf3dc
 from .soint2d import soint2dc
 from .soint3d import soint3dc
 from .sint import sint2dc
+from .sint import sint3dc
 from .bp import bandpassc
 
 from dipcfun import *
