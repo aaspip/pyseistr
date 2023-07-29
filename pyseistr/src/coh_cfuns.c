@@ -39,7 +39,8 @@ float dotmultsum( float *xx, float *yy, int n)
 /*< dot multiplication of vectors and sum up >*/
 {	
 	float zz=0;
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		zz+=xx[i]*yy[i];
 	return zz;
 }
@@ -47,42 +48,48 @@ float dotmultsum( float *xx, float *yy, int n)
 void scale( float *xx, float *yy, int n, float s)
 /*< implement a scaled indentity operator >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		yy[i]=s*xx[i];
 }
 
 void vecabs( float *xx, float *yy, int n)
 /*< Absolute value for vector >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		yy[i]=fabsf(xx[i]);
 }
 
 void scalesum(float *xx, float *yy, float *zz, int n, float sx, float sy)
 /*< summation between two scaled vector >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		zz[i]=sx*xx[i]+sy*yy[i];
 }
 
 void scalesumreal(float *xx, float yy, float *zz, int n, float sx)
 /*< summation between one scaled vector and one scaler  >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		zz[i]=sx*xx[i]+yy;
 }
 
 void vecdiv(float *xx, float *yy, float *zz, int n)
 /*< division between two vector >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		zz[i]=xx[i]/(yy[i]+RT_EPS);
 }
 
 void vecmul(float *xx, float *yy, float *zz, int n)
 /*< multiplication between two vector >*/
 {
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		zz[i]=xx[i]*yy[i];
 }
 
@@ -90,7 +97,8 @@ float vecmax(float *xx, int n)
 /*< maximum value in a vector >*/
 {	
 	float t=-RT_HUGE;
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		if(t<xx[i]) t=xx[i];
 	return t;
 }
@@ -98,7 +106,8 @@ float vecmax(float *xx, int n)
 void consvec(float v, int n, float *x)
 /*< Create constant-value vector >*/
 {	
-	for(int i=0;i<n;i++)
+	int i;
+	for(i=0;i<n;i++)
 		x[i]=v;
 }
 
@@ -136,12 +145,12 @@ void coh_init(int Nt, int Nh, int Nv, float Dt, float *V, float *H, int typ)
 	h=H;
 	type=typ;
 	
-	
+	int i;
 	if(type!=1 && type!=2 && type!=3) type=1;
 	
 	if(type==2)
 	{
-		for(int i=0;i<nh;i++)
+		for(i=0;i<nh;i++)
 			if(hmax<fabs(h[i])) hmax=h[i];
 	}
 }
@@ -159,12 +168,12 @@ void coh_init2(int Nt, int Nh, int Nv, float Dt, float *V, float *H, int typ, fl
 	den=Den;
 	num=Num;
 	
-	
+	int i;
 	if(type!=1 && type!=2 && type!=3) type=1;
 	
 	if(type==2)
 	{
-		for(int i=0;i<nh;i++)
+		for(i=0;i<nh;i++)
 			if(hmax<fabs(h[i])) hmax=h[i];
 	}
 }
