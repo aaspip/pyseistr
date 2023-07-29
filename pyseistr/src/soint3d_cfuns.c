@@ -1,6 +1,5 @@
 #include <Python.h>
 #include <math.h>
-// #include <float.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,7 +7,7 @@
 
 
 /*NOTE: PS indicates PySeistr*/
-#define FLT_EPSILON 1.19209290E-07F
+#define FLT_EPSILON 1.19209290E-07F /*delete #include <float.h> on July 28, 2023*/
 #define PS_NINT(x) ((int)((x)>0.0?(x)+0.5:(x)-0.5))
 #define PS_MAX_DIM 9
 #define PS_PI (3.14159265358979323846264338328)
