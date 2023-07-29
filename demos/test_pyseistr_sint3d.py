@@ -12,20 +12,20 @@
 from pylib.io import binread
 from pyseistr import plot3d
 from pyseistr import sint3dc
-
+import os
 import numpy as np
 
-s3d_zero2=binread('/Users/chenyk/data/datapath/mada_codes/sfsint3/test/s3d-zero2.rsf@',n1=180,n2=61,n3=51)
+s3d_zero2=binread(os.getenv('DATAPATH')+'/mada_codes/sfsint3/test/s3d-zero2.rsf@',n1=180,n2=61,n3=51)
 # plot3d(s3d_zero2);
 
-mask2=binread('/Users/chenyk/data/datapath/mada_codes/sfsint3/test/mask2.rsf@',n1=180,n2=61,n3=51)
+mask2=binread(os.getenv('DATAPATH')+'/mada_codes/sfsint3/test/mask2.rsf@',n1=180,n2=61,n3=51)
 # plot3d(mask2,vmin=0,vmax=1,cmap='jet');
 
-s3d_slope=binread('/Users/chenyk/data/datapath/mada_codes/sfsint3/test/s3d-slope.rsf@',n1=180,n2=61,n3=51*2)
+s3d_slope=binread(os.getenv('DATAPATH')+'/mada_codes/sfsint3/test/s3d-slope.rsf@',n1=180,n2=61,n3=51*2)
 s3d_slope=s3d_slope.reshape(180,61,51,2,order='F')
 # plot3d(s3d_slope[:,:,:,0],cmap='jet');
 
-s3d_pws=binread('/Users/chenyk/data/datapath/mada_codes/sfsint3/test/s3d-pws2.rsf@',n1=180,n2=61,n3=51)
+s3d_pws=binread(os.getenv('DATAPATH')+'/mada_codes/sfsint3/test/s3d-pws2.rsf@',n1=180,n2=61,n3=51)
 plot3d(s3d_pws,frames=[80,14,11],vmin=1500,vmax=3500,levels=np.linspace(1500,3500,100),cmap='jet',figname='sint3d');
 
 
