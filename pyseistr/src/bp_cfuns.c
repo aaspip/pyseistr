@@ -550,20 +550,20 @@ static PyObject *cbp(PyObject *self, PyObject *args){
     npy_intp *sp=PyArray_SHAPE(arrf1);
 
 	if(flo<0)
-		printf('Negative flo');
+		printf("Negative flo");
 	else
 		flo=flo*d1;
 
 
 	if(fhi<0)
-		printf('Negative flo');
+		printf("Negative flo");
 	else
 	{	fhi=fhi*d1;
 		if(flo>fhi)
-			printf('Need flo < fhi\n');
+			printf("Need flo < fhi\n");
 
 		if(0.5<fhi)
-			printf('Need fhi < Nyquist\n');
+			printf("Need fhi < Nyquist\n");
 	}		
 
     if (nplo < 1)            nplo = 1;
