@@ -40,6 +40,10 @@ Using the latest version
 or using Pypi
 
     pip install pyseistr
+    
+or using pip directly from github
+
+    pip install git+https://github.com/aaspip/pyseistr
 
 -----------
 ## DEMO scripts

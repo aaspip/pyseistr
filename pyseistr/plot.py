@@ -99,7 +99,49 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,figname=None,showf=True,**kwargs
 	else:
 		plt.close() #or plt.clear() ?
 		
-		
+def framebox(x1,x2,y1,y2,c=None,lw=None):
+	'''
+	framebox: for drawing a frame box
+	
+	By Yangkang Chen
+	June, 2022
+	
+	INPUT
+	x1,x2,y1,y2: intuitive
+	
+	EXAMPLE I
+	from pyseistr.plot import framebox
+	from pyseistr.synthetics import gensyn
+	from matplotlib import pyplot as plt
+	d=gensyn();
+	plt.imshow(d);
+	framebox(200,400,200,300);
+	plt.show()
+
+	EXAMPLE II
+	from pyseistr.plot import framebox
+	from pyseistr.synthetics import gensyn
+	from matplotlib import pyplot as plt
+	d=gensyn();
+	plt.imshow(d);
+	framebox(200,400,200,300,c='g',lw=4);
+	plt.show()
+	
+	'''
+	
+	if c is None:
+		c='r';
+	if lw is None:
+		lw=2;
+
+	plt.plot([x1,x2],[y1,y1],linestyle='-',color=c,linewidth=lw);
+	plt.plot([x1,x2],[y2,y2],linestyle='-',color=c,linewidth=lw);
+	plt.plot([x1,x1],[y1,y2],linestyle='-',color=c,linewidth=lw);
+	plt.plot([x2,x2],[y1,y2],linestyle='-',color=c,linewidth=lw);
 
 	
+	return
 	
+			
+			
+				
