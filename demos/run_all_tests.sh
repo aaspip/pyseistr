@@ -1,6 +1,6 @@
 #!/bin/sh
 
-svn co https://github.com/aaspip/data/trunk ./data #or git clone https://github.com/aaspip/data
+git clone https://github.com/aaspip/data ./data 
 cp -rf ./data/* ./
 
 python test_pyseistr_somean2d.py
