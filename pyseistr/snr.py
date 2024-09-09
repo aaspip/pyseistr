@@ -12,9 +12,10 @@ def snr(g,f,mode=1):
 	OUTPUT
 	snr: calculated SNR
 	 
-	REFERENCES
+	REFERENCE
 	Chen and Fomel, 2015, Random noise attenuation using local signal-and-noise orthogonalization, Geophysics.
 	
+	EXAMPLE
 	from pyseistr import gensyn,dip2dc,somean2dc,smooth,snr
 	data,noisy=gensyn(noise=True);
 	data1=smooth(noisy,rect=[1,5,1]);
