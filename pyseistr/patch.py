@@ -65,7 +65,7 @@ def patch2d(A,l1=8,l2=8,s1=4,s2=4,mode=1):
 			A=np.concatenate((A,np.zeros([s1-tmp,n2])),axis=0); 
 		tmp=np.mod(n2-l2,s2);
 		if tmp!=0:
-			A=np.concatenate((A,np.zeros([A.shape[0],s2-tmp])),axis=2); 
+			A=np.concatenate((A,np.zeros([A.shape[0],s2-tmp])),axis=1); 
 		
 		[N1,N2]=A.shape;
 		X=[]
