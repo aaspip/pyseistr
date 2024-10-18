@@ -24,9 +24,19 @@ np.concatenate((np.zeros([1,40]),np.expand_dims(np.linspace(0,1,88),axis=1).tran
 	return ListedColormap(seis)
 	
 
-def plot3d(d3d,frames=None,z=None,x=None,y=None,nlevel=100,figname=None,showf=True,close=True,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figname=None,showf=True,close=True,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
+	
+	INPUT
+	d3d: input 3D data (z in first-axis, x in second-axis, y in third-axis)
+	frames: plotting slices on three sides (default: [nz/2,nx/2,ny/2])
+	z,x,y: axis vectors  (default: 0.01*[np.arange(nz),np.arange(nx),np.arange(ny)])
+	figname: figure name to be saved (default: None)
+	showf: if show the figure (default: True)
+	close: if not show a figure, if close the figure (default: True)
+	kwargs: other specs for plotting
+	dz,dx,dy: interval (default: 0.01)
 	
 	By Yangkang Chen
 	June, 18, 2023
@@ -49,8 +59,17 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,nlevel=100,figname=None,showf=Tr
 	if frames is None:
 		frames=[int(nz/2),int(nx/2),int(ny/2)]
 		
-	X, Y, Z = np.meshgrid(np.arange(nx)*0.01, np.arange(ny)*0.01, np.arange(nz)*0.01)
-
+	if z is None:
+		z=np.arange(nz)*dz
+	
+	if x is None:
+		x=np.arange(nx)*dx
+		
+	if y is None:
+		y=np.arange(ny)*dy
+	
+	X, Y, Z = np.meshgrid(x, y, z)
+	
 	d3d=d3d.transpose([1,2,0])
 	
 	kw = {
@@ -76,8 +95,9 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,nlevel=100,figname=None,showf=Tr
 
 	_ = ax.contourf(
 	X[0, :, :], d3d[:, frames[2], :], Z[0, :, :],
-	zdir='y', offset=0, **kw
+	zdir='y', offset=Y.min(), **kw
 	)
+	
 	C = ax.contourf(
 	d3d[frames[1], :, :], Y[:, -1, :], Z[:, -1, :],
 	zdir='x', offset=X.max(), **kw
