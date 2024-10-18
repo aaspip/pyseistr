@@ -68,6 +68,7 @@ from .rgt import *
 from .smooth import *
 from .snr import *
 from .patch import *
+from .interp import *
 
 ## C versions
 from .dip2d import dip2dc
