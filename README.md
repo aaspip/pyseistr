@@ -41,7 +41,7 @@ or using Pypi
 
     pip install pyseistr
     
-or using pip directly from github
+or using pip directly from github (Preferrable because Pyseistr is updated very frequently)
 
     pip install git+https://github.com/aaspip/pyseistr
 
