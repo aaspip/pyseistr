@@ -99,6 +99,7 @@ def sigmoid(n1=400,n2=100,d1=0.004,d2=0.032,o1=0,o2=0,large=None,reflectivity=Tr
 	o1,o2,d1,d2: actually no use (just for retaining the previous parameters)
 	
 	OUTPUT
+	refl (reflectivity) or earth (model)
 
 	RFERENCE
 	October 2014 program of the month:
@@ -229,6 +230,85 @@ def sigmoid(n1=400,n2=100,d1=0.004,d2=0.032,o1=0,o2=0,large=None,reflectivity=Tr
 		return refl
 	else:
 		return earth
+	
+def genplane3d():
+	'''
+	genplane3d: quickly generate the widely used 3D plane-wave synthetic data
+	
+	INPUT
+	No input
+	
+	Maybe in the future add the following
+	noise: if add noise
+	seed: random number seed
+	var: noise variance (actually the maximum amplitude of noise)
+	
+	OUTPUT
+	dout
+		
+	EXAMPLE 1
+	from pyseistr import genplane3d,plot3d
+	data=genplane3d();
+	plot3d(data)
+	
+	
+	REFERENCES
+	This "simple" example has been extensively used by dozens of papers, just to name a few
+	[1] Chen, Y., W. Huang, D. Zhang, W. Chen, 2016, An open-source matlab code package for improved rank-reduction 3D seismic data denoising and reconstruction, Computers & Geosciences, 95, 59-66.
+	[2] Huang, W., R. Wang, Y. Chen, H. Li, and S. Gan, 2016, Damped multichannel singular spectrum analysis for 3D random noise attenuation, Geophysics, 81, V261-V270.
+	[2] Chen, et al., 2023, DRR: an open-source multi-platform package for the damped rank-reduction method and its applications in seismology, Computers & Geosciences, 180, 105440.
+
+	'''
+	
+	a1=np.zeros([300,20])
+	[n,m]=a1.shape
+	a3=np.zeros([300,20])
+	a4=np.zeros([300,20])
+
+	k=-1;
+	a=0.1;
+	b=1;
+	pi=np.pi
+
+	ts=np.arange(-0.055,0.055+0.002,0.002)
+	b1=np.zeros([len(ts)])
+	b2=np.zeros([len(ts)])
+	b3=np.zeros([len(ts)])
+	b4=np.zeros([len(ts)])
+
+	for t in ts:
+		k=k+1;
+		b1[k]=(1-2*(pi*30*t)*(pi*30*t))*np.exp(-(pi*30*t)*(pi*30*t));
+		b2[k]=(1-2*(pi*40*t)*(pi*40*t))*np.exp(-(pi*40*t)*(pi*40*t));
+		b3[k]=(1-2*(pi*40*t)*(pi*40*t))*np.exp(-(pi*40*t)*(pi*40*t));
+		b4[k]=(1-2*(pi*30*t)*(pi*30*t))*np.exp(-(pi*30*t)*(pi*30*t));
+
+	t1=np.zeros([m],dtype='int')
+	t3=np.zeros([m],dtype='int')
+	t4=np.zeros([m],dtype='int')
+	for i in range(m):
+		t1[i]=np.round(140);
+		t3[i]=np.round(-6*i+180);
+		t4[i]=np.round(6*i+10);
+		a1[t1[i]:t1[i]+k+1,i]=b1; 
+		a3[t3[i]:t3[i]+k+1,i]=b1; 
+		a4[t4[i]:t4[i]+k+1,i]=b1; 
+
+	temp=a1[0:300,:]+a3[0:300,:]+a4[0:300,:];
+
+	shot=np.zeros([300,20,20])
+	for j in range(20):
+		a4=np.zeros([300,20]);
+		for i in range(m):
+			t4[i]=np.round(6*i+10+3*j); 
+			a4[t4[i]:t4[i]+k+1,i]=b1;
+
+			t1[i]=np.round(140-2*j);
+			a1[t1[i]:t1[i]+k+1,i]=b1;
+
+		shot[:,:,j]=a1[0:300,:]+a3[0:300,:]+a4[0:300,:];
+
+	return shot
 	
 
 def random0(seed=1996,ia=727,im=524287):
