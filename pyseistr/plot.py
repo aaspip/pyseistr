@@ -72,13 +72,16 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	
 	d3d=d3d.transpose([1,2,0])
 	
+	
 	kw = {
     'vmin': d3d.min(),
     'vmax': d3d.max(),
     'levels': np.linspace(d3d.min(), d3d.max(), nlevel),
     'cmap':cseis()
 	}
-	kw.update(kwargs)
+	
+	kwargs.update(kw)
+	kw=kwargs
 	
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
