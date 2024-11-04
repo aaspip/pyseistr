@@ -80,8 +80,9 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
     'cmap':cseis()
 	}
 	
-	kwargs.update(kw)
-	kw=kwargs
+	kw.update(kwargs)
+# 	kwargs.update(kw)
+# 	kw=kwargs
 	
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
