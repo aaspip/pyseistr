@@ -123,7 +123,8 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 		kwargs.__delitem__('barlabel')
 
 	if figname is not None:
-		kwargs.__delitem__('cmap')
+		if 'cmap' in kwargs.keys():
+			kwargs.__delitem__('cmap')
 		plt.savefig(figname,**kwargs)
 	
 	if showf:
