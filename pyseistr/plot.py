@@ -24,7 +24,7 @@ np.concatenate((np.zeros([1,40]),np.expand_dims(np.linspace(0,1,88),axis=1).tran
 	return ListedColormap(seis)
 	
 
-def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figname=None,showf=True,close=True,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),figname=None,showf=True,close=True,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
 	
@@ -52,6 +52,35 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	data=scipy.io.loadmat('/Users/chenyk/chenyk/matlibcyk/test/hyper3d.mat')['cmp']
 	from pyseistr import plot3d
 	plot3d(data);
+	
+	EXAMPLE 3
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from pyseistr import plot3d
+
+	nz=81
+	nx=81
+	ny=81
+	dz=20
+	dx=20
+	dy=20
+	nt=1501
+	dt=0.001
+
+	v=np.arange(nz)*20*1.2+1500;
+	vel=np.zeros([nz,nx,ny]);
+	for ii in range(nx):
+		for jj in range(ny):
+			vel[:,ii,jj]=v;
+
+	plot3d(vel,figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dz,y=np.arange(nz)*dz,barlabel='Velocity (m/s)',showf=False,close=False)
+	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
+	plt.title('3D velocity model')
+	plt.savefig(fname='vel3d.png',format='png',dpi=300)
+	plt.show()
+	
 	'''
 
 	[nz,nx,ny] = d3d.shape;
@@ -85,7 +114,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
 	
-	fig = plt.figure(figsize=(8, 6))
+	fig = plt.figure(figsize=figsize)
 	ax = fig.add_subplot(111, aspect='auto',projection='3d')
 	plt.jet()
 
