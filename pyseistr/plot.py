@@ -103,10 +103,10 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	
 	
 	kw = {
-    'vmin': d3d.min(),
-    'vmax': d3d.max(),
-    'levels': np.linspace(d3d.min(), d3d.max(), nlevel),
-    'cmap':cseis()
+	'vmin': d3d.min(),
+	'vmax': d3d.max(),
+	'levels': np.linspace(d3d.min(), d3d.max(), nlevel),
+	'cmap':cseis()
 	}
 	
 	kw.update(kwargs)
@@ -205,5 +205,33 @@ def framebox(x1,x2,y1,y2,c=None,lw=None):
 	return
 	
 			
-			
-				
+def gengif(inpath, outpath, duration=500):
+	'''
+	gengif: generate a GIF file from a list of PNG or other type of images.
+
+	By Yangkang Chen
+	Nov, 2024
+	
+	INPUT
+	inpath:   input list of images (e.g., PNG)
+	outpath:  output GIF path
+	duration: Animation speed
+	
+	OUTPUT
+	N/A
+	
+	EXAMPLE
+	pywave/demos/test_second_wfd3ds.py
+	
+	'''
+	from PIL import Image
+	images = [Image.open(image_path) for image_path in inpath]
+
+	images[0].save(
+		outpath,
+		save_all=True,
+		append_images=images[1:],
+		optimize=False,
+		duration=duration,
+		loop=0  # 0 means infinite loop
+	)
