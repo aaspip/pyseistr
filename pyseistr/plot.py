@@ -81,9 +81,8 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	}
 	
 	kw.update(kwargs)
-# 	kwargs.update(kw)
-# 	kw=kwargs
 	
+	print(kw)
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
 	
@@ -125,7 +124,6 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 
 	if figname is not None:
 		kwargs.__delitem__('cmap')
-# 		print(kwargs)
 		plt.savefig(figname,**kwargs)
 	
 	if showf:
