@@ -23,14 +23,13 @@ BibTeX:
 -----------
 ## Copyright
     The pyseistr developing team, 2021-present
+    
 -----------
-
 ## License
     GNU General Public License, Version 3
     (http://www.gnu.org/copyleft/gpl.html)   
 
 -----------
-
 ## Install
 Using the latest version
 
@@ -44,6 +43,10 @@ or using Pypi
 or using pip directly from github (Preferrable because Pyseistr is updated very frequently)
 
     pip install git+https://github.com/aaspip/pyseistr
+
+-----------
+## Verified runnable OS
+Mac OS, Linux, Windows (need Microsoft C++ Build Tools)
 
 -----------
 ## DEMO scripts
