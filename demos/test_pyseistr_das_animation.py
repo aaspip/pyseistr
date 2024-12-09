@@ -78,7 +78,7 @@ plt.savefig('test_pyseistr_das.png',format='png',dpi=300)
 plt.show()
 
 
-## Below is to plot an fancy animation
+## Below is to plot a fancy animation
 import numpy as np
 import matplotlib.pyplot as plt
 clip=20;
