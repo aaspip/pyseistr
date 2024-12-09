@@ -235,3 +235,65 @@ def gengif(inpath, outpath, duration=500):
 		duration=duration,
 		loop=0  # 0 means infinite loop
 	)
+	
+
+def wiping(inpath, outpath, duration=500, number=30):
+	'''
+	wiping: generate a GIF file from a list of PNG or other type of images.
+
+	By Yangkang Chen
+	Nov, 2024
+	
+	INPUT
+	inpath:   input list of images (e.g., PNG)
+	outpath:  output GIF path
+	duration: Animation speed
+	number:	  number of temporary images
+	
+	OUTPUT
+	N/A
+	
+	EXAMPLE
+	
+	from pyseistr import genplane3d,plot3d
+	data,datan=genplane3d(noise=True,seed=202425,var=0.1);
+	dn=datan[:,:,10]
+	import pydrr as pd
+	d1=pd.drr3d(dn,0,120,0.004,3,3);	#DRR
+	noi1=dn-d1;
+	import numpy as np
+	import matplotlib.pyplot as plt	
+	plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0); 
+	plt.imshow(dn,clim=(-1, 1),aspect='auto');plt.axis('off');plt.margins(0, 0);plt.savefig('dn.png')
+	plt.imshow(d1,clim=(-1, 1),aspect='auto');plt.margins(0, 0);plt.savefig('d1.png')
+	from pyseistr import wiping
+	wiping(['dn.png','d1.png'], 'test.gif', duration=500)
+	
+	'''
+	from PIL import Image
+	images = [Image.open(image_path) for image_path in inpath]
+	nimages=len(inpath)
+	I = [np.asarray(img).copy() for img in images]
+
+	nx=I[0].shape[1]
+	dx=int(nx/number)
+	ind=0
+	images=[]
+	for ii in range(number):
+		ind=ind+dx
+# 		print(ii.shape,I[0].shape,'ind=',ind)
+		Inew=I[0].copy()
+		Inew[:,0:ind,:]=I[1][:,0:ind,:] #equal I[1] (e.g., denoised)
+		Inew[:,ind-5:ind+5,:]=int(255/2)
+		im = Image.fromarray(np.uint8(Inew))
+		images.append(im)
+	images[0].save(
+		outpath,
+		save_all=True,
+		append_images=images[1:],
+		optimize=False,
+		duration=duration,
+		loop=0  # 0 means infinite loop
+	)	
+	
+

@@ -231,26 +231,33 @@ def sigmoid(n1=400,n2=100,d1=0.004,d2=0.032,o1=0,o2=0,large=None,reflectivity=Tr
 	else:
 		return earth
 	
-def genplane3d():
+def genplane3d(noise=False,seed=202324,var=0.1):
 	'''
 	genplane3d: quickly generate the widely used 3D plane-wave synthetic data
 	
 	INPUT
-	No input
-	
-	Maybe in the future add the following
 	noise: if add noise
 	seed: random number seed
-	var: noise variance (actually the maximum amplitude of noise)
+	var: noise variance relative to the maximum amplitude of clean data
 	
 	OUTPUT
-	dout
+	dout (or dclean,dnoisy)
 		
 	EXAMPLE 1
 	from pyseistr import genplane3d,plot3d
 	data=genplane3d();
 	plot3d(data)
 	
+	EXAMPLE 2 (2D example)
+	from pyseistr import genplane3d
+	data,datan=genplane3d(noise=True,seed=202425,var=0.1);
+	dn=datan[:,:,10]
+	import pydrr as pd
+	d1=pd.drr3d(dn,0,120,0.004,3,3);	#DRR
+	noi1=dn-d1;
+	import numpy as np
+	import matplotlib.pyplot as plt
+	plt.imshow(np.concatenate([dn,d1,noi1],axis=1),aspect='auto');plt.show()
 	
 	REFERENCES
 	This "simple" example has been extensively used by dozens of papers, just to name a few
@@ -308,7 +315,17 @@ def genplane3d():
 
 		shot[:,:,j]=a1[0:300,:]+a3[0:300,:]+a4[0:300,:];
 
-	return shot
+
+	if noise:
+		## add noise
+		[n1,n2,n3]=shot.shape
+		np.random.seed(seed)
+		var=var*np.abs(shot).max()
+		n=var*np.random.randn(n1,n2,n3); #np.random.randn()'s variance is around 1, mean is 0
+		shotn=shot+n;
+		return shot,shotn
+	else:
+		return shot
 	
 
 def random0(seed=1996,ia=727,im=524287):
