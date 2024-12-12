@@ -59,7 +59,7 @@ def fkdip(d,w):
 	Dtmp=np.fft.ifft(np.fft.ifftshift(Dtmp2,1),nk,1);
 
 	#honor symmetry for inverse fft
-	Dfft2=np.zeros([nf,nk],dtype=np.complex_);
+	Dfft2=np.zeros([nf,nk],dtype=np.complex128);
 	Dfft2[0:nf2+1,:]=Dtmp;
 	Dfft2[nf2+1:,:]=np.conj(np.flipud(Dtmp[1:-1,:]));
 	d0=np.real(np.fft.ifft(Dfft2,nf,0));
