@@ -2511,7 +2511,7 @@ static PyObject *csint2d(PyObject *self, PyObject *args){
 	}
 	lam = sqrtf(lam/n12);
 	
-	ps_conjgrad_init(n12, n12, n12, n12, lam, 10*FLT_EPSILON, true, true); 
+	ps_conjgrad_init(n12, n12, n12, n12, lam, 10*FLT_EPSILON, verb, true); 
 
 	if (NULL != qq) {
 // 	    ps_floatread(qq[0],n12,dip);
