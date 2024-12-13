@@ -6,29 +6,29 @@ import numpy as np
 ## You can either download the data using the following commands or using the binary file from https://github.com/aaspip/data
 # https://github.com/aaspip/data/blob/main/forge0723.bin
 
-#pip install segysak
+fid=open("forge0723.bin","rb");
+dn = np.fromfile(fid, dtype = np.float32, count = 500*960).reshape([500,960],order='F')
+
+## Or uncomment the following after: "pip install segysak"
 # from segysak.segy import segy_loader, well_known_byte_locs
-## test data 1
-#P arrival: 1484
-#window f1=1484 | window f2=200 n2=960 n1=2000
+# # test data 1								   #Do not uncomment this line
+# #P arrival: 1484							   #Do not uncomment this line
+# #window f1=1484 | window f2=200 n2=960 n1=2000 #Do not uncomment this line (This line is for Madagascar processing)
 # os.system("wget -q https://pando-rgw01.chpc.utah.edu/silixa_das_apr_23_2019/FORGE_78-32_iDASv3-P11_UTC190423213209.sgy")
 # segydata = segy_loader("FORGE_78-32_iDASv3-P11_UTC190423213209.sgy")
 # data=np.zeros([1280,30000])
 # data[:,:]=segydata.data
 # dn=data[200:1160,1484-20:3484-20].transpose();
 
-## test data 2
-#P arrival: 24811
-#window f1=24811 | window f2=200 n2=960 n1=2000
+# # test data 2										#Do not uncomment this line
+# # P arrival: 24811									#Do not uncomment this line
+# # window f1=24811 | window f2=200 n2=960 n1=2000	#Do not uncomment this line (This line is for Madagascar processing)
 # os.system("wget -q https://pando-rgw01.chpc.utah.edu/silixa_das_apr_26_2019/FORGE_78-32_iDASv3-P11_UTC190426070723.sgy")
 # segydata = segy_loader("FORGE_78-32_iDASv3-P11_UTC190426070723.sgy")
 # data=np.zeros([1280,30000])
 # data[:,:]=segydata.data
 # pindex=24811
 # dn=data[200:1160,pindex-20:pindex+500-20].transpose();
-
-fid=open("forge0723.bin","rb");
-dn = np.fromfile(fid, dtype = np.float32, count = 500*960).reshape([500,960],order='F')
 
 import matplotlib.pyplot as plt
 import pyseistr as ps
