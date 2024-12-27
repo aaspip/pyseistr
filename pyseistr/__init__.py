@@ -69,6 +69,7 @@ from .smooth import *
 from .snr import *
 from .patch import *
 from .interp import *
+from .io import *
 
 ## C versions
 from .dip2d import dip2dc
