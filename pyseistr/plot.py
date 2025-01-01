@@ -24,7 +24,7 @@ np.concatenate((np.zeros([1,40]),np.expand_dims(np.linspace(0,1,88),axis=1).tran
 	return ListedColormap(seis)
 	
 
-def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),figname=None,showf=True,close=True,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
 	
@@ -73,7 +73,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 		for jj in range(ny):
 			vel[:,ii,jj]=v;
 
-	plot3d(vel,figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dz,y=np.arange(nz)*dz,barlabel='Velocity (m/s)',showf=False,close=False)
+	plot3d(vel,figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False)
 	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
 	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
 	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
@@ -114,9 +114,12 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
 	
-	fig = plt.figure(figsize=figsize)
-	ax = fig.add_subplot(111, aspect='auto',projection='3d')
-	plt.jet()
+	if ifnewfig==False:
+		ax=plt.gca()
+	else:
+		fig = plt.figure(figsize=figsize)
+		ax = fig.add_subplot(111, aspect='auto',projection='3d')
+		plt.jet()
 
 	# Plot contour surfaces
 	_ = ax.contourf(

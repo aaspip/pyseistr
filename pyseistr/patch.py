@@ -52,8 +52,11 @@ def patch2d(A,l1=8,l2=8,s1=4,s2=4,mode=1):
 	plt.figure(figsize=(16,8));
 	plt.imshow(np.concatenate([data,data2,data-data2],axis=1),aspect='auto');
 	plt.show()
-	
+
 	EXAMPLE 2
+	https://github.com/chenyk1990/mlnb/blob/main/DL_denoise_simple2D.ipynb
+	
+	EXAMPLE 3
 	sgk_denoise() in pyseisdl/denoise.py
 	"""
 	[n1,n2]=A.shape;
@@ -103,7 +106,70 @@ def patch3d(A,l1=4,l2=4,l3=4,s1=2,s2=2,s3=2,mode=1):
 	Modified on Dec 12, 2018 (the edge issue, arbitrary size for the matrix)
 			Dec 31, 2018 (tmp1=mod(n1,l1) -> tmp1=mod(n1-l1,s1))
 	
-	EXAMPLE
+	EXAMPLE 1
+	#generate data
+	import numpy as np
+	from pyseistr import genplane3d,plot3d
+	import matplotlib.pyplot as plt
+	data,noisy=genplane3d(noise=True,seed=202425,var=0.1);
+
+	#visualize the data
+	dz=1;dx=1;dy=1;
+	[nz,nx,ny]=data.shape;
+	plot3d(data,vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Clean)')
+	plt.savefig(fname='data3d-clean.png',format='png',dpi=300)
+	plt.show()
+
+	plot3d(noisy,vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Noisy)')
+	plt.savefig(fname='data3d-noisy.png',format='png',dpi=300)
+	plt.show()
+
+	from pyseistr import patch3d,patch3d_inv,snr
+	X=patch3d(data,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+	Xnoisy=patch3d(noisy,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+
+	from pyseistr import cseis
+	plt.imshow(X,aspect='auto',cmap=cseis());plt.ylabel('Patch NO');plt.xlabel('Patch Pixel');plt.show()
+
+	#visualize the patches
+	plt.figure(figsize=(8,8))
+	for ii in range(16):
+            ax=plt.subplot(4,4,ii+1,projection='3d')
+            plot3d(X[600+ii,:].reshape(16,10,10,order='F'),ifnewfig=False,showf=False,close=False)
+            plt.gca().axis('off')
+	plt.show()
+	plt.figure(figsize=(8,8))
+	for ii in range(16):
+            ax=plt.subplot(4,4,ii+1,projection='3d')
+            plot3d(Xnoisy[600+ii,:].reshape(16,10,10,order='F'),ifnewfig=False,showf=False,close=False)
+            plt.gca().axis('off')
+	plt.show()
+
+
+	#reconstruct
+	data2=patch3d_inv(X,nz,nx,ny,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+	print('Error=',np.linalg.norm(data.flatten()-data2.flatten()))
+
+	plot3d(np.concatenate([data,data2,data-data2],axis=1),vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx*3)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Noisy)')
+	plt.savefig(fname='data3d-recon.png',format='png',dpi=300)
+	plt.show()
+
+	EXAMPLE 2
+	https://github.com/chenyk1990/mlnb/blob/main/DL_denoise_simple3D.ipynb
+	
+	EXAMPLE 3
 	sgk_denoise() in pyseisdl/denoise.py
 	"""
 
@@ -124,14 +190,14 @@ def patch3d(A,l1=4,l2=4,l3=4,s1=2,s2=2,s3=2,mode=1):
 			A=np.concatenate((A,np.zeros([A.shape[0],A.shape[1],s3-tmp])),axis=2);	#concatenate along the third dimension
 
 		[N1,N2,N3]=A.shape;
+		X=[]
 		for i1 in range(0,N1-l1+1,s1):
 			for i2 in range(0,N2-l2+1,s2):
 				for i3 in range(0,N3-l3+1,s3):
-					if i1==0 and i2==0 and i3==0:
-						X=np.reshape(A[i1:i1+l1,i2:i2+l2,i3:i3+l3],[l1*l2*l3,1],order='F');
-					else:
 						tmp=np.reshape(A[i1:i1+l1,i2:i2+l2,i3:i3+l3],[l1*l2*l3,1],order='F');
-						X=np.concatenate((X,tmp),axis=1);
+						X.append(tmp)
+		X = np.array(X)				
+						
 	else:
 		#not written yet
 		pass;
@@ -194,6 +260,9 @@ def patch2d_inv(X,n1,n2,l1=8,l2=8,s1=4,s2=4,mode=1):
 	plt.show()
 
 	EXAMPLE 2
+	https://github.com/chenyk1990/mlnb/blob/main/DL_denoise_simple3D.ipynb
+	
+	EXAMPLE 3
 	sgk_denoise() in pyseisdl/denoise.py
 
 	"""
@@ -262,7 +331,70 @@ def patch3d_inv( X,n1,n2,n3,l1=4,l2=4,l3=4,s1=2,s2=2,s3=2,mode=1):
 			Dec 31, 2018 (tmp1=mod(n1,l1) -> tmp1=mod(n1-l1,s1))
 	Marich, 31, 2020, 2D->3D
 	
-	EXAMPLE
+	EXAMPLE 1
+	#generate data
+	import numpy as np
+	from pyseistr import genplane3d,plot3d
+	import matplotlib.pyplot as plt
+	data,noisy=genplane3d(noise=True,seed=202425,var=0.1);
+
+	#visualize the data
+	dz=1;dx=1;dy=1;
+	[nz,nx,ny]=data.shape;
+	plot3d(data,vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Clean)')
+	plt.savefig(fname='data3d-clean.png',format='png',dpi=300)
+	plt.show()
+
+	plot3d(noisy,vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Noisy)')
+	plt.savefig(fname='data3d-noisy.png',format='png',dpi=300)
+	plt.show()
+
+	from pyseistr import patch3d,patch3d_inv,snr
+	X=patch3d(data,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+	Xnoisy=patch3d(noisy,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+
+	from pyseistr import cseis
+	plt.imshow(X,aspect='auto',cmap=cseis());plt.ylabel('Patch NO');plt.xlabel('Patch Pixel');plt.show()
+
+	#visualize the patches
+	plt.figure(figsize=(8,8))
+	for ii in range(16):
+            ax=plt.subplot(4,4,ii+1,projection='3d')
+            plot3d(X[600+ii,:].reshape(16,10,10,order='F'),ifnewfig=False,showf=False,close=False)
+            plt.gca().axis('off')
+	plt.show()
+	plt.figure(figsize=(8,8))
+	for ii in range(16):
+            ax=plt.subplot(4,4,ii+1,projection='3d')
+            plot3d(Xnoisy[600+ii,:].reshape(16,10,10,order='F'),ifnewfig=False,showf=False,close=False)
+            plt.gca().axis('off')
+	plt.show()
+
+
+	#reconstruct
+	data2=patch3d_inv(X,nz,nx,ny,l1=16,l2=10,l3=10,s1=8,s2=2,s3=2);
+	print('Error=',np.linalg.norm(data.flatten()-data2.flatten()))
+
+	plot3d(np.concatenate([data,data2,data-data2],axis=1),vmin=-1,vmax=1,figsize=(14,10),z=np.arange(nz)*dz,x=np.arange(nx*3)*dx,y=np.arange(ny)*dy,barlabel='Amplitude',showf=False,close=False)
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title('3D seismic data (Noisy)')
+	plt.savefig(fname='data3d-recon.png',format='png',dpi=300)
+	plt.show()
+
+	EXAMPLE 2
+	https://github.com/chenyk1990/mlnb/blob/main/DL_denoise_simple3D.ipynb
+	
+	EXAMPLE 3
 	sgk_denoise() in pyseisdl/denoise.py
 
 	"""
@@ -302,7 +434,7 @@ def patch3d_inv( X,n1,n2,n3,l1=4,l2=4,l3=4,s1=2,s2=2,s3=2,mode=1):
 			for i2 in range(0,N2-l2+1,s2):
 				for i3 in range(0,N3-l3+1,s3):
 					id=id+1;
-					A[i1:i1+l1,i2:i2+l2,i3:i3+l3]=A[i1:i1+l1,i2:i2+l2,i3:i3+l3]+np.reshape(X[:,id],[l1,l2,l3],order='F');
+					A[i1:i1+l1,i2:i2+l2,i3:i3+l3]=A[i1:i1+l1,i2:i2+l2,i3:i3+l3]+np.reshape(X[id,:],[l1,l2,l3],order='F');
 					mask[i1:i1+l1,i2:i2+l2,i3:i3+l3]=mask[i1:i1+l1,i2:i2+l2,i3:i3+l3]+np.ones([l1,l2,l3]);
 		A=A/mask;
 	
