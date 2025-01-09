@@ -1,3 +1,7 @@
+<p align="center">
+<img src='https://github.com/aaspip/gallery/blob/main/pyseistr/pyseistr-logo.png' alt='comp' width=320/>
+</p>
+
 **Pyseistr**
 ======
 
