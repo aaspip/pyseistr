@@ -80,8 +80,43 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plt.title('3D velocity model')
 	plt.savefig(fname='vel3d.png',format='png',dpi=300)
 	plt.show()
+
+	EXAMPLE 4 (a spatially varying velocity model)
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from pyseistr import plot3d
+
+	nz=81
+	nx=81
+	ny=81
+	dz=20
+	dx=20
+	dy=20
+	nt=1501
+	dt=0.001
 	
+	# Velocity gradients
+	x_gradient=0.05
+	y_gradient=0.07
+	z_gradient=0.10
+
+	vel3d=np.ones([nx,ny,nz],dtype='float32')
+	for x in range(nx):
+		vel3d[x,:,:]+=(x*x_gradient)
+	for y in range(ny):
+		vel3d[:,y,:]+=(y*y_gradient)
+	for z in range(nz):
+		vel3d[:,:,z]+=(z*z_gradient)
+
+	plot3d(np.transpose(vel3d,(2,0,1)),frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False)
+	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
+	plt.title('3D velocity model')
+	plt.savefig(fname='vel3d.png',format='png',dpi=300)
+	plt.show()
 	'''
+#,
 
 	[nz,nx,ny] = d3d.shape;
 	
