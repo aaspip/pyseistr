@@ -184,7 +184,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 
 	# Colorbar
 	if 'barlabel' in kw.keys():
-		cbar=fig.colorbar(C, ax=ax, orientation='horizontal', fraction=0.02, pad=0.1, format= "%.2f", label=kw['barlabel'])
+		cbar=plt.gcf().colorbar(C, ax=ax, orientation='horizontal', fraction=0.02, pad=0.1, format= "%.2f", label=kw['barlabel'])
 		cbar.ax.locator_params(nbins=5)
 		kwargs.__delitem__('barlabel')
 
