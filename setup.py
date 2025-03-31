@@ -36,7 +36,7 @@ paintc2d_module = Extension('paint2dcfun', sources=['pyseistr/src/paint_cfuns.c'
 setup(
     name="pyseistr",
     version="0.0.4.4.2",
-    license='GNU General Public License, Version 3 (GPLv3)',
+    license='MIT License',
     description="A python package for structural denoising and interpolation of multi-channel seismic data",
     long_description=long_description,
     author="pyseistr developing team",
@@ -57,8 +57,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Scientific/Engineering",
-        "Topic :: Scientific/Engineering :: Physics",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+        "Topic :: Scientific/Engineering :: Physics"
     ],
     keywords=[
         "seismology", "earthquake seismology", "exploration seismology", "array seismology", "denoising", "science", "engineering", "structure", "local slope", "filtering"
