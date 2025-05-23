@@ -21,6 +21,67 @@ def dip2d(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,re
 	dip:  2D slope
 	
 	NOTE: mask function is not enabled yet (will do in the future)
+	
+	EXAMPLE 1
+	import numpy as np
+	import matplotlib.pyplot as plt
+	import pyseistr as ps
+
+	## Generate synthetic data
+	from pyseistr import gensyn,smooth
+	data=gensyn();
+	data=data[:,0::10];#or data[:,0:-1:10];
+	data=data/np.max(np.max(data));
+	np.random.seed(202122);
+	scnoi=(np.random.rand(data.shape[0],data.shape[1])*2-1)*0.2;
+
+	#add erratic noise
+	nerr=scnoi*0;inds=[10,20,50];
+	for i in range(len(inds)):
+		nerr[:,inds[i]]=scnoi[:,inds[i]]*10;
+
+	dn=data+scnoi+nerr;
+
+	dtemp=smooth(dn,rect=[1,5,1]);
+	
+	print('size of data is (%d,%d)'%data.shape)
+	print(data.flatten().max(),data.flatten().min())
+
+	dip=ps.dip2d(dtemp,rect=[10,20,1]); 
+	print(dn.shape)
+	print(dip.flatten().max(),dip.flatten().min())
+
+	## Structural smoothing
+	r=2;
+	eps=0.01;
+	order=2;
+	d1=ps.somean2dc(dn,dip,r,order,eps);
+	d2=ps.somf2dc(dn,dip,r,order,eps,1);
+
+	## plot results
+	fig = plt.figure(figsize=(10, 8))
+	ax=plt.subplot(2,4,1)
+	plt.imshow(data,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Clean data');
+	ax=plt.subplot(2,4,2)
+	plt.imshow(dn,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noisy data');
+	ax=plt.subplot(2,4,3)
+	plt.imshow(d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMEAN)');
+	ax=plt.subplot(2,4,4)
+	plt.imshow(dn-d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMEAN)');
+	ax=plt.subplot(2,4,6)
+	plt.imshow(dip,cmap='jet',clim=(-2, 2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Slope');
+	ax=plt.subplot(2,4,7)
+	plt.imshow(d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMF)');
+	ax=plt.subplot(2,4,8)
+	plt.imshow(dn-d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMF)');
+	plt.show()
 	'''
 	
 	from .divne import divne
@@ -69,7 +130,66 @@ def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,r
 	OUTPUT
 	dip:  2D slope
 	
-	from .divne import divne
+	EXAMPLE 1
+	import numpy as np
+	import matplotlib.pyplot as plt
+	import pyseistr as ps
+
+	## Generate synthetic data
+	from pyseistr import gensyn,smooth
+	data=gensyn();
+	data=data[:,0::10];#or data[:,0:-1:10];
+	data=data/np.max(np.max(data));
+	np.random.seed(202122);
+	scnoi=(np.random.rand(data.shape[0],data.shape[1])*2-1)*0.2;
+
+	#add erratic noise
+	nerr=scnoi*0;inds=[10,20,50];
+	for i in range(len(inds)):
+		nerr[:,inds[i]]=scnoi[:,inds[i]]*10;
+
+	dn=data+scnoi+nerr;
+
+	dtemp=smooth(dn,rect=[1,5,1]);
+	
+	print('size of data is (%d,%d)'%data.shape)
+	print(data.flatten().max(),data.flatten().min())
+
+	dip=ps.dip2dc(dtemp,rect=[10,20,1]); 
+	print(dn.shape)
+	print(dip.flatten().max(),dip.flatten().min())
+
+	## Structural smoothing
+	r=2;
+	eps=0.01;
+	order=2;
+	d1=ps.somean2dc(dn,dip,r,order,eps);
+	d2=ps.somf2dc(dn,dip,r,order,eps,1);
+
+	## plot results
+	fig = plt.figure(figsize=(10, 8))
+	ax=plt.subplot(2,4,1)
+	plt.imshow(data,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Clean data');
+	ax=plt.subplot(2,4,2)
+	plt.imshow(dn,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noisy data');
+	ax=plt.subplot(2,4,3)
+	plt.imshow(d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMEAN)');
+	ax=plt.subplot(2,4,4)
+	plt.imshow(dn-d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMEAN)');
+	ax=plt.subplot(2,4,6)
+	plt.imshow(dip,cmap='jet',clim=(-2, 2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Slope');
+	ax=plt.subplot(2,4,7)
+	plt.imshow(d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMF)');
+	ax=plt.subplot(2,4,8)
+	plt.imshow(dn-d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMF)');
+	plt.show()
 	'''
 	
 	p0 = 0.0;

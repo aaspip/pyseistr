@@ -4,8 +4,7 @@
 :copyright:
     Yangkang Chen (chenyk2016@gmail.com), 2021-2023   
 :license:
-    GNU General Public License, Version 3
-    (http://www.gnu.org/copyleft/gpl.html)
+    MIT License
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)

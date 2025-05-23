@@ -1,4 +1,6 @@
 import numpy as np
+from .operators import adjnull
+
 def divne(num, den, Niter, rect, ndat, eps_dv, eps_cg, tol_cg,verb):
 	'''
 	divne: N-dimensional smooth division rat=num/den		  
@@ -22,7 +24,71 @@ def divne(num, den, Niter, rect, ndat, eps_dv, eps_cg, tol_cg,verb):
 	 
 	REFERENCE
 	H. Wang, Y. Chen, O. Saad, W. Chen, Y. Oboue, L. Yang, S. Fomel, and Y. Chen, 2022, A Matlab code package for 2D/3D local slope estimation and structural filtering. Geophysics, 87(3), F1–F14, doi: 10.1190/geo2021-0266.1. 
+	
+	EXAMPLE 1
+	
+	import numpy as np
+	import matplotlib.pyplot as plt
+	import pyseistr as ps
+
+	## Generate synthetic data
+	from pyseistr import gensyn,smooth
+	data=gensyn();
+	data=data[:,0::10];#or data[:,0:-1:10];
+	data=data/np.max(np.max(data));
+	np.random.seed(202122);
+	scnoi=(np.random.rand(data.shape[0],data.shape[1])*2-1)*0.2;
+
+	#add erratic noise
+	nerr=scnoi*0;inds=[10,20,50];
+	for i in range(len(inds)):
+		nerr[:,inds[i]]=scnoi[:,inds[i]]*10;
+
+	dn=data+scnoi+nerr;
+
+	dtemp=smooth(dn,rect=[1,5,1]);
+	
+	print('size of data is (%d,%d)'%data.shape)
+	print(data.flatten().max(),data.flatten().min())
+
+	dip=ps.dip2d(dtemp,rect=[10,20,1]); #dip2d uses divne
+	print(dn.shape)
+	print(dip.flatten().max(),dip.flatten().min())
+
+	## Structural smoothing
+	r=2;
+	eps=0.01;
+	order=2;
+	d1=ps.somean2dc(dn,dip,r,order,eps);
+	d2=ps.somf2dc(dn,dip,r,order,eps,1);
+
+	## plot results
+	fig = plt.figure(figsize=(10, 8))
+	ax=plt.subplot(2,4,1)
+	plt.imshow(data,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Clean data');
+	ax=plt.subplot(2,4,2)
+	plt.imshow(dn,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noisy data');
+	ax=plt.subplot(2,4,3)
+	plt.imshow(d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMEAN)');
+	ax=plt.subplot(2,4,4)
+	plt.imshow(dn-d1,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMEAN)');
+	ax=plt.subplot(2,4,6)
+	plt.imshow(dip,cmap='jet',clim=(-2, 2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Slope');
+	ax=plt.subplot(2,4,7)
+	plt.imshow(d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Filtered (SOMF)');
+	ax=plt.subplot(2,4,8)
+	plt.imshow(dn-d2,cmap='jet',clim=(-0.2, 0.2),aspect=0.5);ax.set_xticks([]);ax.set_yticks([]);
+	plt.title('Noise (SOMF)');
+	plt.show()
+
 	'''
+	
 	n=num.size
 	
 	ifhasp0=0
@@ -439,43 +505,5 @@ def fold(o, d, nx, nb, np, x, tmp):
 			for i in range(0,j):
 				tmp[j-1-i] = x[o+(nx-1-i)*d];
 	return tmp
-
-def adjnull( adj,add,nm,nd,m,d ):
-	'''
-	Claerbout-style adjoint zeroing Zeros out the output (unless add is true). 
-	Useful first step for and linear operator.
-	
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) and later version.
-	
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-	
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	adj : adjoint flag; add: addition flag; nm: size of m; nd: size of d
-	'''
-	
-	if add:
-		return m,d
-
-	if adj:
-		m=np.zeros(nm);
-		for i in range(0,nm):
-			m[i] = 0.0;
-	else:
-		d=np.zeros(nd);
-		for i in range(0,nd):
-			d[i] = 0.0;
-
-	return m,d
-
-
-
 
 	

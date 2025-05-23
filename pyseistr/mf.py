@@ -15,16 +15,6 @@ def mf(D,nfw=7,ifb=1,axis=2):
 	Copyright (C) 2014 Yangkang Chen
 	Ported to python in Apr, 17, 2022
 	
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published
-	by the Free Software Foundation, either version 3 of the License, or
-	any later version.
-	
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details: http://www.gnu.org/licenses/
-	
 	References
 	Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
 	Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
@@ -74,16 +64,6 @@ def svmf(D,nfw=7,ifb=1,axis=2,l1=2,l2=0,l3=2,l4=4):
 	# 		 win_len: window length distribution
 	
 	Copyright (C) 2019 Yangkang Chen
-	
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published
-	by the Free Software Foundation, either version 3 of the License, or
-	any later version.
-	
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details: http://www.gnu.org/licenses/
 	'''
 	import numpy as np
 	n1=D.shape[0];
