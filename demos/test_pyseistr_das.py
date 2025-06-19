@@ -79,4 +79,48 @@ plt.show()
 
 
 
+## plot frequency slice
+# added by Yangkang Chen, June 18, 2025
+
+dn_fx=np.abs(ps.spectrafx(dn))
+d1_bp_fx=np.abs(ps.spectrafx(d1_bp))
+d1_bpsomf_fx=np.abs(ps.spectrafx(d1_bpsomf))
+d1_bpsomffk_fx=np.abs(ps.spectrafx(d1_bpsomffk))
+
+clip=200;
+nf=512;
+dt=0.0005;dx=1;
+df=1/dt/nf
+[nt,nx]=dn.shape
+fig = plt.figure(figsize=(6, 8))
+ax=plt.subplot(3,2,1)
+plt.imshow(dn_fx,cmap=plt.jet(),clim=(0,clip),aspect='auto',extent=[0,(nx-1)*dx,(nf/2-1)*df,0]);ax.set_xticks([]);#ax.set_yticks([]);
+plt.ylabel('Frequency (Hz)');plt.gca().set_ylim(300, 0);
+plt.title('Raw DAS data');
+
+ax=plt.subplot(3,2,3)
+plt.imshow(d1_bp_fx,cmap=plt.jet(),clim=(0,clip),aspect='auto',extent=[0,(nx-1)*dx,(nf/2-1)*df,0]);ax.set_xticks([]);#ax.set_yticks([]);
+plt.ylabel('Frequency (Hz)');plt.gca().set_ylim(300, 0);
+plt.title('BP');
+
+ax=plt.subplot(3,2,4)
+plt.imshow(d1_bpsomf_fx,cmap=plt.jet(),clim=(0,clip),aspect='auto',extent=[0,(nx-1)*dx,(nf/2-1)*df,0]);ax.set_xticks([]);#ax.set_yticks([]);
+plt.gca().set_ylim(300, 0);
+plt.title('BPSOMF');
+
+ax=plt.subplot(3,2,5)
+plt.imshow(d1_bpsomffk_fx,cmap=plt.jet(),clim=(0,clip),aspect='auto',extent=[0,(nx-1)*dx,(nf/2-1)*df,0]);#ax.set_xticks([]);ax.set_yticks([]);
+plt.ylabel('Frequency (Hz)');plt.xlabel('Channel');plt.gca().set_ylim(300, 0);
+plt.title('BPSOMFFK');
+
+ax=plt.subplot(3,2,6)
+plt.imshow(dn_fx-d1_bpsomffk_fx,cmap=plt.jet(),clim=(0,clip),aspect='auto',extent=[0,(nx-1)*dx,(nf/2-1)*df,0]);#ax.set_xticks([]);ax.set_yticks([]);
+plt.xlabel('Channel');plt.gca().set_ylim(300, 0);
+plt.title('Removed Noise');
+plt.savefig('test_pyseistr_das_fx.png',format='png',dpi=300)
+plt.show()
+
+
+
+
 
