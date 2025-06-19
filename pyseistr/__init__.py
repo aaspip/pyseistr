@@ -69,6 +69,7 @@ from .snr import *
 from .patch import *
 from .interp import *
 from .io import *
+from .spectra import *
 
 ## C versions
 from .dip2d import dip2dc
