@@ -43,9 +43,14 @@ or using Pypi
 
     pip install pyseistr
     
-or using pip directly from github (Preferrable because Pyseistr is updated very frequently)
+or using pip directly from github (Preferable because Pyseistr is updated very frequently)
 
     pip install git+https://github.com/aaspip/pyseistr
+
+If you encounter a problem on certain machines or Google Colab, try the following:
+
+	pip install --no-build-isolation git+https://github.com/aaspip/pyseistr
+
 
 -----------
 ## Verified runnable OS
