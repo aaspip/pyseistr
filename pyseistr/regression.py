@@ -38,6 +38,9 @@ def lpf(basis,data,niter=100,verb=1):
 	
 	pef=[]
 	pred=[]
+	
+
+	
 	return pef,pred
 	
 # def lpfc(signal,noise,rect,niter=50,eps=0.0,verb=1):
@@ -76,3 +79,52 @@ def lpf(basis,data,niter=100,verb=1):
 # 	
 # 	return signal2,noise2,low
 
+
+def multidivn(num, den, niter, nw, n, rect, ndat, nbox, aa=None, verb):
+	'''
+	
+	INPUT
+	num:	numerator
+	den:	denominator
+	niter:  number of iterations
+	nw: 	number of components
+	n:  	data size
+	ndat: 	data dimensions [ndim]
+	nbox: 	smoothing radius [ndim]
+	den:	denominator [nw*nd]
+	aa:		data filter [sf_filter type FYI]
+	verb: 	verbosity flag
+	
+	OUTPUT
+	rat:	division ratio
+	
+	EXAMPLE
+	
+	
+	'''
+
+	n2 = n*nw
+	p = np.zeros (n2);
+    prec =  (None != aa);
+    if (prec) helicon_init(aa); 
+	
+	from .solvers import conjgrad
+	eps_cg=1;
+	tol_cg=1.e-6;
+	
+	par_P=[]
+	par_L={'nm':n,'nd':n,'w':den} 							# parameters of weight2_lop
+	par_S={'nm':n,'nd':n,'nbox':nbox,'ndat':ndat,'ndim':3}	# parameters of repeat_lop
+	ifhasp0=prec;
+	
+	print('ifhasp0 (if preconditioning) = ',ifhasp0)
+	
+	from .operators import weight2_lop, repeat_lop
+	
+	rat = conjgrad(ifnot(prec, helicon_lop, None), weight2_lop, repeat_lop, p, None, num, eps_cg, tol_cg, niter, ifhasp0, par_p, par_L, par_S, verb);
+	
+	return rat
+	
+	
+	
+	
