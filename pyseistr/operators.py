@@ -271,31 +271,31 @@ def weight2_lop(din,par,adj,add):
 
 	return dout
 
-void sf_repeat_init(int m1            /* trace length */, 
-		 int m2            /* number of traces */, 
-		 sf_operator oper1 /* operator */)
-/*< initialize >*/
-{
-    n1 = m1;
-    n2 = m2;
-    oper = oper1;
-}
-
-void sf_repeat_lop (bool adj, bool add, int nx, int ny, float *xx, float *yy)
-/*< combined linear operator >*/
-{
-    int i2;       
-    
-    if (nx != ny || nx != n1*n2) 
-	sf_error("%s: Wrong size (nx=%d ny=%d n1=%d n2=%d)",
-		 __FILE__,nx,ny,n1,n2);
-
-    sf_adjnull (adj, add, nx, ny, xx, yy);
-
-    for (i2=0; i2 < n2; i2++) {
-	oper(adj,true,n1,n1,xx+i2*n1,yy+i2*n1);
-    }
-}
+# void sf_repeat_init(int m1            /* trace length */, 
+# 		 int m2            /* number of traces */, 
+# 		 sf_operator oper1 /* operator */)
+# /*< initialize >*/
+# {
+#     n1 = m1;
+#     n2 = m2;
+#     oper = oper1;
+# }
+# 
+# void sf_repeat_lop (bool adj, bool add, int nx, int ny, float *xx, float *yy)
+# /*< combined linear operator >*/
+# {
+#     int i2;       
+#     
+#     if (nx != ny || nx != n1*n2) 
+# 	sf_error("%s: Wrong size (nx=%d ny=%d n1=%d n2=%d)",
+# 		 __FILE__,nx,ny,n1,n2);
+# 
+#     sf_adjnull (adj, add, nx, ny, xx, yy);
+# 
+#     for (i2=0; i2 < n2; i2++) {
+# 	oper(adj,true,n1,n1,xx+i2*n1,yy+i2*n1);
+#     }
+# }
 
 def repeat_lop(din,par,adj,add):
 	'''
