@@ -214,7 +214,7 @@ def weight2_lop(din,par,adj,add):
 	
 	INPUT
 	din: model/data
-	par: parameter
+	par: parameter (par['w'],par['nw'])
 	adj: adj flag
 	add: add flag
 	
@@ -258,6 +258,12 @@ def weight2_lop(din,par,adj,add):
 	if adj==1:
 		for iw in range(nw):
 			for i in range(nd):
+# 				print('nw,nd=',nw,nd)
+# 				print('w.shape',w.shape)
+# 				print('i,iw',i,iw)
+# 				print('m[i+iw*nd]',m[i+iw*nd])
+# 				print('d[i]',d[i])
+# 				print('w[i,iw]',w[i,iw])
 				m[i+iw*nd]=m[i+iw*nd]+d[i]*w[i,iw]; #dot product
 	else: #forward
 		for iw in range(nw):
@@ -346,12 +352,83 @@ def repeat_lop(din,par,adj,add):
 	
 	m,d  = adjnull( adj,add,nm,nd,m,d );
 	
-	par_op={'nm':n1,'nd':n1}
+# 	par_op={'nm':n1,'nd':n1,'rect':par['rect']}
+	par_op=par['par_op']
+	print('par_op',par_op)
+
+	
 	for i2 in range(n2):
 		if adj==1:
-			m[i2*n1+(i2+1)*n1]=oper(d[i2*n1+(i2+1)*n1],par_op,1,1)
+			m[i2*n1:(i2+1)*n1]=oper(d[i2*n1:(i2+1)*n1],par_op,1,1)
 		else:
-			d[i2*n1+(i2+1)*n1]=oper(m[i2*n1+(i2+1)*n1],par_op,0,1)
+			d[i2*n1:(i2+1)*n1]=oper(m[i2*n1:(i2+1)*n1],par_op,0,1)
+
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+
+	return dout
+
+
+
+def helicon_lop(din,par,adj,add):
+	'''
+	helicon_lop: not started
+	
+	Ported to Python by Yangkang Chen, ?
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	The only difference between weight2_lop and weight_lop is that
+	the parameter 'w' is 1D in weight_lop but 2D in weight2_lop
+	
+	Therefore, in 1D version, nm=nd
+	in 2D version, nm=nd*nw 
+	
+	'''
+	nm=par['nm'];
+	nd=par['nd'];
+	w=par['w']; #2D in weight2_lop while 1D in weight_lop
+	nw=par['nw']; #number of components in multidivn
+	
+	if nd*nw != nm:
+		ValueError('Size mismatch, nd*nw should be nm')
+	
+	if w.shape[1]!=nw:
+		ValueError('Shape mismatch, w should be of [nd,nw]')
+
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+	
+	m,d  = adjnull( adj,add,nm,nd,m,d );
+	
+	if adj==1:
+		for iw in range(nw):
+			for i in range(nd):
+				m[i+iw*nd]=m[i+iw*nd]+d[i]*w[i,iw]; #dot product
+	else: #forward
+		for iw in range(nw):
+			for i in range(nd):
+				d[i]=d[i]+m[i+iw*nd]*w[i,iw]; #d becomes model, m becomes data
 
 	if adj==1:
 		dout=m;

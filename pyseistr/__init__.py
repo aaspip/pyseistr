@@ -58,6 +58,7 @@ from .fk import fkdip
 from .plot import *
 from .pwsmooth import *
 from .pwspray2d import *
+from .regression import *
 
 from .das import coh 
 from .das import cohc
