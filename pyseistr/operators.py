@@ -277,32 +277,6 @@ def weight2_lop(din,par,adj,add):
 
 	return dout
 
-# void sf_repeat_init(int m1            /* trace length */, 
-# 		 int m2            /* number of traces */, 
-# 		 sf_operator oper1 /* operator */)
-# /*< initialize >*/
-# {
-#     n1 = m1;
-#     n2 = m2;
-#     oper = oper1;
-# }
-# 
-# void sf_repeat_lop (bool adj, bool add, int nx, int ny, float *xx, float *yy)
-# /*< combined linear operator >*/
-# {
-#     int i2;       
-#     
-#     if (nx != ny || nx != n1*n2) 
-# 	sf_error("%s: Wrong size (nx=%d ny=%d n1=%d n2=%d)",
-# 		 __FILE__,nx,ny,n1,n2);
-# 
-#     sf_adjnull (adj, add, nx, ny, xx, yy);
-# 
-#     for (i2=0; i2 < n2; i2++) {
-# 	oper(adj,true,n1,n1,xx+i2*n1,yy+i2*n1);
-#     }
-# }
-
 def repeat_lop(din,par,adj,add):
 	'''
 	repeat_lop: combined linear operator
@@ -352,16 +326,13 @@ def repeat_lop(din,par,adj,add):
 	
 	m,d  = adjnull( adj,add,nm,nd,m,d );
 	
-# 	par_op={'nm':n1,'nd':n1,'rect':par['rect']}
 	par_op=par['par_op']
-	print('par_op',par_op)
 
-	
 	for i2 in range(n2):
 		if adj==1:
-			m[i2*n1:(i2+1)*n1]=oper(d[i2*n1:(i2+1)*n1],par_op,1,1)
+			m[i2*n1:(i2+1)*n1]=m[i2*n1:(i2+1)*n1]+oper(d[i2*n1:(i2+1)*n1],par_op,1,1) #m=m+oper is different from m=oper (WHY?)
 		else:
-			d[i2*n1:(i2+1)*n1]=oper(m[i2*n1:(i2+1)*n1],par_op,0,1)
+			d[i2*n1:(i2+1)*n1]=d[i2*n1:(i2+1)*n1]+oper(m[i2*n1:(i2+1)*n1],par_op,0,1) #d=d+oper = d=oper (WHY?)
 
 	if adj==1:
 		dout=m;
@@ -369,7 +340,6 @@ def repeat_lop(din,par,adj,add):
 		dout=d;
 
 	return dout
-
 
 
 def helicon_lop(din,par,adj,add):
