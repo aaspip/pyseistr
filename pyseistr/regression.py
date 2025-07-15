@@ -1,13 +1,14 @@
 import numpy as np
-def lpf(data,basis,rect=[5,5,1],niter=100,verb=1):
+def lpf(data,basis,rect=[5,5,1],niter=100,verb=1,aafilt=None):
 	'''
-	LPFC: Local prediction filter (n-dimensional) (not started)
+	LPF: Local prediction filter (n-dimensional) 
 	
 	INPUT   
 	data:     data to fit [n1,n2,n3] 
-	basis:    basis functions to fit [n1,n2,n3,nw]
+	basis:    basis functions to fit [n1,n2,n3,nw] [basis size is always ndata*nw]
 	rect:     smoothing radius [r1,r2,r3]
 	niter:  number of CG iterations
+	aafilt:   helicon preconditioning filter (default: None)
 	verb:   verbosity flag (default: 0)
 	
 	OUTPUT
@@ -28,27 +29,39 @@ def lpf(data,basis,rect=[5,5,1],niter=100,verb=1):
 	ndat.append(1)
 	
 	n=data.size	
-	nw=basis.shape[1]
+	nw=basis.shape[-1]
 	
 	print("niter,nw,n,ndat,rect=",niter,nw,n,ndat,rect);
 	print('basis.shape',basis.shape)
 	
 
-	mean=(basis*basis).sum()
+	mean=(basis.flatten()*basis.flatten()).sum()
 	mean = np.sqrt (mean/n/nw);
+	
+	print('mean=',mean)
 	
 	data=data/mean;
 	basis=basis/mean
 	
-	pef=multidivn(data, basis, niter, nw, n, ndat, rect, ndim, aa=None, verb=True)
+	data=data.reshape(n,order='F')
+	basis=basis.reshape(n,nw,order='F')
+	
+	pef=multidivn(data, basis, niter, nw, n, ndat, rect, ndim, aa=aafilt, verb=True)
 	
 	from .operators import weight2_lop
-	par={'w':pef, 'nw':nw, 'nm':n*nw, 'nd':n}
+	par={'w':basis, 'nw':nw, 'nm':n*nw, 'nd':n}
 	
 # 	basis=basis*mean;
-	data_pre=weight2_lop(basis.reshape(n*nw,order='F'),par,False,False);
+	data_pre=weight2_lop(pef.reshape(n*nw,order='F'),par,False,False);
 	data_pre=data_pre*mean;
 
+	if ndat[1]==1: #1D problem
+		data_pre=data_pre.reshape(ndat[0],order='F')
+		
+	elif ndim==2: #2D problem
+		data_pre=data_pre.reshape(ndat[0],ndat[1],order='F')
+		pef=pef.reshape(ndat[0],ndat[1],nw,order='F')
+	
 	return data_pre, pef
 	
 def multidivn(num, den, niter, nw, n, ndat, nbox, ndim, aa=None, verb=True):
@@ -63,7 +76,8 @@ def multidivn(num, den, niter, nw, n, ndat, nbox, ndim, aa=None, verb=True):
 	ndat: 	data dimensions [ndim] (e.g., [nd,1])
 	nbox: 	smoothing radius [ndim] (e.g., nbox=[4,4,1])
 	ndim:   dimension (e.g., 1 if input is 1D; 2 if input is 2D; 3 if input is 3D)
-	aa:		data filter [sf_filter type FYI]
+	aa:		data filter [sf_filter type FYI], helix preconditioning filter a dictionary like  	
+			{'flt':np.array([-1]),'lag':np.array([251]),'nh':1, 'mis': False, 'h0': 0}
 	verb: 	verbosity flag
 	
 	OUTPUT
@@ -89,9 +103,9 @@ def multidivn(num, den, niter, nw, n, ndat, nbox, ndim, aa=None, verb=True):
 	eps_cg=1;
 	tol_cg=1.e-6;
 	
-	par_P=[]
+	par_P={'nm':n,'nd':n,'aa': aa}
 	par_L={'nm':n2,'nd':n,'w':den, 'nw': nw} 							# parameters of weight2_lop
-	par_S={'nm':n2,'nd':n2,'n1':n,'n2':nw,'oper':trianglen_lop,'par_op':{'nm':n,'nd':n,'nbox':nbox,'ndat':ndat,'ndim':1}}	# parameters of repeat_lop
+	par_S={'nm':n2,'nd':n2,'n1':n,'n2':nw,'oper':trianglen_lop,'par_op':{'nm':n,'nd':n,'nbox':nbox,'ndat':ndat,'ndim':ndim}}	# parameters of repeat_lop
 	ifhasp0=prec;
 	
 	print('ifhasp0 (if preconditioning) = ',ifhasp0)

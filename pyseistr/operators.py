@@ -18,6 +18,24 @@ def adjnull( adj,add,nm,nd,m,d ):
 			d[i] = 0.0;
 
 	return m,d
+
+def copy_lop( adj,add,nm,nd,m,d ):
+	'''
+	copy operator
+	'''
+	
+	if nm != nd:
+		ValueError('Size mismatch, nm should be nd')
+
+	adjnull (adj, add, nm, nd, m, d);
+	
+	for i in range(nm):
+		if adj==1:
+			m[i] = m[i] + d[i]
+		else:
+			d[i] = d[i] + m[i]
+
+	return m,d
 	
 def allpass3_lop(din,par,adj,add):
 	#3-D Plane-wave destruction filter
@@ -327,12 +345,15 @@ def repeat_lop(din,par,adj,add):
 	m,d  = adjnull( adj,add,nm,nd,m,d );
 	
 	par_op=par['par_op']
-
+# 	print(par_op)
 	for i2 in range(n2):
 		if adj==1:
-			m[i2*n1:(i2+1)*n1]=m[i2*n1:(i2+1)*n1]+oper(d[i2*n1:(i2+1)*n1],par_op,1,1) #m=m+oper is different from m=oper (WHY?)
+			par_op['m']=m[i2*n1:(i2+1)*n1];
+			m[i2*n1:(i2+1)*n1] = oper(d[i2*n1:(i2+1)*n1],par_op,1,1) #m=m+oper is different from m=oper (WHY?)
 		else:
-			d[i2*n1:(i2+1)*n1]=d[i2*n1:(i2+1)*n1]+oper(m[i2*n1:(i2+1)*n1],par_op,0,1) #d=d+oper = d=oper (WHY?)
+# 			d[i2*n1:(i2+1)*n1]=d[i2*n1:(i2+1)*n1]+oper(m[i2*n1:(i2+1)*n1],par_op,0,1) #d=d+oper = d=oper (WHY?)
+			par_op['d']=d[i2*n1:(i2+1)*n1]
+			d[i2*n1:(i2+1)*n1]=oper(m[i2*n1:(i2+1)*n1],par_op,0,1) #d=d+oper = d=oper (WHY?)
 
 	if adj==1:
 		dout=m;
@@ -344,9 +365,9 @@ def repeat_lop(din,par,adj,add):
 
 def helicon_lop(din,par,adj,add):
 	'''
-	helicon_lop: not started
+	helicon_lop: helicon filtering
 	
-	Ported to Python by Yangkang Chen, ?
+	by Yangkang Chen, July 14, 2025
 	
 	INPUT
 	din: model/data
@@ -358,24 +379,15 @@ def helicon_lop(din,par,adj,add):
 	dout: data/model
 	
 	EXPLANATION
-	The only difference between weight2_lop and weight_lop is that
-	the parameter 'w' is 1D in weight_lop but 2D in weight2_lop
+	TBD
 	
-	Therefore, in 1D version, nm=nd
-	in 2D version, nm=nd*nw 
+	EXAMPLE
+	TBD
 	
 	'''
 	nm=par['nm'];
 	nd=par['nd'];
-	w=par['w']; #2D in weight2_lop while 1D in weight_lop
-	nw=par['nw']; #number of components in multidivn
 	
-	if nd*nw != nm:
-		ValueError('Size mismatch, nd*nw should be nm')
-	
-	if w.shape[1]!=nw:
-		ValueError('Shape mismatch, w should be of [nd,nw]')
-
 	if adj==1:
 		d=din;
 		if 'm' in par and add==1:
@@ -389,20 +401,24 @@ def helicon_lop(din,par,adj,add):
 		else:
 			d=np.zeros(par['nd']);
 	
-	m,d  = adjnull( adj,add,nm,nd,m,d );
+	copy_lop(adj, add, nm, nd, m, d);
 	
-	if adj==1:
-		for iw in range(nw):
-			for i in range(nd):
-				m[i+iw*nd]=m[i+iw*nd]+d[i]*w[i,iw]; #dot product
-	else: #forward
-		for iw in range(nw):
-			for i in range(nd):
-				d[i]=d[i]+m[i+iw*nd]*w[i,iw]; #d becomes model, m becomes data
-
+	aa=par['aa'] #helix preconditioning filter
+	for ia in range(aa['nh']):
+		for iy in range(aa['lag'][ia],nm,1):
+			if aa['mis'] !=None and aa['mis'][iy]:
+					continue;
+			ix = iy-aa['lag'][ia]
+			if adj==1:
+				m[ix] = m[ix] + d[iy]*aa['flt'][ia]
+			else:
+# 				print('ix=',ix,'nm=',nm,'iy=',iy,'nm',nm,'nd',nd)
+				d[iy] = d[iy] + m[ix]*aa['flt'][ia]
+	
 	if adj==1:
 		dout=m;
 	else:
 		dout=d;
 
 	return dout
+

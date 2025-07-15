@@ -311,8 +311,8 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 		#The above gp.copy() instead of gp is the most striking bug that has been found because otherwise gp was modified during the shaping operation (opS) (Mar, 28, 2022)
 		
 		if opP is not None:
-			d=opL(gx,par_P,0,0);#forward
-			gr=opP(d,par_L,0,0);#forward
+			d=opL(gx,par_L,0,0);#forward
+			gr=opP(d,par_P,0,0);#forward
 		else:
 			gr=opL(gx,par_L,0,0);#forward
 
