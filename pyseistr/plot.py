@@ -35,7 +35,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	figname: figure name to be saved (default: None)
 	showf: if show the figure (default: True)
 	close: if not show a figure, if close the figure (default: True)
-	kwargs: other specs for plotting
+	kwargs: other specs for plotting (e.g., vmin=-0.1, vmax=0.1, and others accepted by contourf)
 	dz,dx,dy: interval (default: 0.01)
 	
 	By Yangkang Chen
