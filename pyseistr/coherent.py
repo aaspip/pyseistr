@@ -2,10 +2,13 @@ EPS=0.000000000001;
 
 def srmp(din, ax1=[0,0.1,10], ax2=[0,0.1,10], ax3=[0,0.1,10], dif=None, verb=False, stack=False, both=False, jumpo=1, jumps=1):
 	'''
-	SRMP: 2D shot gather multiple prediction
+	SRMP: 2D shot gather multiple prediction (Verified when stack=True)
 	
 	INPUT
 	din: shot gather in the frequency domain 
+	ax1: offset axis
+	ax2: shot axis
+	ax3: frequency axis
 	dif: optional input data
 	jumpo: jump in offset dimension, only for stack=n
 	jumps: jump in shot dimension, only for stack=n
@@ -26,6 +29,9 @@ def srmp(din, ax1=[0,0.1,10], ax2=[0,0.1,10], ax3=[0,0.1,10], dif=None, verb=Fal
 	import numpy as np
 	d=np.zeros([300,20,20])
 	d2=srmp(d)
+	
+	EXAMPLE2
+	test_18_srme.py
 	
 	'''
 	import numpy as np
@@ -53,7 +59,7 @@ def srmp(din, ax1=[0,0.1,10], ax2=[0,0.1,10], ax3=[0,0.1,10], dif=None, verb=Fal
 
 	if stack:
 		mm=np.zeros(n1*n2, dtype=np.complex_)
-		dout=np.zeros([n1,n2,nw]);
+		dout=np.zeros([n1,n2,nw], dtype=np.complex_);
 	else:
 		if(~both):
 			mm=np.zeros((2*n1-1)*n1*n2, dtype=np.complex_);
@@ -61,15 +67,19 @@ def srmp(din, ax1=[0,0.1,10], ax2=[0,0.1,10], ax3=[0,0.1,10], dif=None, verb=Fal
 		else:
 			mm=np.zeros(n1*n1*n2, dtype=np.complex_);
 			mtemp=np.zeros(n1*newn1*newn2, dtype=np.complex_);
-		dout=np.zeros([2*n1-1,newn1,newn2,nw]);
+		dout=np.zeros([2*n1-1,newn1,newn2,nw], dtype=np.complex_);
 		
 	for iw in range(nw):
+		if verb:
+			print("Frequency slice %d/%d is done"%(iw,nw))
+		
 		dd=din[:,:,iw].reshape(n1*n2,1, order='F')
 		if dif is not None:
 			ref=dif[:,:,iw].reshape(n1*n2,1, order='F')
 		if(~both):
 			for i2 in range(n2):
 				for i1 in range(n1):
+# 					print('i2,i1=',i2,i1)
 					mm[i2*n1+i1] = 0;
 					fold=0;
 					for m in range(-1*n1+1,n1,1):
@@ -174,6 +184,6 @@ def srmp(din, ax1=[0,0.1,10], ax2=[0,0.1,10], ax3=[0,0.1,10], dif=None, verb=Fal
 					
 	
 	
-	dout=din
+# 	dout=din
 	
 	return dout
