@@ -101,6 +101,83 @@ def binread(fname,n1,n2=1,n3=1):
 	
 	return data
 
+def binwritecmpx(fname,din):
+	'''
+	binwritecmpx: write Binary file of complex values
+	the values are saved in an interleaved way (e.g., real,image,real,image,...)
+	
+	INPUT
+	fname: file name
+	din:   matrix data [n1*n2*n3], type: np.complex_
+	
+	EXAMPLE
+	from pyseistr import binwritecmpx
+	from pyseistr import gensyn
+	import numpy as np
+	din=gensyn();
+	dinc=np.empty(din.shape,dtype=np.complex_) #complex din
+	dinc.real=din;
+	dinc.imag=-din;
+	binwritecmpx('data_400_1000.bin',dinc)
+	'''
+	import numpy as np
+	
+	data = np.empty(din.size * 2, dtype=np.float32)
+	data[0::2] = din.real.flatten(order='F').copy(order='C')
+	data[1::2] = din.imag.flatten(order='F').copy(order='C')
+
+	fid=open(fname,"wb")
+	fid.write(data)
+	
+def binreadcmpx(fname,n1,n2=1,n3=1):
+	'''
+	binreadcmpx: read Binary file of complex values
+	the values are saved in an interleaved way (e.g., real,image,real,image,...)
+	
+	INPUT
+	fname: file name
+	n1,n2,n3: dimension
+	
+	OUTPUT
+	data: data in numpy array format, type: np.complex_	
+	
+	EXAMPLE
+
+	from pyseistr import binwritecmpx,binreadcmpx
+	from pyseistr import gensyn
+	import numpy as np
+	din=gensyn();
+	dinc=np.empty(din.shape,dtype=np.complex_) #complex din
+	dinc.real=din;
+	dinc.imag=-din;
+	binwritecmpx('data_400_1000.bin',dinc)
+	
+	data=binreadcmpx('data_400_1000.bin',n1=400,n2=1000) #type: np.complex_
+	import matplotlib.pyplot as plt
+	plt.imshow(np.concatenate([data.real,data.imag,data.real-data.imag],axis=1),aspect='auto');
+	plt.show()
+	
+	import matplotlib.pyplot as plt
+	plt.imshow(np.concatenate([data.real,-data.imag,data.real+data.imag],axis=1),aspect='auto');
+	plt.show()
+	'''
+	import numpy as np
+	fid=open(fname,"rb")
+	tmp=np.fromfile(fid, dtype = np.float32, count = 2*n1*n2*n3) ### remember double precision
+	
+	data=np.zeros(n1*n2*n3,np.complex_)
+	data.real=tmp[0::2]
+	data.imag=tmp[1::2]
+	
+	if n2==1 and n3==1:
+		data=np.reshape(data,[n1],order='F')
+	elif n3==1:
+		data=np.reshape(data,[n1,n2],order='F')
+	else:
+		data=np.reshape(data,[n1,n2,n3],order='F')
+		
+	return data
+	
 def binwriteint(fname,din):
 	'''
 	binwrite: write Binary file in integer format
