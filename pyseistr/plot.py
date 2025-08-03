@@ -23,6 +23,159 @@ np.concatenate((np.zeros([1,40]),np.expand_dims(np.linspace(0,1,88),axis=1).tran
 
 	return ListedColormap(seis)
 	
+def plot2d(d2d,z=None,x=None,dz=0.01,dx=0.01,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,**kwargs):
+	'''
+	plot2d: plot beautiful 2D images
+	
+	INPUT
+	d2d: input 2D data (z in first-axis, x in second-axis)
+	frames: plotting slices on three sides (default: [nz/2,nx/2,ny/2])
+	z,x: axis vectors  (default: 0.01*[np.arange(nz),np.arange(nx)])
+	figname: figure name to be saved (default: None)
+	showf: if show the figure (default: True)
+	close: if not show a figure, if close the figure (default: True)
+	kwargs: other specs for plotting (e.g., vmin=-0.1, vmax=0.1, and others accepted by contourf)
+	dz,dx: interval (default: 0.01)
+	
+	By Yangkang Chen
+	August, 3, 2025
+	
+	EXAMPLE 1
+	import numpy as np
+	d2d=np.random.rand(100,100);
+	from pyseistr import plot2d
+	plot2d(d2d);
+	
+	EXAMPLE 2
+	from pyseistr import gensyn, plot2d
+	data=gensyn()
+	plot2d(data);
+
+	EXAMPLE 3
+	from pyseistr import gensyn, plot2d
+	data=gensyn()
+	plot2d(data, pclip=90);
+	
+	EXAMPLE 4
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from pyseistr import plot2d
+
+	nz=81
+	nx=81
+	dz=20
+	dx=20
+	nt=1501
+	dt=0.001
+
+	v=np.arange(nz)*20*1.2+1500;
+	vel=np.zeros([nz,nx]);
+	for ii in range(nx):
+			vel[:,ii]=v;
+
+	plot2d(vel,figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,barlabel='Velocity (m/s)',showf=False,close=False)
+	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Z (m)",fontsize='large', fontweight='normal')
+	plt.title('2D velocity model')
+	plt.savefig(fname='vel2d.png',format='png',dpi=300)
+	plt.show()
+	
+	EXAMPLE 5 (velocity with pclip)
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from pyseistr import plot2d
+
+	nz=81
+	nx=81
+	dz=20
+	dx=20
+	nt=1501
+	dt=0.001
+
+	v=np.arange(nz)*20*1.2+1500;
+	vel=np.zeros([nz,nx]);
+	for ii in range(nx):
+			vel[:,ii]=v;
+
+	plot2d(vel,figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,barlabel='Velocity (m/s)',showf=False,close=False, pclip=80)
+	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Z (m)",fontsize='large', fontweight='normal')
+	plt.title('2D velocity model')
+	plt.savefig(fname='vel2d.png',format='png',dpi=300)
+	plt.show()
+	'''
+#,
+
+	[nz,nx] = d2d.shape;
+		
+	if z is None:
+		z=np.arange(nz)*dz
+	
+	if x is None:
+		x=np.arange(nx)*dx
+	
+	X, Z = np.meshgrid(x, z)
+	
+	kw = {
+	'vmin': d2d.min(),
+	'vmax': d2d.max(),
+	'cmap':cseis(),
+	'clim':(-np.abs(d2d).max(), np.abs(d2d).max()),
+	'extent': [X.min(), X.max(), Z.max(), Z.min()]
+	}
+
+	if 'pclip' in kwargs.keys():
+		pclip=kwargs['pclip']
+		vmax=np.percentile(np.abs(d2d), pclip)
+		kwargs['vmax']=vmax
+		kwargs['vmin']=max(d2d.min(),-vmax)
+		kwargs.__delitem__('pclip')
+	
+	if 'barlabel' in kwargs.keys():
+		tmp_barlabel=kwargs['barlabel']
+		kwargs.__delitem__('barlabel')
+		kw.update(kwargs)
+		kwargs['barlabel']=tmp_barlabel
+	else:
+		kw.update(kwargs)
+	
+	if ifnewfig==False:
+		ax=plt.gca()
+	else:
+		fig = plt.figure(figsize=figsize)
+		ax = fig.add_subplot(111, aspect='auto')
+		plt.jet()
+
+	# Plot contour surfaces
+	C=plt.imshow(d2d, aspect='auto', **kw)
+
+	kw.update(kwargs)
+	plt.gca().set_xlabel("X",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Z",fontsize='large', fontweight='normal')
+
+	xmin, xmax = X.min(), X.max()
+	zmin, zmax = Z.min(), Z.max()
+	print([xmin,xmax],[zmin,zmax])
+	ax.set(xlim=[xmin, xmax], ylim=[zmin, zmax])
+	plt.gca().invert_yaxis()
+
+	# Colorbar
+	if 'barlabel' in kw.keys():
+		cbar=plt.gcf().colorbar(C, ax=ax, orientation='horizontal', fraction=0.02, pad=0.1, format= "%.2f", label=kw['barlabel'])
+		cbar.ax.locator_params(nbins=5)
+		kwargs.__delitem__('barlabel')
+
+	if figname is not None:
+		if 'cmap' in kwargs.keys():
+			kwargs.__delitem__('cmap')
+		plt.savefig(figname,**kwargs)
+	
+	if showf:
+		plt.show()
+	else:
+		if close:
+			plt.close() #or plt.clear() ?
+
 
 def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,**kwargs):
 	'''
