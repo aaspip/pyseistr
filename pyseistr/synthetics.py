@@ -657,7 +657,70 @@ def generr(n1,n2,n3=1,seed=202122,seed2=201415,var=10,ratio=0.1):
 	
 	return noise
 
-		
+def dither(din, shift):
+	'''
+	dither: Make a dithering to each trace of the input data
+	
+	INPUT
+	din: input data (2D)
+	shift: random time shift (in samples) for each trace (shift >0, downward)
+	
+	OUTPUT
+	dout: shifted data
+	
+	EXAMPLE 1
+	from pyseistr import gensyn, dither
+	import matplotlib.pyplot as plt;
+	
+	data=gensyn()
+	data2=dither(data,-50)
+	plt.imshow(data);plt.show()
+	plt.imshow(data2);plt.show()
+
+	data=gensyn()
+	data2=dither(data,50)
+	plt.imshow(data);plt.show()
+	plt.imshow(data2);plt.show()
+
+	EXAMPLE 2
+	from pyseistr import gensyn, dither
+	import matplotlib.pyplot as plt;
+	import numpy as np
+	
+	data=gensyn(); nx=data.shape[1]
+	data2=dither(data,np.random.permutation(nx))
+	plt.imshow(data);plt.show()
+	plt.imshow(data2);plt.show()
+
+	data=gensyn()
+	data2=dither(data,-np.random.permutation(nx))
+	plt.imshow(data);plt.show()
+	plt.imshow(data2);plt.show()
+	
+	'''
+	
+	nt,nx = din.shape
+	
+# 	dout=np.zeros([nt,nx])
+	dout=din.copy()
+	
+	if type(shift)==int or type(shift)==float or len(shift) == 1:
+		shift=np.ones(nx, dtype=np.int_)*shift
+	else:
+		shift=shift.astype(np.int_)
+		if din.shape[1] != len(shift):
+			Exception("Sorry, n2 must be the ssame")
+
+	for ix in range(nx):
+		if shift[ix]>0:
+			dout[shift[ix]:,ix]=din[:-shift[ix],ix]
+		if shift[ix]<0:
+			dout[:shift[ix],ix]=din[-shift[ix]:,ix]
+	
+	return dout
+
+
+
 def random0(seed=1996,ia=727,im=524287):
 	'''
 	random0: Simple pseudo-random number generator

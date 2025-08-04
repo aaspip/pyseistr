@@ -65,7 +65,7 @@ def binwrite(fname,din):
 	'''
 	import numpy as np
 	fid=open(fname,"wb")
-	data=np.float32(din.flatten(order='F').copy(order='C'))
+	data=np.float32(din.flatten(order='F')) #.copy(order='C'))
 	fid.write(data)
 	
 	
