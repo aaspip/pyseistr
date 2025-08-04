@@ -72,6 +72,7 @@ from .interp import *
 from .io import *
 from .spectra import *
 from .coherent import *
+from .preprocess import *
 
 ## C versions
 from .dip2d import dip2dc
