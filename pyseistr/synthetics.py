@@ -701,8 +701,7 @@ def dither(din, shift):
 	
 	nt,nx = din.shape
 	
-# 	dout=np.zeros([nt,nx])
-	dout=din.copy()
+	dout=np.zeros([nt,nx])
 	
 	if type(shift)==int or type(shift)==float or len(shift) == 1:
 		shift=np.ones(nx, dtype=np.int_)*shift
@@ -714,8 +713,10 @@ def dither(din, shift):
 	for ix in range(nx):
 		if shift[ix]>0:
 			dout[shift[ix]:,ix]=din[:-shift[ix],ix]
-		if shift[ix]<0:
+		elif shift[ix]<0:
 			dout[:shift[ix],ix]=din[-shift[ix]:,ix]
+		elif shift[ix]==0:
+			dout[:,ix]=din[:,ix].copy()
 	
 	return dout
 
