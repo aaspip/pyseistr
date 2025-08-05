@@ -48,7 +48,82 @@ def mf(D,nfw=7,ifb=1,axis=2):
 		
 	return D1
 
+def mfp(D,nfw=7,ifb=1,axis=2,perc=0.1,ifabs=True, mask=False):
+	'''
+	MFP: median filter with a percentage along first or second axis for 2D profile
+	
+	INPUT 
+	D:   	intput data 
+	nfw:    window size 
+	ifb:    if use padded boundary (if not, zero will be padded)
+	axis:   along the vertical (1) or horizontal (2) axis
+	perc:   if perc=0.5, mfp = mf; perc=0.9, means use 10% percentile value in descending order (choose the large value)
+	ifabs:  if using absolute value for the percentile value
+	mask:	only change values in mask area (e.g., value=0, or, 999)
+	
+	OUTPUT 
+	D1:  	output data
+	
+	Copyright (C) 2025 The University of Texas at Austin
+	Copyright (C) 2025 Yangkang Chen
+	
+	References
+	Huang et al., 2021, Erratic noise suppression using iterative structure-oriented space-varying median filtering with sparsity constraint, Geophysical Prospecting, 69, 101-121.
+	Chen et al., 2020, Deblending of simultaneous-source data using a structure-oriented space-varying median filter, Geophysical Journal International, 222, 1805–1823.
+	Gan et al., 2016, Separation of simultaneous sources using a structural-oriented median filter in the flattened dimension, Computers & Geosciences, 86, 46-54.
+	Chen, Y., 2015, Deblending using a space-varying median filter, Exploration Geophysics, 46, 332-341.
+	
+	EXAMPLE
+	see DBZJ
+	'''
+	import numpy as np
 
+	# nfw should be odd
+	if np.mod(nfw,2)==0:
+		nfw=nfw+1;
+
+	if axis==2:
+		D=D.transpose();
+	n1=D.shape[0];
+	n2=D.shape[1];
+	
+	nfw2=(nfw-1)/2;nfw2=int(nfw2);
+
+	D1=D;
+	
+	if ifb==1:
+		D=np.concatenate((np.flipud(D[0:nfw2,:]),D,np.flipud(D[n1-nfw2:n1,:])),axis=0);
+	else: 
+		D=np.concatenate((np.zeros([nfw2,n2]),D,np.zeros([nfw2,n2])),axis=0);
+	# output data
+# 	D1=np.zeros([n1,n2]);
+
+	for i2 in range(0,n2):
+		for i1 in range(0,n1):
+			if mask:
+				if ifabs:
+					if D1[i1,i2]==0:
+						D1[i1,i2]=np.percentile(np.abs(D[i1:i1+nfw,i2]), perc*100);  
+					else:
+						pass
+				else:
+					if D1[i1,i2]==9999:
+						D1[i1,i2]=np.percentile(D[i1:i1+nfw,i2], perc*100); 
+					else:
+						pass
+			else:
+				if ifabs:
+					if D1[i1,i2]>0:
+						D1[i1,i2]=np.percentile(np.abs(D[i1:i1+nfw,i2]), perc*100);  
+					else:
+						D1[i1,i2]=-np.percentile(np.abs(D[i1:i1+nfw,i2]), perc*100); 
+				else:
+					D1[i1,i2]=np.percentile(D[i1:i1+nfw,i2], perc*100); 
+	if axis==2:
+		D1=D1.transpose();
+		
+	return D1
+	
 def svmf(D,nfw=7,ifb=1,axis=2,l1=2,l2=0,l3=2,l4=4):
 	'''
 	SVMF: space-varying median filter along first or second axis for 2D profile

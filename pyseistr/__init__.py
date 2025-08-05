@@ -54,7 +54,7 @@ from .soint3d import soint3d #structure-oriented interpolation for 3D data
 from .sint import sint2d
 from .ricker import ricker
 from .bp import bandpass
-from .fk import fkdip
+from .fk import fkdip,fkdip2
 from .plot import *
 from .pwsmooth import *
 from .pwspray2d import *
