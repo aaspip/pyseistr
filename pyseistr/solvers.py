@@ -120,7 +120,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 	gg=np.zeros(ny);
 	
 	if wt  is not None or wght  is not None:
-		td=zeros(ny);
+		td=np.zeros(ny);
 		if wt  is not None:
 			wht=wt;
 		else:
@@ -235,6 +235,314 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 		par['res']=res;
 		
 	return x,par
+
+def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
+	'''
+	Generic preconditioned linear solver. (same as Madagascar function: sf_solver_prec)
+	
+	Solves
+	L{x} =~ dat
+	eps p   =~ 0
+	where x = prec{p}
+	
+	Yangkang Chen
+	Aug, 06, 2025
+	Ported to Python in Aug, 06, 2025
+	
+	INPUT
+	opL: forward/linear operator
+	solv: stepping function
+	opP: preconditioning operator
+	np:   size of p   (1D vector)
+	nx:   size of x   (1D vector)
+	ny:   size of dat (1D vector)
+	x:    estimated model
+	dat:  data
+	niter:number of iterations
+	eps:  regularization parameter
+	
+	par. (parameter struct)
+	  "wt":     float*:         weight      
+	  "wght":   sf_weight wght: weighting function
+	  "x0":     float*:         initial model
+	  "nloper": sf_operator:    nonlinear operator
+	  "mwt":    float*:         model weight
+	  "verb":   bool:           verbosity flag
+	  "known":  bool*:          known model mask
+	  "nmem":   int:            iteration memory
+	  "nfreq":  int:            periodic restart
+	  "xmov":   float**:        model iteration
+	  "rmov":   float**:        residual iteration
+	  "err":    float*:         final error
+	  "res":    float*:         final residual
+	  "xp":     float*:         preconditioned model
+	  
+	OUPUT
+	x: estimated model
+	
+	'''
+	
+	TOLERANCE=1.e-12;
+	forget=0;
+	x=x.flatten(order='F');
+	dat=dat.flatten(order='F');
+	xmov=None;
+	rmov=None;
+	wht=None;
+	err=None;
+	res=None;
+
+	if 'wt' in par:
+		wt=par['wt'];
+	else:
+		wt=None;
+	
+	if 'wght' in par:
+		wght=par['wght'];
+	else:
+		wght=None;
+	
+	if 'x0' in par:
+		x0=par['x0'];
+	else:
+		x0=None;
+	
+	if 'nloper' in par:
+		nloper=par['nloper'];
+		par_nloper=par['par_nloper'];
+	else:
+		nloper=None;
+		
+	if 'mwt' in par:
+		mwt=par['mwt'];
+	else:
+		mwt=None;
+		
+	if 'verb' in par:
+		verb=par['verb'];
+	else:
+		verb=0;
+		
+	if 'known' in par:
+		known=par['known'];
+	else:
+		known=None;
+
+	if 'nmem' in par:
+		nmem=par['nmem'];
+	else:
+		nmem=-1;
+	
+	if 'nfreq' in par:
+		nfreq=par['nfreq'];
+	else:
+		nfreq=0;
+		
+	if 'xmov' in par:
+		xmov=par['xmov'];
+	else:
+		xmov=None;
+
+	if 'rmov' in par:
+		rmov=par['rmov'];
+	else:
+		rmov=None;
+		
+	if 'err' in par:
+		err=par['err'];
+	else:
+		err=None;
+
+	if 'res' in par:
+		res=par['res'];
+	else:
+		res=None;
+
+	if 'xp' in par:
+		xp=par['xp'];
+	else:
+		xp=None;
+		
+	p=np.zeros(ny+np)
+	g=np.zeros(ny+np);
+	rr=np.zeros(ny);
+	gg=np.zeros(ny);
+	
+	rr=-dat;		#for i in range(ny)
+	p[nprec:]=0.0; 	#for i in range(ny)
+	
+	if wt  is not None or wght  is not None:
+		td=np.zeros(ny);
+		if wt  is not None:
+			wht=wt;
+		else:
+			wht=np.ones(ny);
+	
+	if mwt  is not None:
+		tp=np.zeros(np);
+	
+# 	rr=-dat;
+	if x0  is not None:
+		p[0:np]=x0[0:np];
+		if nloper  is not None:
+			if mwt  is not None:
+				tp[0:np]=p[0:np]*mwt[0:np]
+				x=opP(tp,par_P,0,1)
+				par_nloper['d']=rr;
+				rr=nloper(x,par_nloper,0,1);
+			else:
+				x=opP(p,par_P,0,1)
+				par_nloper['d']=rr;
+				rr=nloper(x,par_nloper,0,1);
+		else:
+			if mwt  is not None:
+				tp[0:np]=p[0:np]*mwt[0:np]
+				x=opP(tp,par_P,0,1)
+				par_L['d']=rr;
+				rr=opL(x,par_L,0,1);
+			else:
+				x=opP(p,par_P,0,1)
+				par_L['d']=rr;
+				rr=opL(x,par_L,0,1);
+	else:
+		p=np.zeros(np);
+	
+	dpr0=np.sum(rr*rr);
+	dpg0=1.0;
+	
+	for n in range(0,niter):
+		if nmem>=0:
+			forget= (n >= nmem);
+			
+		if wght  is not None and forget:
+			wht=wght(ny,rr); #wght is a function
+		
+		if wht  is not None:
+			rr=eps*p[np:]+rr*wht;
+			td=rr*wht;
+			x=opP(td,par_P,1,0)
+			g=opL(x,par_L,1,0);
+		else:
+			x=opP(rr,par_P,1,0)
+			g=opL(x,par_L,1,0);
+		
+		if mwt  is not None:
+			g[0:np]=g[0:np]*mwt[0:np]; #mwt size: ?; g size: ny+nprec
+			
+		g[np:] = eps*rr[0:ny]
+		
+		if known  is not None:
+			for ii in range(0,np):
+				if known[ii]:
+					g[ii]=0.0;
+		
+		if mwt  is not None:
+			tp[0:np]=g[0:np]*mwt[0:np];
+			x=opP(tp,par_P,0,0);
+			gg=opL(x,par_L,0,0);
+		else:
+			x=opP(g,par_P,0,0);
+			gg=opL(x,par_L,0,0);
+		
+		if wht  is not None:
+			gg[0:ny]=gg[0:ny]*wht[0:ny];
+		
+		from .divne import cblas_saxpy
+		gg=cblas_saxpy(ny,eps,g[np:],1,gg,1);
+		
+		if forget and (nfreq !=0): #periodic restart
+			forget = (0 == np.mod(n+1,nfreq));
+		
+		if n==0:
+			dprr0=np.sum(rr[0:ny]*rr[0:ny])
+			dpgm0=np.sum(g[0:np]*g[0:np]);
+			dprr=1.0;
+			dpgm=1.0;
+		else:
+			dprr=np.sum(p[np:]*p[np:]);
+			dpgm=np.sum(g[0:np]*g[0:np]);
+			
+		
+		if verb:
+			print('iteration %d res %f mod %f grad %f !'%(n+1, dpr,np.sum(x*x), dpg));
+			
+		if dprr < TOLERANCE or dpgm < TOLERANCE:
+			if verb:
+				print('convergence in %d iterations\n',n+1);
+			if mwt  is not None:
+				x=x*mwt;
+				tp[0:np]=p[0:np]*mwt[0:np]
+				x=opP(tp,par_P,0,0)
+			else:
+				x=opP(p,par_P,0,0)
+			break;
+		
+		p,rr = solv(forget,np+ny,ny,p,g,rr,gg);
+		
+		forget=0;
+		if nloper  is not None:
+			rr[0:ny]=eps*p[np:]-dat[0:ny];
+			if mwt  is not None:
+				tp[0:np] = p[0:np]*mwt[0:np]
+				x=opP(tp,par_P,0,1);
+				par_nloper['d']=rr;
+				rr=nloper(x,par_nloper,0,1); 
+			else:
+				x=opP(p,par_P,0,1);
+				par_nloper['d']=rr;
+				rr=nloper(x,par_nloper,0,1); 
+		else:
+			if wht is not None:
+				rr[0:ny]=-dat[0:ny];
+				if mwt  is not None:
+					tp[0:np]=p[0:np]*mwt[0:np];
+					x=opP(tp,par_P,0,1)
+					par_L['d']=rr;
+					rr=opL(x,par_L,0,1);
+				else:
+					x=opP(p,par_P,0,1)
+					par_L['d']=rr;
+					rr=opL(x,par_L,0,1);
+			else:
+				if( xmov  is not None or n==niter-1 ):
+					if mwt  is not None:
+						tp[0:np]=p[0:np]*mwt[0:np]
+						x=opP(tp,par_P,0,0)
+					else:
+						x=opP(p,par_P,0,0)
+				
+		if xmov  is not None:
+			xmov[:,n]=x;
+			par['xmov']=xmov;
+		
+		if rmov  is not None:
+			rmov[0:ny,n]=p[np:]*eps;
+			par['rmov']=rmov;
+		
+		if err  is not None:
+			err[n]=np.sum(rr*rr);
+			par['err']=err;
+
+	if xp is not None:
+		xp[0:np]=p[0:np]
+	
+	if res  is not None:
+		res=rr;
+		par['res']=res;
+		
+	
+	while n<niter:
+		if xmov is not None:
+			xmov[0:nx,n]=x[0:nx]
+		
+		if rmov is not None:
+			rmov[0:ny,n]=p[np:]*eps
+			
+		if err is not None:
+			err[n] = np.sum(rr*rr);
+	
+	return x,par
+
 
 def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S,verb):
 	'''
