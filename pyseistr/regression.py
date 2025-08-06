@@ -66,6 +66,7 @@ def lpf(data,basis,rect=[5,5,1],niter=100,verb=1,aafilt=None):
 	
 def multidivn(num, den, niter, nw, n, ndat, nbox, ndim, aa=None, verb=True):
 	'''
+	multidivn: multidimensional division regression
 	
 	INPUT
 	num:	numerator [nd*1]
@@ -119,5 +120,33 @@ def multidivn(num, den, niter, nw, n, ndat, nbox, ndim, aa=None, verb=True):
 	return rat
 	
 	
+def npef(din, filt=None, filt_pch=None, filt_lag=None, epsilon=0.01, a=3, niter=100):
+	'''
+	npef: Estimate Non-stationary PEF in N dimensions.
 	
+	INPUT
+	din: input data
+	filt: double-helix filter
+	filt_pch: double-helix filter pch
+	filt_lag: double-helix filter lags
+	epsilon: regularization parameter (default: 0.01)
+	a:	  dimension
+	niter: number of iterations 
+	
+	OUTPUT
+	dout: output data
+	lag: 	lag file
+	
+	EXAMPLE
+	neqdemos/test_19_npef.py
+	
+	
+	'''
+	
+	
+	dout=din;
+	lag=dout;
+	
+	
+	return dout,lag
 	
