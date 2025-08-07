@@ -59,6 +59,8 @@ from .plot import *
 from .pwsmooth import *
 from .pwspray2d import *
 from .regression import *
+from .coords import *
+from .struct import *
 
 from .das import coh 
 from .das import cohc
