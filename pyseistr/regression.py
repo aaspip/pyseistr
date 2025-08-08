@@ -251,7 +251,7 @@ def createnhelix(dim, nd, center, gap, na, pch):
 	for ip in range(nnp):
 		nh[ip]=aa['nh']
 		
-	nsaa=nhelix(np, n123, nh, pch);
+	nsaa=nallocate(nnp, n123, nh, pch);
 	
 	for ip in range(0,nnp):
 		for i in range(aa['nh']):
@@ -266,19 +266,21 @@ def nallocate(nnp, nd, nh, pch):
 	
 	INPUT
 	nnp: 	number of patches
-	nd:	    data size
-	nh:		filter size [np]
-	pch:	patching [nd]
+	nd:	    data size, INT array
+	nh:		filter size [np], INT array
+	pch:	patching [nd], INT array
 	
 	OUTPUT
 	aa
 	'''
+	from .struct import nhelix, helix
+	
 	aa=nhelix();
 	aa['np']=nnp;
 	
 	aa['hlx']=[]; #aa['hlx'] is a list of helix filters
 	for ii in range(nnp):
-		aa['hlx'].append(helix(nh[ip]))
+		aa['hlx'].append(helix(nh[ii]))
 	
 	aa['pch']=np.zeros(nd, dtype=np.int_)
 	for iid in range(nd):
@@ -338,6 +340,7 @@ def bound(dim, both, nold, nd, na, aa):
 	from .coords import cart2line, line2cart
 	from .operators import helicon_lop
 	
+	nb=np.ones(3, dtype=np.int_)
 	my=1;mb=1;
 	for i in range(dim):
 		nb[i]=nd[i]+2*na[i];
@@ -352,14 +355,14 @@ def bound(dim, both, nold, nd, na, aa):
 		xx[ib]=0.0;
 		for i in range(dim):
 			if ii[i]+1 <= na[i] or ii[i]+1 > nb[i]-na[i]:
-				x[ib]=1.0;
+				xx[ib]=1.0;
 				break;
 	
 	par={'nm':mb,'nd':mb,'aa': aa} #parameter for helicon filtering operator
 	aa=regrid(dim, nold, nb, aa); 
 	
 	for i in range(aa['nh']):
-		aa['flt']=1.0;
+		aa['flt'][i]=1.0;
 	
 	yy=helicon_lop(xx, par, 0, 0);
 	aa=regrid(dim, nb, nd, aa);
@@ -453,7 +456,8 @@ def regrid(dim, nold, nnew, aa):
 	aa:		helix filter
 	
 	'''
-	
+	from .coords import cart2line, line2cart
+	ii=np.zeros(3, dtype=np.int_)
 	for i in range(dim):
 		ii[i] = nold[i]/2-1;
 	
@@ -463,7 +467,7 @@ def regrid(dim, nold, nnew, aa):
 	for i in range(aa['nh']):
 		h=aa['lag'][i]+h0;
 		ii=line2cart( dim, nold, h);
-		aa['lag'][i] = cart2line[dim,nnew,ii] - h1;
+		aa['lag'][i] = cart2line(dim,nnew,ii) - h1;
 	
 	return aa
 
