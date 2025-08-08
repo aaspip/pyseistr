@@ -157,15 +157,16 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	
 	from .bp import ifnot
 	dim=np.ndim(din)  #e.g., 1D/2D
+	n=din.shape
 	
-	if center is not None:
+	if center is None:
 		center=np.zeros(dim,dtype=np.int_)
 		for i in range(dim):
 			center[i]=ifnot(i+1 < dim and a[i+1]>1, a[i]/2, 0)
 	else:
 		center=np.array(center).astype(np.int_)
 	
-	if gap is not None:
+	if gap is None:
 		gap=np.zeros(dim,dtype=np.int_)
 	else:
 		gap=np.array(gap).astype(np.int_)
@@ -217,12 +218,12 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	
 	return dout,lag
 	
-def createnhelix(ndim, nd, center, gap, na, pch):
+def createnhelix(dim, nd, center, gap, na, pch):
 	'''
 	createnhelix:  allocate and output a non-stationary filter
 	
 	INPUT
-	ndim:	number of dimension (INT number)
+	dim:	number of dimension (INT number)
 	nd:	  	data size (INT numpy array of size ndim)
 	center: filter center (INT numpy array of size ndim)
 	gap:	filter gap (INT numpy array of size ndim)
@@ -237,7 +238,7 @@ def createnhelix(ndim, nd, center, gap, na, pch):
 	from pyseistr import createnhelix
 	aa=createnhelix(1,[400], [0], [0], [3], [0])
 	'''
-	
+	from .struct import nhelix
 	aa=createhelix(dim, nd, center, gap, na);
 	
 	n123=1;
@@ -297,6 +298,9 @@ def nbound(ip, dim, nd, na, aa):
 	nd:		data size [ndim]
 	na:		filter size [dim]
 	aa:		non-stationary helix filteer
+	
+	OUTPUT
+	aa:		output filter
 	'''
 	
 	n=1;
@@ -315,12 +319,64 @@ def nbound(ip, dim, nd, na, aa):
 	
 	return aa
 
-def bound():
+def bound(dim, both, nold, nd, na, aa):
 	'''
+	bound: Mark helix filter outputs where input is off data.
 	
+	INPUT
+	dim: 	number of dimensions
+	both:	[bool] if both input and output
+	nold:	old data coordinate [dim]
+	nd:		data size [ndim]
+	na:		filter size [dim]
+	aa:		non-stationary helix filteer
 	
+	OUTPUT
+	aa:		output filter
 	'''
+	from .struct import helix
+	from .coords import cart2line, line2cart
+	from .operators import helicon_lop
 	
+	my=1;mb=1;
+	for i in range(dim):
+		nb[i]=nd[i]+2*na[i];
+		mb=mb*nb[i]
+		my=my*nb[i]
+		
+	xx=np.zeros(mb, dtype=np.float_)
+	yy=np.zeros(mb, dtype=np.float_)
+	
+	for ib in range(mb):
+		ii=line2cart(dim, nb, ib);  
+		xx[ib]=0.0;
+		for i in range(dim):
+			if ii[i]+1 <= na[i] or ii[i]+1 > nb[i]-na[i]:
+				x[ib]=1.0;
+				break;
+	
+	par={'nm':mb,'nd':mb,'aa': aa} #parameter for helicon filtering operator
+	aa=regrid(dim, nold, nb, aa); 
+	
+	for i in range(aa['nh']):
+		aa['flt']=1.0;
+	
+	yy=helicon_lop(xx, par, 0, 0);
+	aa=regrid(dim, nb, nd, aa);
+	
+	for i in range(aa['nh']):
+		aa['flt'] = 0.0;
+		
+	aa['mis']=np.zeros(my, dtype=np.bool_)
+	
+	for iy in range(my):
+		ii=line2cart(dim, nd, iy);
+		for i in range(dim):
+			ib=cart2line(dim, nb, ii);
+		if both:
+			aa['mis'][iy] = bool (yy[ib] > 0. or xx[ib] > 0.);
+		else:
+			aa['mis'][iy] = bool (yy[ib] > 0.);
 	
 	return aa
 
@@ -383,12 +439,77 @@ def createhelix(ndim, nd, center, gap, na):
 	return aa
 	
 
-def nfind_pef():
+def regrid(dim, nold, nnew, aa):
+	'''
+	regrid: change data size
+	
+	INPUT
+	dim:	number of dimensions
+	nold:	old data size [dim], INT array
+	nnew:	new data size [dim], INT array
+	aa:		modified filter
+	
+	OUTPUT
+	aa:		helix filter
+	
+	'''
+	
+	for i in range(dim):
+		ii[i] = nold[i]/2-1;
+	
+	h0=cart2line( dim, nold, ii); # midpoint lag on nold 
+	h1=cart2line( dim, nnew, ii); #             on nnew 
+	
+	for i in range(aa['nh']):
+		h=aa['lag'][i]+h0;
+		ii=line2cart( dim, nold, h);
+		aa['lag'][i] = cart2line[dim,nnew,ii] - h1;
+	
+	return aa
 
-
-
-	return 
+def nfind_pef(nd, dd, aa, rr, niter, eps, nh):
+	'''
+	nfind_pef: estimate non-stationary PEF
+	
+	INPUT
+	nd:		data size, 	INT
+	dd:		data, 		FLOAT array
+	aa:		estimated filter, nhelix filter
+	rr:		regularization filter, nhelix filter
+	niter:	number of iterations, INT
+	eps:	regularization parameter, FLOAT
+	nh:		filter size,			INT
 	
 	
+	OUTPUT
+	aa:		estimated filter, nhelix filter
 	
+	EXAMPLE
+	TBD
+	
+	'''
+	nnp=aa['np']
+	nr=nnp*nh;
+	flt=np.zeros(nr, dtype=np.float_)
+	
+# 	nhconest_init(dd, aa, nh);
+#     npolydiv2_init( nr, rr);
+	
+	from .solvers import solver_prec, cgstep
+	from operators import nhconest_lop, npolydiv2_lop
+	
+	opL=nhconest_lop;opP=npolydiv2_lop;		#define forward and preconditioning operator
+	par_L={'nm': nr, 'nd': nd, 'x': dd, 'aa': aa, 'nhmax': nh};	#parameter file of forward operator
+	par_P={'nm': nr, 'nd': nr, 'aa':rr, 'tt': np.zeros(nr)}		#parameter dic of preconditioning operator
+	par_sol={'verb': 1}		#parameter dic of the solver
+	
+	flt=solver_prec(opL, cgstep, opP, nr, nr, nd, flt, dd, niter, eps, par_L, par_P, par_sol);
+	
+	for ip in range(nnp):
+		na=aa['hlx'][ip]['nh']
+		for ih in range(na):
+			aa['hlx'][ip]['flt'][ih] = -flt[ip*nh+ih];
+	
+	return aa
+
 	

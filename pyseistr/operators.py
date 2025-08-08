@@ -422,3 +422,211 @@ def helicon_lop(din,par,adj,add):
 
 	return dout
 
+def nhconest_lop(din,par,adj,add):
+	'''
+	nhconest_lop: Nonstationary Helical convolution operator
+	
+	by Yangkang Chen, Aug 7, 2025
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	TBD
+	
+	EXAMPLE
+	TBD
+	
+	'''
+	nm=par['nm'];
+	nd=par['nd'];
+	
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+	
+	aa=par['aa'] #helix filter
+	x=par['x']
+	nhmax=par['nhmax']
+	
+	for iy in range(nd):
+		if aa['mis'][iy]:
+			continue;
+		ip=aa['pch'][iy];
+		lag=aa['hlx'][ip]['lag']
+		na=aa['hlx'][ip]['nh']
+		
+		for ia in range(na):
+			ix=iy-lag[ia];
+			if ix<0:
+				continue;
+			
+			if adj==1:
+				m[ia+nhmax+ip] = m[ia+nhmax+ip] + d[iy]*x[ix];
+			else:
+				d[iy] = d[iy] + 		 m[ia+nhmax+ip]*x[ix];
+	
+	
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+
+	return dout
+	
+	
+	
+def npolydiv2_lop(din,par,adj,add):
+	'''
+	npolydiv2_lop: Double polynomial division with a non-stationary helical filter
+	
+	by Yangkang Chen, Aug 7, 2025
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	TBD
+	
+	EXAMPLE
+	TBD
+	
+	'''
+	nm=par['nm'];
+	nd=par['nd'];
+	
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+	
+# 	aa=par['aa'] #helix filter
+# 	x=par['x']
+	tt=par['tt']
+	
+	if adj==1:
+		tt=npolydiv_lop(d,par,0,0);
+		par['m']=m;
+		m=npolydiv_lop(tt,par,1,1);
+	else:
+		tt=npolydiv_lop(m,par,0,0);
+		par['m']=d
+		d=npolydiv_lop(tt,par,1,1);
+	
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+
+	return dout
+
+def npolydiv_lop(din,par,adj,add):
+	'''
+	npolydiv_lop: Inverse filtering with a non-stationary helix filter
+	
+	by Yangkang Chen, Aug 7, 2025
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	TBD
+	
+	EXAMPLE
+	TBD
+	
+	'''
+	nm=par['nm'];
+	nd=par['nd'];
+	
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+	
+	aa=par['aa']; #helix filter
+	tt=par['tt']
+	
+	from .bp import ifnot
+	for iid in range(nd):
+		tt[iid]=ifnot(adj, d[iid], m[iid]);
+	
+	if adj==1:
+		for iy in range(nd-1,-1,-1):
+			ip=aa['pch'][iy];
+			lag=aa['hlx'][ip]['lag']
+			flt=aa['hlx'][ip]['flt']
+			na=aa['hlx'][ip]['nh']
+			for ia in range(na):
+				ix=iy-lag[ia];
+				if ix<0:
+					continue;
+				tt[ix]=tt[ix]-flt[ia]*tt[iy];
+		for iid in range(nd):
+			m[iid] = m[iid] + tt[iid];
+	else:
+		for iy in range(nd):
+			ip=aa['pch'][iy]
+			lag=aa['hlx'][ip]['lag']
+			flt=aa['hlx'][ip]['flt']
+			na=aa['hlx'][ip]['nh']
+			for ia in range(na):
+				ix=iy-lag[ia];
+				if ix<0:
+					continue;
+				tt[ix]=tt[ix]-flt[ia]*tt[iy];
+		
+		for iid in range(nd):
+			d[iid] = d[iid] + tt[iid]
+
+		
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+
+	return dout
+

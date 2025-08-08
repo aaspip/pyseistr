@@ -251,7 +251,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	
 	INPUT
 	opL: forward/linear operator
-	solv: stepping function
+	solv: stepping function (e.g., cgstep)
 	opP: preconditioning operator
 	np:   size of p   (1D vector)
 	nx:   size of x   (1D vector)
