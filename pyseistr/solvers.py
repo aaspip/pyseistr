@@ -236,7 +236,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 		
 	return x,par
 
-def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
+def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	'''
 	Generic preconditioned linear solver. (same as Madagascar function: sf_solver_prec)
 	
@@ -253,7 +253,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	opL: forward/linear operator
 	solv: stepping function (e.g., cgstep)
 	opP: preconditioning operator
-	np:   size of p   (1D vector)
+	nnp:   size of p   (1D vector)
 	nx:   size of x   (1D vector)
 	ny:   size of dat (1D vector)
 	x:    estimated model
@@ -363,8 +363,8 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	else:
 		xp=None;
 		
-	p=np.zeros(ny+np)
-	g=np.zeros(ny+np);
+	p=np.zeros(ny+nnp)
+	g=np.zeros(ny+nnp);
 	rr=np.zeros(ny);
 	gg=np.zeros(ny);
 	
@@ -379,14 +379,14 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			wht=np.ones(ny);
 	
 	if mwt  is not None:
-		tp=np.zeros(np);
+		tp=np.zeros(nnp);
 	
 # 	rr=-dat;
 	if x0  is not None:
-		p[0:np]=x0[0:np];
+		p[0:nnp]=x0[0:nnp];
 		if nloper  is not None:
 			if mwt  is not None:
-				tp[0:np]=p[0:np]*mwt[0:np]
+				tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
 				x=opP(tp,par_P,0,1)
 				par_nloper['d']=rr;
 				rr=nloper(x,par_nloper,0,1);
@@ -396,7 +396,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				rr=nloper(x,par_nloper,0,1);
 		else:
 			if mwt  is not None:
-				tp[0:np]=p[0:np]*mwt[0:np]
+				tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
 				x=opP(tp,par_P,0,1)
 				par_L['d']=rr;
 				rr=opL(x,par_L,0,1);
@@ -405,7 +405,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				par_L['d']=rr;
 				rr=opL(x,par_L,0,1);
 	else:
-		p=np.zeros(np);
+		p=np.zeros(nnp);
 	
 	dpr0=np.sum(rr*rr);
 	dpg0=1.0;
@@ -427,7 +427,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			g=opL(x,par_L,1,0);
 		
 		if mwt  is not None:
-			g[0:np]=g[0:np]*mwt[0:np]; #mwt size: ?; g size: ny+nprec
+			g[0:nnp]=g[0:nnp]*mwt[0:nnp]; #mwt size: ?; g size: ny+nprec
 			
 		g[np:] = eps*rr[0:ny]
 		
@@ -437,7 +437,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 					g[ii]=0.0;
 		
 		if mwt  is not None:
-			tp[0:np]=g[0:np]*mwt[0:np];
+			tp[0:nnp]=g[0:nnp]*mwt[0:nnp];
 			x=opP(tp,par_P,0,0);
 			gg=opL(x,par_L,0,0);
 		else:
@@ -455,12 +455,12 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		
 		if n==0:
 			dprr0=np.sum(rr[0:ny]*rr[0:ny])
-			dpgm0=np.sum(g[0:np]*g[0:np]);
+			dpgm0=np.sum(g[0:nnp]*g[0:nnp]);
 			dprr=1.0;
 			dpgm=1.0;
 		else:
 			dprr=np.sum(p[np:]*p[np:]);
-			dpgm=np.sum(g[0:np]*g[0:np]);
+			dpgm=np.sum(g[0:nnp]*g[0:nnp]);
 			
 		
 		if verb:
@@ -471,7 +471,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				print('convergence in %d iterations\n',n+1);
 			if mwt  is not None:
 				x=x*mwt;
-				tp[0:np]=p[0:np]*mwt[0:np]
+				tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
 				x=opP(tp,par_P,0,0)
 			else:
 				x=opP(p,par_P,0,0)
@@ -483,7 +483,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		if nloper  is not None:
 			rr[0:ny]=eps*p[np:]-dat[0:ny];
 			if mwt  is not None:
-				tp[0:np] = p[0:np]*mwt[0:np]
+				tp[0:nnp] = p[0:nnp]*mwt[0:nnp]
 				x=opP(tp,par_P,0,1);
 				par_nloper['d']=rr;
 				rr=nloper(x,par_nloper,0,1); 
@@ -495,7 +495,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			if wht is not None:
 				rr[0:ny]=-dat[0:ny];
 				if mwt  is not None:
-					tp[0:np]=p[0:np]*mwt[0:np];
+					tp[0:nnp]=p[0:nnp]*mwt[0:nnp];
 					x=opP(tp,par_P,0,1)
 					par_L['d']=rr;
 					rr=opL(x,par_L,0,1);
@@ -506,7 +506,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			else:
 				if( xmov  is not None or n==niter-1 ):
 					if mwt  is not None:
-						tp[0:np]=p[0:np]*mwt[0:np]
+						tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
 						x=opP(tp,par_P,0,0)
 					else:
 						x=opP(p,par_P,0,0)
@@ -524,7 +524,7 @@ def solver_prec(opL,solv,opP,np,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			par['err']=err;
 
 	if xp is not None:
-		xp[0:np]=p[0:np]
+		xp[0:nnp]=p[0:nnp]
 	
 	if res  is not None:
 		res=rr;

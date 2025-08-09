@@ -384,6 +384,9 @@ def helicon_lop(din,par,adj,add):
 	EXAMPLE
 	TBD
 	
+	PAR
+	par={'nm': nm, 'nd': nd, 'aa': aa}
+	
 	'''
 	nm=par['nm'];
 	nd=par['nd'];
@@ -422,6 +425,86 @@ def helicon_lop(din,par,adj,add):
 
 	return dout
 
+def nhelicon_lop(din,par,adj,add):
+	'''
+	nhelicon_lop: non-stationary helicon filtering
+	
+	by Yangkang Chen, Aug 9, 2025
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	TBD
+	
+	EXAMPLE
+	TBD
+	
+	PAR
+	par={'nm': nm, 'nd': nd, 'aa': aa} #here aa is a non-stationary helix filter
+	
+	'''
+	nm=par['nm'];
+	nd=par['nd'];
+	
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+	
+	copy_lop(adj, add, nm, nd, m, d);
+	
+	aa=par['aa'] #helix preconditioning filter
+# 	for ia in range(aa['nh']):
+# 		for iy in range(aa['lag'][ia],nm,1):
+# 			if aa['mis'] !=None and aa['mis'][iy]:
+# 					continue;
+# 			ix = iy-aa['lag'][ia]
+# 			if adj==1:
+# 				m[ix] = m[ix] + d[iy]*aa['flt'][ia]
+# 			else:
+# # 				print('ix=',ix,'nm=',nm,'iy=',iy,'nm',nm,'nd',nd)
+# 				d[iy] = d[iy] + m[ix]*aa['flt'][ia]
+
+	for iy in range(nd):
+		if aa['mis'] is not None and aa['mis'][iy]:
+			continue;
+		ip=aa['pch'][iy]
+		lag=aa['hlx'][ip]['lag']
+		flt=aa['hlx'][ip]['flt']
+		na=aa['hlx'][ip]['nh']
+	
+		for ia in range(na):
+			ix=iy-lag[ia];
+			if ix<0:
+				continue;
+			if adj:
+				m[ix] = m[ix] * flt[ia]
+			else:
+				d[iy] = d[iy] * flt[ia]
+		
+	
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+
+	return dout
+	
 def nhconest_lop(din,par,adj,add):
 	'''
 	nhconest_lop: Nonstationary Helical convolution operator

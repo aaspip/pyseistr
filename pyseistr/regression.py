@@ -181,21 +181,69 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	
 	dd=dd/(dabs+100*EPSILON)
 	
-	
-	
 	pp=np.zeros(n123,dtype=np.int_)
 	if pch is not None:
-		pp=pch;
-		nnp=pp.max()
+		pp=pch.flatten(order='F')
+		
+		if pch is not None:
+			pp=pch;
+			nnp=pp.max()
+		else:
+			pp=np.array(range(n123))
+			nnp=n123;
 	else:
-		pp=np.array(range(n123))
 		nnp=n123;
+		pp=np.array(range(n123), dtype=np.int_)
 		
 	aa=createnhelix(dim, n, center, gap, a, pp)
+# 	print(aa.keys())
 	nf= aa['hlx'][0]['nh']
-	aa=find_mask(n123, kk, aa);
+
+#     sf_warning("dim=%d",dim);
+#     sf_warning("n=%d",n[0]);
+#     sf_warning("center=%d",center[0]);
+#     sf_warning("gap=%d",gap[0]);
+#     sf_warning("a=%d",a[0]);
+#     sf_warning("pp=%d",pp[0]);
+#     
+# 	print("main: type(aa['hlx'][0]['flt'])",type(aa['hlx'][0]['flt']))
+	aa=nfind_mask(n123, kk, aa);
+	print('aa.keys',aa.keys())
+	####### output lag
+	lag=[]
+# 	for ip in range(nnp):
+# 		lag.append(aa['hlx'][ip]['lag'])
+# 	lag=np.array(lag, dtype=np.int_)
+	####### output lag
 	
+	
+	eps=epsilon;eps=0.01;
 	print("niter=",niter,"epsilon",eps);
+	
+
+	nbf=filt.shape[0]
+	if np.ndim(filt)==1:
+		nbp=1
+	
+	if filt_pch is not None:
+		pp=filt_pch.flatten(order='F')
+		pp=np.zeros(nnp, dtype=np.int_)
+	else:
+		pp=None
+	
+	pch=np.zeros(nf*nnp, dtype=np.int_);
+	nh=np.zeros(nbp, dtype=np.int_)
+	
+	for i in range(nbp):
+		nh[i]=nbf;
+	
+	iid=0;
+	for ig in range(nf):
+		for ip in range(nnp):
+			pch[iid]=ifnot(pp is not None,pp[ip],ip);
+			iid=iid+1;
+	
+	bb = nallocate (nbp, nf*nnp, nh, pch);
 	
 	for ip in range(nbp):
 		kk[0:nbf]=filt_lag[0:nbf]
@@ -206,12 +254,15 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	for ip in range(nbp):
 		bb['hlx'][ip]['flt']=filt[ip]
 	
-	nfind_pef (n123, dd, aa, bb, niter, eps, nf);
+	aa=nfind_pef (n123, dd, aa, bb, niter, eps, nf);
 	
-	
+	print('nf:',nf, 'np:', nnp)
+	dout=[]
+	for ip in range(nnp):
+		dout.append(aa['hlx'][ip]['flt'])
 # 	dout=din;
 # 	lag=dout;
-	
+	dout=np.array(dout)
 	
 	#dout: [nf,nnp]
 	#lag:  [nf,nnp]
@@ -250,13 +301,17 @@ def createnhelix(dim, nd, center, gap, na, pch):
 	nh=np.zeros(nnp, dtype=np.int_)
 	for ip in range(nnp):
 		nh[ip]=aa['nh']
-		
+
 	nsaa=nallocate(nnp, n123, nh, pch);
 	
+
+
 	for ip in range(0,nnp):
 		for i in range(aa['nh']):
 			nsaa['hlx'][ip]['lag'][i]=aa['lag'][i];
 		nsaa=nbound(ip, dim, nd, na, nsaa);
+
+# 	print("createnhelix: type(aa['hlx'][0]['flt'])",type(nsaa['hlx'][0]['flt']))
 	
 	return nsaa
 
@@ -281,6 +336,9 @@ def nallocate(nnp, nd, nh, pch):
 	aa['hlx']=[]; #aa['hlx'] is a list of helix filters
 	for ii in range(nnp):
 		aa['hlx'].append(helix(nh[ii]))
+
+	print("nh",nh)
+# 	print("nallocate: type(aa['hlx'][0]['flt'])",type(aa['hlx'][0]['flt']))
 	
 	aa['pch']=np.zeros(nd, dtype=np.int_)
 	for iid in range(nd):
@@ -368,7 +426,7 @@ def bound(dim, both, nold, nd, na, aa):
 	aa=regrid(dim, nb, nd, aa);
 	
 	for i in range(aa['nh']):
-		aa['flt'] = 0.0;
+		aa['flt'][i] = 0.0;
 		
 	aa['mis']=np.zeros(my, dtype=np.bool_)
 	
@@ -496,11 +554,8 @@ def nfind_pef(nd, dd, aa, rr, niter, eps, nh):
 	nr=nnp*nh;
 	flt=np.zeros(nr, dtype=np.float_)
 	
-# 	nhconest_init(dd, aa, nh);
-#     npolydiv2_init( nr, rr);
-	
 	from .solvers import solver_prec, cgstep
-	from operators import nhconest_lop, npolydiv2_lop
+	from .operators import nhconest_lop, npolydiv2_lop
 	
 	opL=nhconest_lop;opP=npolydiv2_lop;		#define forward and preconditioning operator
 	par_L={'nm': nr, 'nd': nd, 'x': dd, 'aa': aa, 'nhmax': nh};	#parameter file of forward operator
@@ -516,4 +571,86 @@ def nfind_pef(nd, dd, aa, rr, niter, eps, nh):
 	
 	return aa
 
+def find_mask(n, known, aa):
+	'''
+	find_mask: create a filter mask
 	
+	INPUT
+	n:		data size, INT
+	known:	mask for known data, INT array
+	aa:		helical filter
+	
+	OUTPUT
+	aa:		helical filter
+	'''
+	from .bp import ifnot
+	from .operators import helicon_lop
+	
+	rr=np.zeros(n, dtype=np.float_)
+	dfre=np.zeros(n, dtype=np.float_)
+	
+	for i in range(n):
+		dfre[i] = ifnot(known[i], 0, 1);
+	
+	par_helicon={'nm': n, 'nd': n, 'aa': aa}
+	print(aa.keys())
+	
+	rr=helicon_lop(dfre,par_helicon,0,0);
+	for ih in range(aa['nh']):
+		aa['flt'][ih] = 0.;
+		
+	for i in range(n):
+		if rr[i]>0:
+			aa['mis'][i] = True;
+	
+	return 
+
+def nfind_mask(nd, known, aa):
+	'''
+	find_mask: create a filter mask
+	
+	INPUT
+	nd:		data size, INT
+	known:	mask for known data, INT array
+	aa:		helical filter
+	
+	OUTPUT
+	aa:		helical filter
+	'''
+	from .bp import ifnot
+	from .operators import nhelicon_lop
+	
+	rr=np.zeros(nd, dtype=np.float_)
+	dfre=np.zeros(nd, dtype=np.float_)
+	
+	for i in range(nd):
+		dfre[i] = ifnot(known[i], 0, 1);
+	
+	par_nhelicon={'nm': nd, 'nd': nd, 'aa': aa}
+# 	print(aa.keys())
+	
+	for ip in range(aa['np']):
+		for i in range(aa['hlx'][ip]['nh']):
+# 			print(aa.keys())
+# 			print("type(aa['hlx'][ip]['flt'])",type(aa['hlx'][ip]['flt']))
+			aa['hlx'][ip]['flt'][i]=1.0;
+	
+	rr=nhelicon_lop(dfre,par_nhelicon,0,0);
+		
+	for i in range(nd):
+		if rr[i]>0:
+			aa['mis'][i] = True;
+
+	for ip in range(aa['np']):
+		for i in range(aa['hlx'][ip]['nh']):
+			aa['hlx'][ip]['flt'][i] = 0.;
+		
+	return aa
+
+
+
+
+
+
+
+
