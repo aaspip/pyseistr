@@ -199,13 +199,13 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 # 	print(aa.keys())
 	nf= aa['hlx'][0]['nh']
 
-#     sf_warning("dim=%d",dim);
-#     sf_warning("n=%d",n[0]);
-#     sf_warning("center=%d",center[0]);
-#     sf_warning("gap=%d",gap[0]);
-#     sf_warning("a=%d",a[0]);
-#     sf_warning("pp=%d",pp[0]);
-#     
+	print("dim=%d"%dim);
+	print("n=%d"%n[0]);
+	print("center=%d"%center[0]);
+	print("gap=%d"%gap[0]);
+	print("a=%d"%a[0]);
+	print("pp=%d"%pp[0]);
+#   
 # 	print("main: type(aa['hlx'][0]['flt'])",type(aa['hlx'][0]['flt']))
 	aa=nfind_mask(n123, kk, aa);
 	print('aa.keys',aa.keys())
@@ -224,6 +224,7 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	nbf=filt.shape[0]
 	if np.ndim(filt)==1:
 		nbp=1
+		filt=filt[:,np.newaxis]
 	
 	if filt_pch is not None:
 		pp=filt_pch.flatten(order='F')
@@ -244,7 +245,7 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 			iid=iid+1;
 	
 	bb = nallocate (nbp, nf*nnp, nh, pch);
-	
+	print('npef:',type(bb['hlx'][0]['flt']),bb['hlx'][0]['flt'])
 	for ip in range(nbp):
 		kk[0:nbf]=filt_lag[0:nbf]
 		for i in range(nbf):
@@ -252,7 +253,15 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	print('nf=',nf)
 	
 	for ip in range(nbp):
-		bb['hlx'][ip]['flt']=filt[ip]
+		bb['hlx'][ip]['flt']=filt[:,ip]
+
+	print('n123=',n123)
+	print('dd=',dd)
+	print('aa',aa)
+	print('bb',bb)
+	print('niter=',niter)
+	print('eps=',eps)
+	print('nf=',nf)
 	
 	aa=nfind_pef (n123, dd, aa, bb, niter, eps, nf);
 	

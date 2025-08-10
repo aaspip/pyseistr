@@ -671,9 +671,10 @@ def npolydiv_lop(din,par,adj,add):
 			d=np.zeros(par['nd']);
 	
 	aa=par['aa']; #helix filter
-	tt=par['tt']
+	tt=par['tt']; #a FLOAT array
 	
 	from .bp import ifnot
+	print('npolydiv_lop, nd/nd, size(d/m)', nd, nm, d.size, m.size)
 	for iid in range(nd):
 		tt[iid]=ifnot(adj, d[iid], m[iid]);
 	
@@ -695,12 +696,13 @@ def npolydiv_lop(din,par,adj,add):
 			ip=aa['pch'][iy]
 			lag=aa['hlx'][ip]['lag']
 			flt=aa['hlx'][ip]['flt']
+# 			print('flt:',type(flt),flt)
 			na=aa['hlx'][ip]['nh']
 			for ia in range(na):
 				ix=iy-lag[ia];
 				if ix<0:
 					continue;
-				tt[ix]=tt[ix]-flt[ia]*tt[iy];
+				tt[iy]=tt[iy]-flt[ia]*tt[ix];
 		
 		for iid in range(nd):
 			d[iid] = d[iid] + tt[iid]
