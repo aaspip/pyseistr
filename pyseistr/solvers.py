@@ -143,7 +143,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 	else:
 		x=np.zeros(nx);
 	
-	dpr0=np.sum(rr*rr);
+	dpr0=np.sqrt(np.sum(rr*rr));
 	dpg0=1.0;
 	
 	for n in range(0,niter):
@@ -181,15 +181,15 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 			forget = (0 == np.mod(n+1,nfreq));
 		
 		if n==0:
-			dpg0=np.sum(g*g);
+			dpg0=np.sqrt(np.sum(g*g));
 			dpr=1.0;
 			dpg=1.0;
 		else:
-			dpr=np.sum(rr*rr)/dpr0;
-			dpg=np.sum(g*g)/dpg0;
+			dpr=np.sqrt(np.sum(rr*rr))/dpr0;
+			dpg=np.sqrt(np.sum(g*g))/dpg0;
 		
 		if verb:
-			print('iteration %d res %f mod %f grad %f !'%(n+1, dpr,np.sum(x*x), dpg));
+			print('iteration %d res %f mod %f grad %f !'%(n+1, dpr,np.sqrt(np.sum(x*x)), dpg));
 			
 		if dpr < TOLERANCE or dpg < TOLERANCE:
 			if verb:
@@ -230,7 +230,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 			par['rmov']=rmov;
 		
 		if err  is not None:
-			err[n]=np.sum(r*r);
+			err[n]=np.sqrt(np.sum(r*r));
 			par['err']=err;
 
 	if res  is not None:
@@ -373,10 +373,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	
 	rr=-dat;		#for i in range(ny)
 	p[nnp:]=0.0; 	#for i in range(ny)
-
-# 	print('rr, iter0, eps', 0, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
-# 	print('dppm n=-11',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
-
 		
 	if wt  is not None or wght  is not None:
 		td=np.zeros(ny);
@@ -391,7 +387,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 # 	rr=-dat;
 	if x0  is not None:
 		p[0:nnp]=x0[0:nnp];
-# 		print('dppm n=-12',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
 		if nloper  is not None:
 			if mwt  is not None:
 				tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
@@ -414,10 +409,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				rr=opL(x,par_L,0,1);
 	else:
 		p[0:nnp]=0.0;
-
-# 	print('dppm n=-1',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
-# 	dpr0=np.sum(rr*rr);
-# 	dpg0=1.0;
 	
 	for n in range(0,niter):
 		if nmem>=0:
@@ -425,8 +416,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			
 		if wght  is not None and forget:
 			wht=wght(ny,rr); #wght is a function
-
-# 		print('g1, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
 
 		if wht  is not None:
 			rr=eps*p[nnp:]+rr*wht;
@@ -436,16 +425,11 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		else:
 			x=opL(rr,par_L,1,0);
 			g[0:nnp]=opP(x,par_P,1,0)
-# 		print('g2, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
-# 		print('rr, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
-# 		print('x, iter, eps', n, np.sqrt(np.sum(x[0:ny]*x[0:ny])), eps);
-		
+
 		if mwt  is not None:
 			g[0:nnp]=g[0:nnp]*mwt[0:nnp]; #mwt size: ?; g size: ny+nprec
 			
 		g[nnp:] = eps*rr[0:ny]
-
-# 		print('g3, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
 		
 		if known  is not None:
 			for ii in range(0,nnp):
@@ -465,8 +449,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		
 		from .divne import cblas_saxpy
 		gg=cblas_saxpy(ny,eps,g[nnp:],1,gg,1);
-
-# 		print('gg, iter', n, np.sqrt(np.sum(gg[0:ny]*gg[0:ny])));
 		
 		if forget and (nfreq !=0): #periodic restart
 			forget = (0 == np.mod(n+1,nfreq));
@@ -484,12 +466,6 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		dppd=np.sqrt(np.sum(p[nnp:]*p[nnp:]));
 		dppm=np.sqrt(np.sum(p[0:nnp]*p[0:nnp]));
 		
-# 		print('dppm n=%d'%n,np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
-	
-# 		print('ny',ny,'nnp',nnp)
-# 		print('dppd',dppd)
-# 		print('dppm',np.sum(p[0:nnp]*p[0:nnp])
-		
 		if verb:
 			print('iteration %d res %f prec dat %f prec mod %f grad %f !'%(n+1, dprr,dppd,dppm,dpgm));
 			
@@ -504,28 +480,11 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				x=opP(p[0:nnp],par_P,0,0)
 			break;
 			
-# 		print('rr1, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
-# 		print('p1, iter, eps', n, np.sqrt(np.sum(p[0:ny+nnp]*p[0:ny+nnp])), eps);
-# 		print('g, iter, eps', n, np.sqrt(np.sum(g[0:ny+nnp]*g[0:ny+nnp])), eps);
-# 		print('gg, iter, eps', n, np.sqrt(np.sum(gg[0:ny]*gg[0:ny])), eps);
-# 		print("forget=",forget)
-# 		p,rr = solv(forget,nnp+ny,ny,p,g,rr,gg);
-
-# 		if n==0:
-# 			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg, alloc=0);
-# 		else:
-# 			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg,S,Ss,alloc=1);
-# 			
 		if n==0:
 			p,rr,S,Ss=solv(forget,nnp+ny,ny,p,g,rr,gg,alloc=0);
 		else:
 			p,rr,S,Ss=solv(forget,nnp+ny,ny,p,g,rr,gg,S,Ss,alloc=1);
 		
-# 		print('rr2, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
-# 		print('p2, iter, eps', n, np.sqrt(np.sum(p[0:ny+nnp]*p[0:ny+nnp])), eps);
-# 
-# 		print('dppm nn=%d'%n,np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
-# 		
 		forget=0;
 		if nloper  is not None:
 			rr[0:ny]=eps*p[nnp:]-dat[0:ny];
@@ -745,8 +704,6 @@ def cgstep(forget,nx,ny,x,g,rr,gg,S=None,Ss=None,alloc=0):
 	'''
 	Allocated=alloc;
 	EPSILON=1.e-12;
-# 	Allocated=0;
-# 	print("cgstep")
 	if Allocated==0:
 		Allocated =1;
 		forget=1;#confusing? changed on Aug 10, 2025
