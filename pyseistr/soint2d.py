@@ -1,6 +1,6 @@
 from soint2dcfun import *
 
-def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
+def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1, prec=False):
 	'''
 	soint2d: 2D structure-oriented interpolation (unfinished)
 	
@@ -11,6 +11,7 @@ def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	dip: slope
 	order:    PWD order
 	eps: regularization (default:0.01);
+	prec: if apply preconditioning operator
 	
 	OUTPUT
 	ds: filtered data 
@@ -30,9 +31,9 @@ def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 	[n1,n2]=din.shape;
 	n12=n1*n2;
 	
-	mm=din;
-	mm=mm.flatten(order='F');
-	known=np.zeros([n12,1]);
+	mm=din.flatten(order='F'); 			  #data vector flattened to 1D
+	known=np.zeros(n12, dtype=np.bool_);  #mask vector flattened to 1D
+	pp=dip.flatten(order='F'); #slope vector flattened to 1D
 	
 	if mask  is not None:
 		dd=mask.flatten(order='F');
@@ -44,10 +45,56 @@ def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1):
 			known[ii] = (mm[ii] !=0) ;
 			dd[ii]=0;
 
-	pp=dipi.flatten(order='F');
 	
-	dout=din
+	if np.ndim(din)>2:
+		qq=np.zeros(n1,n2, dtype='float')
+	else:
+		qq=None;
+	
+	if qq is not None:
+		if prec:
+			par_predict = {'nm': n12, 'nd': n12, 'n1': n1, 'n2': n2, "dip": dip, "tt": np.zeros(n1, dtype=np.float_), 'nw': nw, 'e': 0.0001}
+		else:
+			par_allpass={}
+	else:
+		if prec:
+			par_predict = {'nm': n12, 'nd': n12, 'n1': n1, 'n2': n2, "dip": dip, "tt": np.zeros(n1, dtype=np.float_), 'nw': nw, 'e': 0.0001}
+		else:
+# 			allpass22_init(allpass2_init(nw, nj1, n1,n2, drift, pp));
+			par_allpass={}
+			
 
+	from .solvers import cgstep, solver, solver_prec
+	from .operators import mask_lop, predict_lop
+	
+# 	print(mm.max(),mm.min())
+# # 	dd2=predict_lop(mm, par_predict, False, False);
+# 	dd2=np.ones(n12);
+# 	par_predict['m']=dd2;
+# 	dd2=predict_lop(mm, par_predict, True, True);
+# 	print(dd2.max(),dd2.min())
+# 	print(dd2)
+# 	dd2=dd2.reshape(n1,n2,order='F')
+	
+	if qq is not None:
+		pass
+		
+	else:
+		if prec:
+			par_L={'nm': n12, 'nd': n12, 'mask': known}
+			par_P=par_predict
+			par_sol={'verb': 1}
+			mm2,tmp=solver_prec(mask_lop, cgstep, predict_lop, n12, n12, n12, mm, mm, niter, 0, par_L, par_P, par_sol)
+			
+		else:
+			par_L={'ap1': ap1}
+			par_sol={'known': known, 'x0': mm, 'verb': 1}
+			mm2,tmp=solver(allpass21_lop, cgstep, n12, n12, mm, dd, niter, par_L, par_sol)
+			
+	dout=mm2.reshape(n1,n2,order='F')
+
+
+# 	dout=din;
 	return dout
 	
 	

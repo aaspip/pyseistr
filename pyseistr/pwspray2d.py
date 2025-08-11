@@ -396,7 +396,7 @@ def pwd_set(adj,w,diag,offd,pp,inp):
 	'''
 
 	n=w['n'];
-	nw=np.int((w['na']-1)/2);
+	nw=np.int32((w['na']-1)/2);
 
 	#	pwd_set
 	tmp=np.zeros(n);

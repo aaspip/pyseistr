@@ -189,7 +189,10 @@ def passfilter(p,nw):
 
 
 def mask_lop(din,par,adj,add):
-
+	'''
+	mask_lop: mask operator
+	
+	'''
 	if adj==1:
 		d=din;
 		if 'm' in par and add==1:
@@ -223,6 +226,72 @@ def mask_lop(din,par,adj,add):
 		
 	return dout	
 	
+def predict_lop(din, par, adj, add):
+	'''
+	predict_lop: plane-wave prediction operator (verified to be correct)
+	
+	INPUT
+	din: model/data
+	par: parameter (par['n1'],par['n2'],par['dip'],par['e'],par['nw'],par['nm'],par['nd'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	'''
+	from .pwspray2d import predict_step
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+
+	nm=par['nm'];	 #int
+	nd=par['nd'];	 #int
+	# this operator requires nm=nd
+
+	[ m,d ] = adjnull( adj,add,nm,nd,m,d );
+
+	n1=par['n1']
+	n2=par['n2']
+	tt=par['tt']   #1D vector of size n1
+	dip=par['dip'] #2D matrix
+	e=par['e']	   #regularization parameter
+	nw=par['nw']   #order
+	
+	for i1 in range(n1):
+		tt[i1]=0.;
+	
+	if adj:
+		for i2 in range(n2-1, -1, -1):
+			[w,diag,offd,tt] = predict_step(e,nw,True,True,dip[:,i2],tt);
+			for i1 in range(n1):
+				tt[i1] = tt[i1] + d[i1+i2*n1]
+			for i1 in range(n1):
+				m[i1+i2*n1] = m[i1+i2*n1] + tt[i1]
+	else:
+		for i2 in range(n2):
+			for i1 in range(n1):
+				tt[i1] = tt[i1] + m[i1+i2*n1]
+			for i1 in range(n1):
+				d[i1+i2*n1] = d[i1+i2*n1] + tt[i1]
+# 			predict_step(false,true,tt,dip[i2]);
+			[w,diag,offd,tt] = predict_step(e,nw,False,True,dip[:,i2],tt);
+			
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+		
+	return dout	
 
 def weight2_lop(din,par,adj,add):
 	'''

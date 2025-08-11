@@ -198,7 +198,10 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 				x=x*mwt;
 			break;
 		
-		x,rr = solv(forget,nx,ny,x,g,rr,gg);
+		if n==0:
+			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg, alloc=0);
+		else:
+			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg,S,Ss,alloc=1);
 		
 		forget=0;
 		if nloper  is not None:
@@ -238,7 +241,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 
 def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	'''
-	Generic preconditioned linear solver. (same as Madagascar function: sf_solver_prec)
+	Generic preconditioned linear solver. (same as Madagascar function: sf_solver_prec) (Correct)
 	
 	Solves
 	L{x} =~ dat
@@ -370,7 +373,11 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	
 	rr=-dat;		#for i in range(ny)
 	p[nnp:]=0.0; 	#for i in range(ny)
-	
+
+# 	print('rr, iter0, eps', 0, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
+# 	print('dppm n=-11',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
+
+		
 	if wt  is not None or wght  is not None:
 		td=np.zeros(ny);
 		if wt  is not None:
@@ -384,6 +391,7 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 # 	rr=-dat;
 	if x0  is not None:
 		p[0:nnp]=x0[0:nnp];
+# 		print('dppm n=-12',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
 		if nloper  is not None:
 			if mwt  is not None:
 				tp[0:nnp]=p[0:nnp]*mwt[0:nnp]
@@ -406,7 +414,8 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 				rr=opL(x,par_L,0,1);
 	else:
 		p[0:nnp]=0.0;
-	
+
+# 	print('dppm n=-1',np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
 # 	dpr0=np.sum(rr*rr);
 # 	dpg0=1.0;
 	
@@ -416,7 +425,9 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			
 		if wght  is not None and forget:
 			wht=wght(ny,rr); #wght is a function
-		
+
+# 		print('g1, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
+
 		if wht  is not None:
 			rr=eps*p[nnp:]+rr*wht;
 			td=rr*wht;
@@ -425,11 +436,16 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		else:
 			x=opL(rr,par_L,1,0);
 			g[0:nnp]=opP(x,par_P,1,0)
-			
+# 		print('g2, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
+# 		print('rr, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
+# 		print('x, iter, eps', n, np.sqrt(np.sum(x[0:ny]*x[0:ny])), eps);
+		
 		if mwt  is not None:
 			g[0:nnp]=g[0:nnp]*mwt[0:nnp]; #mwt size: ?; g size: ny+nprec
 			
 		g[nnp:] = eps*rr[0:ny]
+
+# 		print('g3, iter, eps', n, np.sqrt(np.sum(g[0:nnp+ny]*g[0:nnp+ny])), eps);
 		
 		if known  is not None:
 			for ii in range(0,nnp):
@@ -449,22 +465,30 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 		
 		from .divne import cblas_saxpy
 		gg=cblas_saxpy(ny,eps,g[nnp:],1,gg,1);
+
+# 		print('gg, iter', n, np.sqrt(np.sum(gg[0:ny]*gg[0:ny])));
 		
 		if forget and (nfreq !=0): #periodic restart
 			forget = (0 == np.mod(n+1,nfreq));
 		
 		if n==0:
-			dprr0=np.sum(rr[0:ny]*rr[0:ny])
-			dpgm0=np.sum(g[0:nnp]*g[0:nnp]);
+			dprr0=np.sqrt(np.sum(rr[0:ny]*rr[0:ny]))
+			dpgm0=np.sqrt(np.sum(g[0:nnp]*g[0:nnp]));
 			dprr=1.0;
 			dpgm=1.0;
 		else:
-			dprr=np.sum(rr[0:ny]*rr[0:ny])/dprr0;
-			dpgm=np.sum(g[0:nnp]*g[0:nnp])/dpgm0;
+			dprr=np.sqrt(np.sum(rr[0:ny]*rr[0:ny]))/dprr0;
+			dpgm=np.sqrt(np.sum(g[0:nnp]*g[0:nnp]))/dpgm0;
 			
 		
-		dppd=np.sum(p[nnp:]*p[nnp:]);
-		dppm=np.sum(p[0:nnp]*p[0:nnp]);
+		dppd=np.sqrt(np.sum(p[nnp:]*p[nnp:]));
+		dppm=np.sqrt(np.sum(p[0:nnp]*p[0:nnp]));
+		
+# 		print('dppm n=%d'%n,np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
+	
+# 		print('ny',ny,'nnp',nnp)
+# 		print('dppd',dppd)
+# 		print('dppm',np.sum(p[0:nnp]*p[0:nnp])
 		
 		if verb:
 			print('iteration %d res %f prec dat %f prec mod %f grad %f !'%(n+1, dprr,dppd,dppm,dpgm));
@@ -479,9 +503,29 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			else:
 				x=opP(p[0:nnp],par_P,0,0)
 			break;
+			
+# 		print('rr1, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
+# 		print('p1, iter, eps', n, np.sqrt(np.sum(p[0:ny+nnp]*p[0:ny+nnp])), eps);
+# 		print('g, iter, eps', n, np.sqrt(np.sum(g[0:ny+nnp]*g[0:ny+nnp])), eps);
+# 		print('gg, iter, eps', n, np.sqrt(np.sum(gg[0:ny]*gg[0:ny])), eps);
+# 		print("forget=",forget)
+# 		p,rr = solv(forget,nnp+ny,ny,p,g,rr,gg);
+
+# 		if n==0:
+# 			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg, alloc=0);
+# 		else:
+# 			x,rr,S,Ss = solv(forget,nx,ny,x,g,rr,gg,S,Ss,alloc=1);
+# 			
+		if n==0:
+			p,rr,S,Ss=solv(forget,nnp+ny,ny,p,g,rr,gg,alloc=0);
+		else:
+			p,rr,S,Ss=solv(forget,nnp+ny,ny,p,g,rr,gg,S,Ss,alloc=1);
 		
-		p,rr = solv(forget,nnp+ny,ny,p,g,rr,gg);
-		
+# 		print('rr2, iter, eps', n, np.sqrt(np.sum(rr[0:ny]*rr[0:ny])), eps);
+# 		print('p2, iter, eps', n, np.sqrt(np.sum(p[0:ny+nnp]*p[0:ny+nnp])), eps);
+# 
+# 		print('dppm nn=%d'%n,np.sqrt(np.sum(p[0:nnp]*p[0:nnp])));
+# 		
 		forget=0;
 		if nloper  is not None:
 			rr[0:ny]=eps*p[nnp:]-dat[0:ny];
@@ -523,7 +567,7 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			par['rmov']=rmov;
 		
 		if err  is not None:
-			err[n]=np.sum(rr*rr);
+			err[n]=np.sqrt(np.sum(rr*rr));
 			par['err']=err;
 
 	if xp is not None:
@@ -542,8 +586,8 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 			rmov[0:ny,n]=p[nnp:]*eps
 			
 		if err is not None:
-			err[n] = np.sum(rr*rr);
-	
+			err[n] = np.sqrt(np.sum(rr*rr));
+		n=n+1
 	return x,par
 
 
@@ -668,11 +712,13 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 	return x
 
 
-def cgstep(forget,nx,ny,x,g,rr,gg):
+def cgstep(forget,nx,ny,x,g,rr,gg,S=None,Ss=None,alloc=0):
 	'''
 	Step of conjugate-gradient iteration.
 	Yangkang Chen
 	Aug, 05, 2020
+	
+	Y. Chen did an overhaul on this function
 	
 	INPUT
 	forget:restart flag
@@ -688,17 +734,29 @@ def cgstep(forget,nx,ny,x,g,rr,gg):
 	g:    gradient [nx]
 	rr:   data residual [ny]
 	gg:   conjugate gradient [ny]
+	
+	EXAMPLE
+	first use of cgstep:
+	
+	x,rr,S,Ss=cgstep(forget,nx,ny,x,g,rr,gg,alloc=0):
+	
+	next use:
+	x,rr,S,Ss=cgstep(forget,nx,ny,x,g,rr,gg,S,Ss,alloc=1)
 	'''
+	Allocated=alloc;
 	EPSILON=1.e-12;
-	Allocated=0;
-	if not Allocated:
+# 	Allocated=0;
+# 	print("cgstep")
+	if Allocated==0:
 		Allocated =1;
-		forget=1;
+		forget=1;#confusing? changed on Aug 10, 2025
 		S=np.zeros(nx);
 		Ss=np.zeros(ny);
+		
+
 	if forget:
-		S=np.zeros(nx);
-		Ss=np.zeros(ny);
+		S[:]=0;
+		Ss[:]=0;
 		beta=0;
 		alfa=np.sum(gg*gg);
 		#Solve G . ( R + G*alfa) = 0
@@ -731,4 +789,4 @@ def cgstep(forget,nx,ny,x,g,rr,gg):
 	Ss=alfa*gg+Ss;
 	x=x+S;
 	rr=rr+Ss;
-	return x,rr
+	return x,rr, S, Ss
