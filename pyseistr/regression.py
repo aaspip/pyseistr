@@ -655,7 +655,6 @@ def nfind_mask(nd, known, aa):
 	for i in range(nd):
 		dfre[i] = ifnot(known[i], 0, 1);
 	
-	par_nhelicon={'nm': nd, 'nd': nd, 'aa': aa}
 # 	print(aa.keys())
 	
 	for ip in range(aa['np']):
@@ -663,7 +662,8 @@ def nfind_mask(nd, known, aa):
 # 			print(aa.keys())
 # 			print("type(aa['hlx'][ip]['flt'])",type(aa['hlx'][ip]['flt']))
 			aa['hlx'][ip]['flt'][i]=1.0;
-	
+
+	par_nhelicon={'nm': nd, 'nd': nd, 'aa': aa}
 	rr=nhelicon_lop(dfre,par_nhelicon,0,0);
 		
 	for i in range(nd):
