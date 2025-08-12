@@ -496,7 +496,7 @@ def helicon_lop(din,par,adj,add):
 
 def nhelicon_lop(din,par,adj,add):
 	'''
-	nhelicon_lop: non-stationary helicon filtering
+	nhelicon_lop: non-stationary helicon filtering (Correct)
 	
 	by Yangkang Chen, Aug 9, 2025
 	
@@ -538,16 +538,6 @@ def nhelicon_lop(din,par,adj,add):
 	copy_lop(adj, add, nm, nd, m, d);
 	
 	aa=par['aa'] #helix preconditioning filter
-# 	for ia in range(aa['nh']):
-# 		for iy in range(aa['lag'][ia],nm,1):
-# 			if aa['mis'] !=None and aa['mis'][iy]:
-# 					continue;
-# 			ix = iy-aa['lag'][ia]
-# 			if adj==1:
-# 				m[ix] = m[ix] + d[iy]*aa['flt'][ia]
-# 			else:
-# # 				print('ix=',ix,'nm=',nm,'iy=',iy,'nm',nm,'nd',nd)
-# 				d[iy] = d[iy] + m[ix]*aa['flt'][ia]
 
 	for iy in range(nd):
 		if aa['mis'] is not None and aa['mis'][iy]:
@@ -562,9 +552,9 @@ def nhelicon_lop(din,par,adj,add):
 			if ix<0:
 				continue;
 			if adj:
-				m[ix] = m[ix] * flt[ia]
+				m[ix] = m[ix] + d[iy] * flt[ia]
 			else:
-				d[iy] = d[iy] * flt[ia]
+				d[iy] = d[iy] + m[ix] * flt[ia]
 		
 	
 	if adj==1:
@@ -576,13 +566,13 @@ def nhelicon_lop(din,par,adj,add):
 	
 def nhconest_lop(din,par,adj,add):
 	'''
-	nhconest_lop: Nonstationary Helical convolution operator
+	nhconest_lop: Nonstationary Helical convolution operator (Correct!)
 	
 	by Yangkang Chen, Aug 7, 2025
 	
 	INPUT
 	din: model/data
-	par: parameter (par['w'],par['nw'])
+	par: parameter (par['aa'],par['x'],par['nhmax'],par['nm'],par['nd'])
 	adj: adj flag
 	add: add flag
 	
@@ -629,10 +619,9 @@ def nhconest_lop(din,par,adj,add):
 				continue;
 			
 			if adj==1:
-				m[ia+nhmax+ip] = m[ia+nhmax+ip] + d[iy]*x[ix];
+				m[ia+nhmax*ip] = m[ia+nhmax*ip] + d[iy]*x[ix];
 			else:
-				d[iy] = d[iy] + 		 m[ia+nhmax+ip]*x[ix];
-	
+				d[iy] = d[iy] + 		 m[ia+nhmax*ip]*x[ix];
 	
 	if adj==1:
 		dout=m;
@@ -651,7 +640,7 @@ def npolydiv2_lop(din,par,adj,add):
 	
 	INPUT
 	din: model/data
-	par: parameter (par['w'],par['nw'])
+	par: parameter (e.g., par={'nm':nr, 'nd': nr, 'aa': rr, 'tt': np.zeros(nr)})
 	adj: adj flag
 	add: add flag
 	
@@ -680,11 +669,13 @@ def npolydiv2_lop(din,par,adj,add):
 			d=par['d'];
 		else:
 			d=np.zeros(par['nd']);
+
+# 	m,d  = adjnull( adj,add,nm,nd,m,d );
 	
 # 	aa=par['aa'] #helix filter
 # 	x=par['x']
-	tt=par['tt']
-	
+# 	tt=par['tt']
+	tt=np.zeros(nm)
 	if adj==1:
 		tt=npolydiv_lop(d,par,0,0);
 		par['m']=m;
@@ -740,8 +731,8 @@ def npolydiv_lop(din,par,adj,add):
 			d=np.zeros(par['nd']);
 	
 	aa=par['aa']; #helix filter
-	tt=par['tt']; #a FLOAT array
-	
+# 	tt=par['ttt']; #a FLOAT array
+	tt=np.zeros(nm)
 	from .bp import ifnot
 	print('npolydiv_lop, nd/nd, size(d/m)', nd, nm, d.size, m.size)
 	for iid in range(nd):

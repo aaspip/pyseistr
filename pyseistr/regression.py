@@ -244,6 +244,9 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 			pch[iid]=ifnot(pp is not None,pp[ip],ip);
 			iid=iid+1;
 	
+	print('before nallocate, nbp, nf, nnp, nh',nbp, nf, nnp, nh);
+	print('len(pch)',len(pch))
+	print('pch',pch)
 	bb = nallocate (nbp, nf*nnp, nh, pch);
 	print('npef:',type(bb['hlx'][0]['flt']),bb['hlx'][0]['flt'])
 	for ip in range(nbp):
@@ -263,6 +266,20 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 	print('eps=',eps)
 	print('nf=',nf)
 	
+	
+	##define aa
+	dim=1;n=[400];center=[0];gap=[0];a=[3];pp=list(range(400));
+	aa = createnhelix(dim, n, center, gap, a, pp);
+	
+	##define bb
+	nbp=1; nf=2; nnp=400; nh=[1];
+	pch=np.zeros(800);
+	rr=nallocate (nbp, nf*nnp, nh, pch);
+
+	rr['hlx'][0]['flt'][0]=-1.0
+	rr['hlx'][0]['lag'][0]=2
+	bb=rr;
+	
 	aa=nfind_pef (n123, dd, aa, bb, niter, eps, nf);
 	
 	print('nf:',nf, 'np:', nnp)
@@ -272,15 +289,16 @@ def npef(din, filt=None, filt_pch=None, filt_lag=None, pch=None, epsilon=0.01, a
 # 	dout=din;
 # 	lag=dout;
 	dout=np.array(dout)
+	dout=dout.T
 	
 	#dout: [nf,nnp]
 	#lag:  [nf,nnp]
 	
-	return dout,lag
+	return dout,lag,aa,bb
 	
 def createnhelix(dim, nd, center, gap, na, pch):
 	'''
-	createnhelix:  allocate and output a non-stationary filter
+	createnhelix:  allocate and output a non-stationary filter (Correct!)
 	
 	INPUT
 	dim:	number of dimension (INT number)
@@ -288,7 +306,7 @@ def createnhelix(dim, nd, center, gap, na, pch):
 	center: filter center (INT numpy array of size ndim)
 	gap:	filter gap (INT numpy array of size ndim)
 	na:		filter size (INT numpy array of size ndim)
-	pch:	patching [product(nd)] (INT numpy array of size ndim)
+	pch:	patching [product(nd)] (INT numpy array of size product[nd])
 	
 	OUTPUT
 	nsaa:		the helix filter
@@ -296,7 +314,7 @@ def createnhelix(dim, nd, center, gap, na, pch):
 	
 	EXAMPLE
 	from pyseistr import createnhelix
-	aa=createnhelix(1,[400], [0], [0], [3], [0])
+	aa=createnhelix(1,[400], [0], [0], [3], list(range(400)))
 	'''
 	from .struct import nhelix
 	aa=createhelix(dim, nd, center, gap, na);
@@ -312,8 +330,6 @@ def createnhelix(dim, nd, center, gap, na, pch):
 		nh[ip]=aa['nh']
 
 	nsaa=nallocate(nnp, n123, nh, pch);
-	
-
 
 	for ip in range(0,nnp):
 		for i in range(aa['nh']):
@@ -349,6 +365,7 @@ def nallocate(nnp, nd, nh, pch):
 	print("nh",nh)
 # 	print("nallocate: type(aa['hlx'][0]['flt'])",type(aa['hlx'][0]['flt']))
 	
+	print('nd',nd)
 	aa['pch']=np.zeros(nd, dtype=np.int_)
 	for iid in range(nd):
 		aa['pch'][iid] = pch[iid]
@@ -384,7 +401,8 @@ def nbound(ip, dim, nd, na, aa):
 	for i in range(n):
 		aa['mis'][i] = bb['mis'][i]
 		
-	del bb
+# 	del bb
+	bb['mis']=None;
 	
 	return aa
 
@@ -442,7 +460,8 @@ def bound(dim, both, nold, nd, na, aa):
 	for iy in range(my):
 		ii=line2cart(dim, nd, iy);
 		for i in range(dim):
-			ib=cart2line(dim, nb, ii);
+			ii[i]=ii[i]+na[i];
+		ib=cart2line(dim, nb, ii);
 		if both:
 			aa['mis'][iy] = bool (yy[ib] > 0. or xx[ib] > 0.);
 		else:
@@ -571,8 +590,9 @@ def nfind_pef(nd, dd, aa, rr, niter, eps, nh):
 	par_P={'nm': nr, 'nd': nr, 'aa':rr, 'tt': np.zeros(nr)}		#parameter dic of preconditioning operator
 	par_sol={'verb': 1}		#parameter dic of the solver
 	
-	flt=solver_prec(opL, cgstep, opP, nr, nr, nd, flt, dd, niter, eps, par_L, par_P, par_sol);
-	
+	flt,tmp=solver_prec(opL, cgstep, opP, nr, nr, nd, flt, dd, niter, eps, par_L, par_P, par_sol);
+# 	print('flt.shape',flt.shape)
+# 	print("aa['hlx'][ip]['flt'].shape",aa['hlx'][0]['flt'].shape)
 	for ip in range(nnp):
 		na=aa['hlx'][ip]['nh']
 		for ih in range(na):

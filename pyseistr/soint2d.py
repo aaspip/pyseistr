@@ -2,7 +2,7 @@ from soint2dcfun import *
 
 def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1, prec=False):
 	'''
-	soint2d: 2D structure-oriented interpolation (unfinished)
+	soint2d: 2D structure-oriented interpolation (correct)
 	
 	by Yangkang Chen, 2022
 	
@@ -66,16 +66,7 @@ def soint2d(din,mask,dip,order=1,niter=100,njs=[1,1],drift=0,verb=1, prec=False)
 
 	from .solvers import cgstep, solver, solver_prec
 	from .operators import mask_lop, predict_lop
-	
-# 	print(mm.max(),mm.min())
-# # 	dd2=predict_lop(mm, par_predict, False, False);
-# 	dd2=np.ones(n12);
-# 	par_predict['m']=dd2;
-# 	dd2=predict_lop(mm, par_predict, True, True);
-# 	print(dd2.max(),dd2.min())
-# 	print(dd2)
-# 	dd2=dd2.reshape(n1,n2,order='F')
-	
+		
 	if qq is not None:
 		pass
 		
