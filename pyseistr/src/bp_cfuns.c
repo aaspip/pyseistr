@@ -544,7 +544,7 @@ static PyObject *cbp(PyObject *self, PyObject *args){
 	if(verb)
 		printf("nplo=%d,n123=%d\n",nplo,n123);
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);

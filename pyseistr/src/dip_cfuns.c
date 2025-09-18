@@ -1801,7 +1801,7 @@ static PyObject *dipc(PyObject *self, PyObject *args){
 	hasmask=f14;
 	verb=f15;
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
     
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
@@ -2025,7 +2025,7 @@ static PyObject *smoothcf(PyObject *self, PyObject *args){
     
 	n123=n1*n2*n3;
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);

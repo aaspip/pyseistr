@@ -342,10 +342,10 @@ static PyObject *cohc_inv(PyObject *self, PyObject *args){
 	dt0=f11;
 	verb=f12;
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-    arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-    arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
-    arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
     
     nd2=PyArray_NDIM(arrf1);
     
@@ -451,9 +451,9 @@ static PyObject *cohc_fb(PyObject *self, PyObject *args){
 	if(verb)
 		printf("typ=%d,nt0=%d,nv0=%d,nh0=%d,dt0=%g,forw=%d,verb=%d\n",typ,nt0,nv0,nh0,dt0,forw,verb);
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-    arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-    arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 
     nd2=PyArray_NDIM(arrf1);
     

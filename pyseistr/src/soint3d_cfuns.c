@@ -2429,10 +2429,10 @@ static PyObject *csoint3d(PyObject *self, PyObject *args){
 	n123=n1*n2*n3;
     init_genrand((unsigned long) seed);
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
@@ -2536,10 +2536,10 @@ static PyObject *csint3d(PyObject *self, PyObject *args){
     
 	n123=n1*n2*n3;
 
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf3 = PyArray_FROM_OTF(f3, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf4 = PyArray_FROM_OTF(f4, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 	
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);

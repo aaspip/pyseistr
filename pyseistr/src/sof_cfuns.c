@@ -1469,8 +1469,8 @@ static PyObject *csomean2d(PyObject *self, PyObject *args){
 	eps=f9; /*regularization*/
 	verb=f10;
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);
@@ -1570,8 +1570,8 @@ static PyObject *csomf2d(PyObject *self, PyObject *args){
 	eps=f9; /*regularization*/
 	verb=f10;
 	
-    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_IN_ARRAY);
-	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_IN_ARRAY);
+    arrf1 = PyArray_FROM_OTF(f1, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+	arrf2 = PyArray_FROM_OTF(f2, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
 
     nd2=PyArray_NDIM(arrf1);
     npy_intp *sp=PyArray_SHAPE(arrf1);

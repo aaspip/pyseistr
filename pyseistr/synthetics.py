@@ -87,7 +87,92 @@ def genflat(nt=100,nx=60,t=[30,50,80],amp=[1,1,1],freq=30,dt=0.004):
 	
 	return data
 	
+def gendip(noise=False,seed=202324,var=0.1):
+	'''
+	gendip: quickly generate the widely used 2D plane-wave synthetic data
+	You can generate 2D using genplane3d, but this one is bigger (80 traces, while the geneplane3d one is 20 traces)
 	
+	INPUT
+	noise: if add noise
+	seed: random number seed
+	var: noise variance relative to the maximum amplitude of clean data
+	
+	OUTPUT
+	dout (or dclean,dnoisy)
+		
+	EXAMPLE 1
+	from pyseistr import gendip
+	import matplotlib.pyplot as plt
+	data=gendip();
+	plt.imshow(data,aspect='auto');plt.show()
+	
+	EXAMPLE 2 (2D example)
+	from pyseistr import gendip
+	dc,dn=gendip(noise=True,seed=202425,var=0.1);
+	import pydrr as pd
+	d1=pd.drr3d(dn,0,120,0.004,3,3);	#DRR
+	noi1=dn-d1;
+	import numpy as np
+	import matplotlib.pyplot as plt
+	plt.imshow(np.concatenate([dn,d1,noi1],axis=1),aspect='auto');plt.show()
+	
+	REFERENCES
+	This "simple" example has been extensively used by dozens of papers, just to name a few
+	[1] Chen, Y., W. Huang, D. Zhang, W. Chen, 2016, An open-source matlab code package for improved rank-reduction 3D seismic data denoising and reconstruction, Computers & Geosciences, 95, 59-66.
+	[2] Huang, W., R. Wang, Y. Chen, H. Li, and S. Gan, 2016, Damped multichannel singular spectrum analysis for 3D random noise attenuation, Geophysics, 81, V261-V270.
+	[2] Chen, et al., 2023, DRR: an open-source multi-platform package for the damped rank-reduction method and its applications in seismology, Computers & Geosciences, 180, 105440.
+
+	'''
+	
+	a1=np.zeros([300,80])
+	[n,m]=a1.shape
+	a3=a1.copy();
+	a4=a1.copy();
+
+	k=-1;
+	a=0.1;
+	b=1;
+	pi=np.pi
+
+	ts=np.arange(-0.055,0.055+0.002,0.002)
+	b1=np.zeros([len(ts)])
+	b2=np.zeros([len(ts)])
+	b3=np.zeros([len(ts)])
+	b4=np.zeros([len(ts)])
+
+	for t in ts:
+		k=k+1;
+		b1[k]=(1-2*(pi*30*t)*(pi*30*t))*np.exp(-(pi*30*t)*(pi*30*t));
+		b2[k]=(1-2*(pi*40*t)*(pi*40*t))*np.exp(-(pi*40*t)*(pi*40*t));
+		b3[k]=(1-2*(pi*40*t)*(pi*40*t))*np.exp(-(pi*40*t)*(pi*40*t));
+		b4[k]=(1-2*(pi*30*t)*(pi*30*t))*np.exp(-(pi*30*t)*(pi*30*t));
+
+	t1=np.zeros([m],dtype='int')
+	t3=np.zeros([m],dtype='int')
+	t4=np.zeros([m],dtype='int')
+	for i in range(m):
+		t1[i]=np.round(140);
+		t3[i]=np.round(-2*i+220);
+		t4[i]=np.round(2*i+10);
+		a1[t1[i]:t1[i]+k+1,i]=b1; 
+		a3[t3[i]:t3[i]+k+1,i]=b1; 
+		a4[t4[i]:t4[i]+k+1,i]=b1; 
+
+	dc=a4[0:300,:];
+	dc=dc/np.abs(dc).max()
+
+	if noise:
+		## add noise
+		[n1,n2]=dc.shape
+		np.random.seed(seed)
+		var=var*np.abs(dc).max()
+		n=var*np.random.randn(n1,n2); #np.random.randn()'s variance is around 1, mean is 0
+		dn=dc+n;
+		return dc,dn
+	else:
+		return dc
+
+
 def sigmoid(n1=400,n2=100,d1=0.004,d2=0.032,o1=0,o2=0,large=None,reflectivity=True,taper=True,sd=19921995):
 	'''
 	sigmoid: generate the famous Sigmoid synthetic data
