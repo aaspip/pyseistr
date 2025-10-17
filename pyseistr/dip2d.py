@@ -217,7 +217,7 @@ def dip2dc(din,niter=5,liter=20,order=2,eps_dv=0.01, eps_cg=1, tol_cg=0.000001,r
 			hasmask=1;
 	dip=dipc(din,n1,n2,n3,niter,liter,order,eps_dv,eps_cg,tol_cg,r1,r2,r3,hasmask,verb);
 	dip=dip.reshape(n1,n2,order='F');
-		
+	
 	return dip
 	
 def conv_allpass(din,dip,order):

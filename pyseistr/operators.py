@@ -775,3 +775,56 @@ def npolydiv_lop(din,par,adj,add):
 
 	return dout
 
+
+def matrix_lop(din,par,adj,add):
+	'''
+	Define a matrix multiplication operator
+
+	by Yangkang Chen, Sep 5, 2025
+	
+	INPUT
+	din: model/data
+	par: parameter (par['w'],par['nw'])
+	adj: adj flag
+	add: add flag
+	
+	OUTPUT
+	dout: data/model
+	
+	EXPLANATION
+	TBD
+	
+	EXAMPLE
+	tomo_pyekfmm_2D_checkerboard
+	
+	'''
+	if adj==1:
+		d=din;
+		if 'm' in par and add==1:
+			m=par['m'];
+		else:
+			m=np.zeros(par['nm']);
+	else:
+		m=din;
+		if 'd' in par and add==1:
+			d=par['d'];
+		else:
+			d=np.zeros(par['nd']);
+
+	nm=par['nm'];	 #int
+	nd=par['nd'];	 #int
+	matrix=par['matrix']
+
+	[ m,d ] = adjnull( adj,add,nm,nd,m,d );
+
+	if adj:
+		m=np.matmul(matrix.transpose(),d)
+	else:
+		d=np.matmul(matrix,m)
+	
+	if adj==1:
+		dout=m;
+	else:
+		dout=d;
+		
+	return dout
