@@ -268,6 +268,21 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plt.title('3D velocity model')
 	plt.savefig(fname='vel3d.png',format='png',dpi=300)
 	plt.show()
+	
+	EXAMPLE 5 (for constant velocity)
+	
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from pyseistr import plot3d
+	vel3d=np.ones([nx,ny,nz],dtype='float32')
+	plot3d(np.transpose(vel3d,(2,0,1)),levels=[1,1.001],frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False)
+	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
+	plt.title('3D velocity model')
+	plt.savefig(fname='vel3d.png',format='png',dpi=300)
+	plt.show()
+	
 	'''
 #,
 
