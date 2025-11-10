@@ -327,7 +327,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	# Plot contour surfaces
 	_ = ax.contourf(
 	X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
-	zdir='z', offset=0, **kw
+	zdir='z', offset=Z.min(), **kw
 	)
 
 	_ = ax.contourf(
