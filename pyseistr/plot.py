@@ -177,7 +177,7 @@ def plot2d(d2d,z=None,x=None,dz=0.01,dx=0.01,figsize=(8, 6),ifnewfig=True,fignam
 			plt.close() #or plt.clear() ?
 
 
-def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
 	
@@ -274,6 +274,8 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	import numpy as np
 	import matplotlib.pyplot as plt
 	from pyseistr import plot3d
+	nx,ny,nz=81,81,81
+	dx,dy,dz=20,20,20
 	vel3d=np.ones([nx,ny,nz],dtype='float32')
 	plot3d(np.transpose(vel3d,(2,0,1)),levels=[1,1.001],frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False)
 	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
@@ -281,6 +283,62 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
 	plt.title('3D velocity model')
 	plt.savefig(fname='vel3d.png',format='png',dpi=300)
+	plt.show()
+
+	EXAMPLE 6 (play with slices)
+	
+	import numpy as np
+	import matplotlib.pyplot as plt
+	
+	from pyseistr import plot3d
+	from pyekfmm import vgrad3d
+	vel3d=vgrad3d(3,5,50,40,30)
+	nz,nx,ny=vel3d.shape
+	
+	plt.figure(figsize=(12, 8))
+	ax=plt.subplot(2,3,1,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,cmap=plt.jet(),ifnewfig=False,showf=False,close=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("frames=[nz/2,nx/2,ny/2]")
+	
+	ax=plt.subplot(2,3,2,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[int(nz/3),nx-1,0],cmap=plt.jet(),ifnewfig=False,showf=False,close=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("frames=[nz/3,nx-1,0]")
+	
+	ax=plt.subplot(2,3,3,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[int(nz/2),0,int(ny/3)],cmap=plt.jet(),ifnewfig=False,showf=False,close=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("frames=[nz/2,0,ny/3]")
+	
+	ax=plt.subplot(2,3,4,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[0,nx-1,0],cmap=plt.jet(),ifnewfig=False,showf=False,close=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("frames=[0,nx-1,0]")
+
+	ax=plt.subplot(2,3,5,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[int(nz/3),int(nx/3),int(ny/3)],cmap=plt.jet(),ifnewfig=False,showf=False,close=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("frames=[nz/3,nx/3,ny/3]")
+	
+	ax=plt.subplot(2,3,6,projection='3d')
+	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[0,nx-1,0],cmap=plt.jet(),ifnewfig=False,showf=False,close=False,ifslice=False); 
+	plt.gca().set_xlabel("X (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (sample)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (sample)",fontsize='large', fontweight='normal')
+	plt.title("ifslice=False")
+	
+	plt.savefig(fname='vel3d_slices.png',format='png',dpi=300)
 	plt.show()
 	
 	'''
@@ -349,6 +407,16 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	zmin, zmax = Z.min(), Z.max()
 	ax.set(xlim=[xmin, xmax], ylim=[ymin, ymax], zlim=[zmin, zmax])
 	plt.gca().invert_zaxis()
+
+	if ifslice==True: #if highlight the slice
+		plt.plot([x[frames[1]],x[frames[1]]],[y.min(),y.max()],[z.min(),z.min()],'b-', linewidth=2, zorder=10) #top slice
+		plt.plot([x.min(),x.max()],[y[frames[2]],y[frames[2]]],[z.min(),z.min()],'b-', linewidth=2, zorder=10) #top slice
+		
+		plt.plot([x[frames[1]],x[frames[1]]],[y.min(),y.min()],[z.min(),z.max()],'b-', linewidth=2, zorder=10) #left slice
+		plt.plot([x.min(),x.max()],[y.min(),y.min()],[z[frames[0]],z[frames[0]]],'b-', linewidth=2, zorder=10) #left slice
+		
+		plt.plot([x.max(),x.max()],[y[frames[2]],y[frames[2]]],[z.min(),z.max()],'b-', linewidth=2, zorder=10) #right slice
+		plt.plot([x.max(),x.max()],[y.min(),y.max()],[z[frames[0]],z[frames[0]]],'b-', linewidth=2, zorder=10) #right slice
 
 	# Colorbar
 	if 'barlabel' in kw.keys():
