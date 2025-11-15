@@ -341,8 +341,9 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plt.savefig(fname='vel3d_slices.png',format='png',dpi=300)
 	plt.show()
 	
+	NOTE:
+	when using cmap in plot3d, better use ''cmap=plt.cm.jet'', instead of ''cmap=plt.jet()''
 	'''
-#,
 
 	[nz,nx,ny] = d3d.shape;
 	
