@@ -357,7 +357,6 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	vel3d=vgrad3d(3,5,50,40,30)
 	nz,nx,ny=vel3d.shape
 	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[30,20,15],cmap=plt.cm.jet,ifnewfig=True,showf=True,close=False,ifinside=True); 
-	
 	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[10,10,10],cmap=plt.cm.jet,ifnewfig=True,showf=True,close=False,ifinside=True); 
 	
 	NOTE:
@@ -403,8 +402,6 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 		plt.jet()
 
 	# Plot contour surfaces
-
-
 	if ifinside==True:
 	
 		#create mask for top
@@ -466,10 +463,6 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 		d3d[frames[1], :, :], Y[:, -1, :], Z[:, -1, :],
 		zdir='x', offset=X.max(), **kw
 		)
-
-# 	ax.set_xlim(x[frames[1]], x.max())
-# 	ax.set_ylim(y[frames[2]], y.max())
-# 	ax.set_zlim(z[frames[0]], z.max())
 	
 	plt.gca().set_xlabel("X",fontsize='large', fontweight='normal')
 	plt.gca().set_ylabel("Y",fontsize='large', fontweight='normal')
@@ -490,29 +483,6 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 		
 		plt.plot([x.max(),x.max()],[y[frames[2]],y[frames[2]]],[z.min(),z.max()],'b-', linewidth=2, zorder=10) #right slice
 		plt.plot([x.max(),x.max()],[y.min(),y.max()],[z[frames[0]],z[frames[0]]],'b-', linewidth=2, zorder=10) #right slice
-
-# 	if ifinside is True: #show the inside structure of the 3D volume
-# 		from mpl_toolkits.mplot3d.proj3d import proj_transform
-# 		#slice center
-# 		x0, y0, z0 = x[frames[1]], y[frames[2]], z[frames[0]]
-# # 		x_fig, y_fig, z_fig = plt.gca().transAxes.transform(())
-# # # 		x0, y0, w, h = bbox.x0, bbox.y0, bbox.width, bbox.height
-# # 		ax3d = plt.gcf().add_axes([20, 15, 20, 15], projection='3d')
-# 		x_disp, y_disp, _ = proj_transform(x0, y0, z0, plt.gca().get_proj())
-# 		x_disp, y_disp = plt.gca().transData.transform((x_disp, y_disp))
-# 		x_fig, y_fig = plt.gcf().transFigure.inverted().transform((x_disp, y_disp))
-# # 		display_coords = plt.gca().transData.transform(np.vstack([x_disp, y_disp]).T)  # shape (N,2)
-# # 		print('x_disp, y_disp',x_disp, y_disp)
-# # 		print('x0, y0, z0',x0, y0, z0)
-# # 		x_fig, y_fig = plt.gcf().transFigure.inverted().transform((x_disp, y_disp))
-# # 		x_fig, y_fig = plt.gcf().transFigure.inverted().transform(display_coords).T
-# 		ax3d = plt.gcf().add_axes([x_fig-0.3, y_fig-0.3, 0.3, 0.3], projection='3d')
-
-# 		w, h = 0.25, 0.25   # you choose
-# 		xf, yf = project_3d_to_figure(fig, ax, x0, y0, z0)
-# 		left   = xf - w/2
-# 		bottom = yf - h/2
-# 		ax_new = plt.gcf().add_axes([left, bottom, w, h], projection='3d')  # 3D axis works too
 
 	# Colorbar
 	if 'barlabel' in kw.keys():
