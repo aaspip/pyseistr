@@ -1,3 +1,43 @@
+def xyzwrite(fname,vel,xx,yy,zz,withnewline=False):
+	'''
+	xyzwrite: write ASCII file
+	
+	INPUT
+	fname: file name
+	vel:   velocity model in numpy array (nx,ny,nz)
+	
+	Example:
+	from pyseistr import xyzwrite
+	import numpy as np
+	
+	lon1,lon2=-104.7,-103.7
+	lat1,lat2=31.3,31.9
+	dlon=(lon2-lon1)/(nx-1)
+	dlat=(lat2-lat1)/(ny-1)
+	lons=np.linspace(0,nx-1,nx)*dlon+lon1
+	lats=np.linspace(0,ny-1,ny)*dlat+lat1
+	Vcmez3d=np.load("v_est_topo_10813.npy") #x,y,z
+	xyzwrite('CMEZ3D_xyz.txt',Vcmez3d,lons,lats,zz)
+
+	'''
+	
+	
+	nx,ny,nz=vel.shape
+	
+	din=[]
+	for ix in range(nx):
+		for iy in range(ny):
+			for iz in range(nz):
+				din.append(" ".join([str(xx[ix]),str(yy[iy]),str(zz[iz]),str(vel[ix,iy,iz])]))
+	
+	
+	f=open(fname,'w')
+
+	for ii in range(len(din)):
+			f.write(str(din[ii])+"\n")
+			
+	
+			
 def asciiwrite(fname,din,withnewline=False):
 	'''
 	asciiwrite: write ASCII file
