@@ -187,7 +187,7 @@ def project_3d_to_figure(fig, ax, x, y, z):
     xf, yf = fig.transFigure.inverted().transform((x_disp, y_disp))
     return xf, yf
     
-def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,ifinside=False,topo=None,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,ifinside=False,topo=None,Vtopo=None,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
 	
@@ -201,6 +201,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	ifslice: if plotting the highlighting slices (the blue lines)
 	ifinside: if showing the inside section
 	topo:	  if not None, denotes the surface topography
+	Vtopo:	value of the topography (can be none)
 	kwargs: other specs for plotting (e.g., vmin=-0.1, vmax=0.1, and others accepted by contourf)
 	dz,dx,dy: interval (default: 0.01)
 	
@@ -367,9 +368,9 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	import numpy as np
 	import matplotlib.pyplot as plt
 	from pyseistr import plot3d
-	nz=161
+	nz=141
 	nx=161
-	ny=161
+	ny=121
 	dz=0.02
 	dx=0.02
 	dy=0.02
@@ -404,15 +405,19 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plt.savefig(fname='vel3d_topo.png',format='png',dpi=300)
 	plt.show()
 
+	plot3d(np.transpose(vel3d,(2,0,1)),topo=topo,Vtopo=np.ones_like(topo),frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,
+	z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (km/s)',showf=False,close=False,ifslice=False)
+	plt.gca().set_xlabel("X (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (km)",fontsize='large', fontweight='normal')
+	plt.title('3D velocity model with topography (constant top value)')
+	plt.savefig(fname='vel3d_topo2.png',format='png',dpi=300)
+	plt.show()
+	
 	NOTE:
 	when using cmap in plot3d, better use ''cmap=plt.cm.jet'', instead of ''cmap=plt.jet()''
 	'''
 
-	def norm(v, d3d):
-		'''
-		for surface topography
-		'''
-		return (v - np.nanmin(d3d)) / (np.nanmax(d3d) - np.nanmin(d3d))
 		
 	[nz,nx,ny] = d3d.shape;
 	
@@ -441,6 +446,12 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	}
 	
 	kw.update(kwargs)
+
+	def norm(v):
+		'''
+		for surface topography
+		'''
+		return (v - kw['vmin']) / (kw['vmax'] - kw['vmin'])
 	
 	if 'alpha' not in kw.keys():
 		kw['alpha']=1.0
@@ -517,13 +528,16 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 			)
 		else: #using plt_surface to plot the surface topography
 			Z_top=topo;
-			Vp_top = d3d[:, :, frames[0]].transpose() #to be confirmed
+			if Vtopo is None:
+				Vp_top = d3d[:, :, frames[0]].transpose() #to be confirmed
+			else:
+				Vp_top = Vtopo #to be confirmed
 
 			_ = ax.plot_surface(
 			X[:, :, -1], Y[:, :, -1], Z_top,
 			rstride=1,
 			cstride=1,
-			facecolors=plt.cm.jet(norm(Vp_top, d3d)),
+			facecolors=plt.cm.jet(norm(Vp_top)),
 			linewidth=0,
 			edgecolor='none',
 			antialiased=False
@@ -541,7 +555,7 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 
 			Ztop_ymin = Z_top[:, 0]          # (nx,)
 			vel=d3d[frames[1], :, :]
-			mask = np.squeeze(Z[0, :, :]) > Ztop_ymin[:,None]-(z[2]-z[1]) #make it smoother
+			mask = np.squeeze(Z[:, -1, :]) > Ztop_ymin[:,None]-(z[2]-z[1]) #make it smoother
 			vel=np.where(mask, vel, np.nan)
 			C = ax.contourf(
 			vel, Y[:, -1, :], Z[:, -1, :],
