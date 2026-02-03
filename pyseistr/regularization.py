@@ -240,6 +240,79 @@ def xyz2rsf(xs,ys,zs,value,xx=None,yy=None,zz=None,nx=None,ny=None,nz=None):
 	
 	
 	
+def rsf3to3(din,x,y,z,xx,yy,zz):
+	'''
+	rsf3to3: converting a RSF 3D data cube from grid 1 (x,y,z) to grid 2 (xx,yy,zz)
+	
+	INPUT
+	din:	3D cube on grid 1
+	x,y,z:  1D axis vector [nx,ny,nz] of grid 1
+	xx,yy,zz:  1D axis vector [nx,ny,nz] of grid 2
+	
+	OUTPUT
+	dout:	3D cube on grid 2
+	
+	EXAMPLE
+	# https://github.com/aaspip/data/blob/main/CMEZ3D-20260202.npy
+	
+	import numpy as np
+	vel1=np.load('CMEZ3D-20260202.npy') #on 3D grid, X,Y,Z
+	# Grid 1
+	dx,dy,dz=(95.01-0)/100.0,95.01/100.0,95.01/100.0
+	z0,x0,y0=-1.5,0,0
+	nx,ny,nz=101,72,26
+	x=np.linspace(0,nx-1,nx)*dx+x0;
+	y=np.linspace(0,ny-1,ny)*dy+y0;
+	z=np.linspace(0,nz-1,nz)*dz+z0;
+	# Grid 2
+	dx,dy,dz=0.9501,0.9501,0.2
+	z0,x0,y0=0,0,0
+	nx,ny,nz=101,101,52
+	xx=np.linspace(0,nx-1,nx)*dx+x0;
+	yy=np.linspace(0,ny-1,ny)*dy+y0;
+	zz=np.linspace(0,nz-1,nz)*dz+z0;
+	
+	from pyseistr import rsf3to3
+	vel2=rsf3to3(vel1,x,y,z,xx,yy,zz)
+	
+	from pyseistr import plot3d 
+	import matplotlib.pyplot as plt
+	plot3d(np.transpose(vel1,(2,0,1)),vmin=4.3,vmax=6.3,z=z,x=x,y=y,cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("X (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("CMEZ3D on the original grid",fontsize='large', fontweight='normal')
+	plt.savefig('rsf3to3_0.png', dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+
+	plot3d(np.transpose(vel2,(2,0,1)),vmin=4.3,vmax=6.3,z=zz,x=xx,y=yy,cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("X (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("CMEZ3D on an interpolated grid",fontsize='large', fontweight='normal')
+	plt.savefig('rsf3to3_1.png', dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+	'''
+	
+	from scipy.interpolate import RegularGridInterpolator
+	interp = RegularGridInterpolator(
+		(x, y, z),
+		din,
+		method='linear',		# or 'nearest'
+		bounds_error=False,
+		fill_value=None #np.nan
+	)
+
+	# build query points
+	XX, YY, ZZ = np.meshgrid(xx, yy, zz, indexing='ij')
+	points = np.stack([XX.ravel(), YY.ravel(), ZZ.ravel()], axis=-1)
+
+	# interpolate
+	dout = interp(points).reshape(len(xx), len(yy), len(zz))
+	
+	
+	
+	return dout
 	
 	
 	
