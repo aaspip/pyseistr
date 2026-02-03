@@ -187,7 +187,7 @@ def project_3d_to_figure(fig, ax, x, y, z):
     xf, yf = fig.transFigure.inverted().transform((x_disp, y_disp))
     return xf, yf
     
-def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,ifinside=False,**kwargs):
+def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,ifinside=False,topo=None,**kwargs):
 	'''
 	plot3d: plot beautiful 3D slices
 	
@@ -198,6 +198,9 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	figname: figure name to be saved (default: None)
 	showf: if show the figure (default: True)
 	close: if not show a figure, if close the figure (default: True)
+	ifslice: if plotting the highlighting slices (the blue lines)
+	ifinside: if showing the inside section
+	topo:	  if not None, denotes the surface topography
 	kwargs: other specs for plotting (e.g., vmin=-0.1, vmax=0.1, and others accepted by contourf)
 	dz,dx,dy: interval (default: 0.01)
 	
@@ -359,218 +362,26 @@ def plot3d(d3d,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=1
 	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[30,20,15],cmap=plt.cm.jet,ifnewfig=True,showf=True,close=False,ifinside=True); 
 	plot3d(vel3d,dx=1,dy=1,dz=1,frames=[10,10,10],cmap=plt.cm.jet,ifnewfig=True,showf=True,close=False,ifinside=True); 
 	
-	NOTE:
-	when using cmap in plot3d, better use ''cmap=plt.cm.jet'', instead of ''cmap=plt.jet()''
-	'''
-
-	[nz,nx,ny] = d3d.shape;
+	EXAMPLE 8 (a spatially varying velocity model, with topography)
 	
-	if frames is None:
-		frames=[int(nz/2),int(nx/2),int(ny/2)]
-		
-	if z is None:
-		z=np.arange(nz)*dz
-	
-	if x is None:
-		x=np.arange(nx)*dx
-		
-	if y is None:
-		y=np.arange(ny)*dy
-	
-	X, Y, Z = np.meshgrid(x, y, z)
-	
-	d3d=d3d.transpose([1,2,0]) #z,x,y -> x,y,z
-	
-	
-	kw = {
-	'vmin': d3d.min(),
-	'vmax': d3d.max(),
-	'levels': np.linspace(d3d.min()-0.000000001, d3d.max()+0.000000001, nlevel),
-	'cmap':cseis()
-	}
-	
-	kw.update(kwargs)
-	
-	if 'alpha' not in kw.keys():
-		kw['alpha']=1.0
-	
-	if ifnewfig==False:
-		ax=plt.gca()
-	else:
-		fig = plt.figure(figsize=figsize)
-		ax = fig.add_subplot(111, aspect='auto',projection='3d')
-		plt.jet()
-
-	# Plot contour surfaces
-	if ifinside==True:
-	
-		#create mask for top
-		tt=d3d[:, :, 0].transpose().copy()
-		tt[0:frames[2],frames[1]+1:]=False
-	
-		_ = ax.contourf(
-		X[:, :, -1], Y[:, :, -1], tt, #x,y,z
-		zdir='z', offset=Z.min(), **kw
-		)
-
-		_ = ax.contourf(
-		X[0:frames[2]+1, frames[1]:, -1], Y[0:frames[2]+1, frames[1]:, -1], d3d[frames[1]:, 0:frames[2]+1, frames[0]].transpose(), #x,y,z
-		zdir='z', offset=z[frames[0]], **kw
-		)
-	
-		#create mask for front
-		tt=d3d[:, 0, :].copy()
-		tt[frames[1]+1:,0:frames[0]]=False
-		
-		_ = ax.contourf(
-		X[0, :, :], tt, Z[0, :, :],
-		zdir='y', offset=Y.min(), **kw
-		)
-
-		_ = ax.contourf(
-		X[0, frames[1]:, 0:frames[0]+1], d3d[frames[1]:, frames[2], 0:frames[0]+1], Z[0, frames[1]:, 0:frames[0]+1],
-		zdir='y', offset=y[frames[2]], **kw
-		)
-	
-
-		#create mask for right
-		tt=d3d[nx-1, :, :].copy()
-		tt[0:frames[2],0:frames[0]]=False
-		
-		C = ax.contourf(
-		tt, Y[:, -1, :], Z[:, -1, :],
-		zdir='x', offset=X.max(), **kw
-		)
-
-		C = ax.contourf(
-		d3d[frames[1], 0:frames[2]+1, 0:frames[0]+1], Y[0:frames[2]+1, -1, 0:frames[0]+1], Z[0:frames[2]+1, -1, 0:frames[0]+1],
-		zdir='x', offset=x[frames[1]], **kw
-		)
-		
-	else: #no inside section
-
-		_ = ax.contourf(
-		X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
-		zdir='z', offset=Z.min(), **kw
-		)
-		
-		_ = ax.contourf(
-		X[0, :, :], d3d[:, frames[2], :], Z[0, :, :],
-		zdir='y', offset=Y.min(), **kw
-		)
-
-		C = ax.contourf(
-		d3d[frames[1], :, :], Y[:, -1, :], Z[:, -1, :],
-		zdir='x', offset=X.max(), **kw
-		)
-	
-	plt.gca().set_xlabel("X",fontsize='large', fontweight='normal')
-	plt.gca().set_ylabel("Y",fontsize='large', fontweight='normal')
-	plt.gca().set_zlabel("Z",fontsize='large', fontweight='normal')
-
-	xmin, xmax = X.min(), X.max()
-	ymin, ymax = Y.min(), Y.max()
-	zmin, zmax = Z.min(), Z.max()
-	ax.set(xlim=[xmin, xmax], ylim=[ymin, ymax], zlim=[zmin, zmax])
-	plt.gca().invert_zaxis()
-
-	if ifslice==True: #if highlight the slice
-		plt.plot([x[frames[1]],x[frames[1]]],[y.min(),y.max()],[z.min(),z.min()],'b-', linewidth=2, zorder=10) #top slice
-		plt.plot([x.min(),x.max()],[y[frames[2]],y[frames[2]]],[z.min(),z.min()],'b-', linewidth=2, zorder=10) #top slice
-		
-		plt.plot([x[frames[1]],x[frames[1]]],[y.min(),y.min()],[z.min(),z.max()],'b-', linewidth=2, zorder=10) #left slice
-		plt.plot([x.min(),x.max()],[y.min(),y.min()],[z[frames[0]],z[frames[0]]],'b-', linewidth=2, zorder=10) #left slice
-		
-		plt.plot([x.max(),x.max()],[y[frames[2]],y[frames[2]]],[z.min(),z.max()],'b-', linewidth=2, zorder=10) #right slice
-		plt.plot([x.max(),x.max()],[y.min(),y.max()],[z[frames[0]],z[frames[0]]],'b-', linewidth=2, zorder=10) #right slice
-
-	# Colorbar
-	if 'barlabel' in kw.keys():
-		cbar=plt.gcf().colorbar(C, ax=ax, orientation='horizontal', fraction=0.02, pad=0.1, format= "%.2f", label=kw['barlabel'])
-		cbar.ax.locator_params(nbins=5)
-		kwargs.__delitem__('barlabel')
-
-	if figname is not None:
-		if 'cmap' in kwargs.keys():
-			kwargs.__delitem__('cmap')
-		plt.savefig(figname,**kwargs)
-	
-	if showf:
-		plt.show()
-	else:
-		if close:
-			plt.close() #or plt.clear() ?
-
-def plot3d_surf(d3d,topo=None,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,dy=0.01,nlevel=100,figsize=(8, 6),ifnewfig=True,figname=None,showf=True,close=True,ifslice=True,ifinside=False,**kwargs):
-	'''
-	plot3d_surf: plot beautiful 3D slices with surface topography
-	
-	INPUT
-	d3d: input 3D data (z in first-axis, x in second-axis, y in third-axis)
-	frames: plotting slices on three sides (default: [nz/2,nx/2,ny/2])
-	z,x,y: axis vectors  (default: 0.01*[np.arange(nz),np.arange(nx),np.arange(ny)])
-	figname: figure name to be saved (default: None)
-	showf: if show the figure (default: True)
-	close: if not show a figure, if close the figure (default: True)
-	kwargs: other specs for plotting (e.g., vmin=-0.1, vmax=0.1, and others accepted by contourf)
-	dz,dx,dy: interval (default: 0.01)
-	
-	By Yangkang Chen
-	Feb, 2, 2026
-	
-	EXAMPLE 1 (a spatially varying velocity model, without topography)
 	import numpy as np
 	import matplotlib.pyplot as plt
-	from pyseistr import plot3d_surf
-
-	nz=81
-	nx=81
-	ny=81
-	dz=20
-	dx=20
-	dy=20
+	from pyseistr import plot3d
+	nz=161
+	nx=161
+	ny=161
+	dz=0.02
+	dx=0.02
+	dy=0.02
 	nt=1501
 	dt=0.001
 	
 	# Velocity gradients
-	x_gradient=0.05
-	y_gradient=0.07
-	z_gradient=0.10
+	x_gradient=0.05/8
+	y_gradient=0.07/8
+	z_gradient=0.10/8
 
-	vel3d=np.ones([nx,ny,nz],dtype='float32')
-	for x in range(nx):
-		vel3d[x,:,:]+=(x*x_gradient)
-	for y in range(ny):
-		vel3d[:,y,:]+=(y*y_gradient)
-	for z in range(nz):
-		vel3d[:,:,z]+=(z*z_gradient)
-
-	plot3d_surf(np.transpose(vel3d,(2,0,1)),frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False)
-	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
-	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
-	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
-	plt.title('3D velocity model')
-	plt.savefig(fname='vel3d.png',format='png',dpi=300)
-	plt.show()
-		
-		
-	EXAMPLE 2 (a spatially varying velocity model, with topography)
-	
-	import numpy as np
-	import matplotlib.pyplot as plt
-	from pyseistr import plot3d_surf
-	nz=161
-	nx=161
-	ny=161
-	dz=20
-	dx=20
-	dy=20
-	# Velocity gradients
-	x_gradient=0.05
-	y_gradient=0.07
-	z_gradient=0.10
-
-	vel3d=np.ones([nx,ny,nz],dtype='float32')
+	vel3d=3*np.ones([nx,ny,nz],dtype='float32')
 	for x in range(nx):
 		vel3d[x,:,:]+=(x*x_gradient)
 	for y in range(ny):
@@ -582,35 +393,27 @@ def plot3d_surf(d3d,topo=None,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,d
 	y=np.array(range(ny))
 	
 	X, Y = np.meshgrid(x, y)
-
-	topo = 100+100.0 * np.sin(4*np.pi*X/(nx-1)) * np.cos(4*np.pi*Y/(ny-1))
-	plot3d_surf(np.transpose(vel3d,(2,0,1)),topo,frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (m/s)',showf=False,close=False,ifslice=False)
-	plt.gca().set_xlabel("X (m)",fontsize='large', fontweight='normal')
-	plt.gca().set_ylabel("Y (m)",fontsize='large', fontweight='normal')
-	plt.gca().set_zlabel("Z (m)",fontsize='large', fontweight='normal')
+	#topo = 0.1+0.001*(100.0 * np.cos(4*np.pi*X/(nx-1)) * np.sin(4*np.pi*Y/(ny-1)))
+	topo = 0.1+0.001*(100.0 * np.sin(4*np.pi*X/(nx-1)) * np.cos(4*np.pi*Y/(ny-1))) #see the difference
+	plot3d(np.transpose(vel3d,(2,0,1)),topo=topo,frames=[0,nx-1,0],figsize=(16,10),cmap=plt.cm.jet,
+	z=np.arange(nz)*dz,x=np.arange(nx)*dx,y=np.arange(ny)*dy,barlabel='Velocity (km/s)',showf=False,close=False,ifslice=False)
+	plt.gca().set_xlabel("X (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Y (km)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Z (km)",fontsize='large', fontweight='normal')
 	plt.title('3D velocity model with topography')
-	plt.savefig(fname='vel3d.png',format='png',dpi=300)
+	plt.savefig(fname='vel3d_topo.png',format='png',dpi=300)
 	plt.show()
 
-
+	NOTE:
+	when using cmap in plot3d, better use ''cmap=plt.cm.jet'', instead of ''cmap=plt.jet()''
 	'''
-# 	def norm(v):
-# 		return (v - np.nanmin(v)) / (np.nanmax(v) - np.nanmin(v))
-	import matplotlib.colors as colors
-	
-	def norm(v, d3d, nlevels=10):
-# 		levels = np.linspace(v.min(), v.max(), nlevels)
-# 		cmap = plt.cm.get_cmap('viridis', len(levels)-1)
-# 		return cmap(colors.BoundaryNorm(levels, cmap.N))
-# 		return plt.cm.jet()
+
+	def norm(v, d3d):
+		'''
+		for surface topography
+		'''
 		return (v - np.nanmin(d3d)) / (np.nanmax(d3d) - np.nanmin(d3d))
-	
-	
-	if topo is None:
-		Z_top=d3d[0,:,:]*0
-	else:
-		Z_top=topo
-	
+		
 	[nz,nx,ny] = d3d.shape;
 	
 	if frames is None:
@@ -697,74 +500,64 @@ def plot3d_surf(d3d,topo=None,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,d
 		
 	else: #no inside section
 
-# 		_ = ax.contourf(
-# 		X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
-# 		zdir='z', offset=Z.min(), **kw
-# 		)
+		if topo is None:
+			_ = ax.contourf(
+			X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
+			zdir='z', offset=Z.min(), **kw
+			)
 		
-		Vp_top = d3d[:, :, frames[0]].transpose() #to be confirmed
-# 		Z_top  = d3d[:, :, 0]*0+0
+			_ = ax.contourf(
+			X[0, :, :], d3d[:, frames[2], :], Z[0, :, :],
+			zdir='y', offset=Y.min(), **kw
+			)
 
-# 		_ = ax.contourf(
-# 		X[:, :, -1], Y[:, :, -1], d3d[:, :, frames[0]].transpose(), #x,y,z
-# 		zdir='z', offset=Z_top, **kw
-# 		)
+			C = ax.contourf(
+			d3d[frames[1], :, :], Y[:, -1, :], Z[:, -1, :],
+			zdir='x', offset=X.max(), **kw
+			)
+		else: #using plt_surface to plot the surface topography
+			Z_top=topo;
+			Vp_top = d3d[:, :, frames[0]].transpose() #to be confirmed
+
+			_ = ax.plot_surface(
+			X[:, :, -1], Y[:, :, -1], Z_top,
+			rstride=1,
+			cstride=1,
+			facecolors=plt.cm.jet(norm(Vp_top, d3d)),
+			linewidth=0,
+			edgecolor='none',
+			antialiased=False
+			)
 		
-# 		_ = ax.plot_surface(
-# 		X[:, :, -1], Y[:, :, -1], Z_top,
-# 		facecolors=plt.cm.jet(norm(Vp_top)),
-# 		linewidth=0,
-# 		antialiased=True
-# 		)
-# 		print(norm(Vp_top))
-		_ = ax.plot_surface(
-		X[:, :, -1], Y[:, :, -1], Z_top,
-		rstride=1,
-		cstride=1,
-		facecolors=plt.cm.jet(norm(Vp_top, d3d)),
-		linewidth=0,
-		edgecolor='none',
-		antialiased=False
-		)
-		
-		Ztop_xmin = Z_top[0, :]          # (nx,)
-		
-		vel=d3d[:, frames[2], :]
-# 		print('t',Z[0, :, :].shape)
-# 		print('tt',Ztop_xmin[np.newaxis, :].shape)
-# 		print(Ztop_xmin)
-		mask = np.squeeze(Z[0, :, :]) > Ztop_xmin[:,None]-20 #make it smoother
-# 		print(mask.shape,mask.max(),mask.min())
-# 		plt.figure();plt.imshow(mask);plt.show()
-		vel=np.where(mask, vel, np.nan)
-# 		vel[:,0:50]=np.nan
-		_ = ax.contourf(
-		X[0, :, :], vel, Z[0, :, :],
-		zdir='y', offset=Y.min(), **kw
-		)
+			Ztop_xmin = Z_top[0, :]          # (nx,)
+			vel=d3d[:, frames[2], :]
+			mask = np.squeeze(Z[0, :, :]) > Ztop_xmin[:,None]-(z[2]-z[1]) #make it smoother
+			vel=np.where(mask, vel, np.nan)
+			_ = ax.contourf(
+			X[0, :, :], vel, Z[0, :, :],
+			zdir='y', offset=Y.min(), **kw
+			)
 
 
-		Ztop_ymin = Z_top[:, 0]          # (nx,)
-		vel=d3d[frames[1], :, :]
-		mask = np.squeeze(Z[0, :, :]) > Ztop_ymin[:,None]-1
-# 		print(mask.shape,mask.max(),mask.min())
-# 		plt.figure();plt.imshow(mask);plt.show()
-		vel=np.where(mask, vel, np.nan)
-		C = ax.contourf(
-		vel, Y[:, -1, :], Z[:, -1, :],
-		zdir='x', offset=X.max(), **kw
-		)
+			Ztop_ymin = Z_top[:, 0]          # (nx,)
+			vel=d3d[frames[1], :, :]
+			mask = np.squeeze(Z[0, :, :]) > Ztop_ymin[:,None]-(z[2]-z[1]) #make it smoother
+			vel=np.where(mask, vel, np.nan)
+			C = ax.contourf(
+			vel, Y[:, -1, :], Z[:, -1, :],
+			zdir='x', offset=X.max(), **kw
+			)
 		
-		ax.yaxis.pane.set_edgecolor('w')    # white edge
-		ax.yaxis.pane.set_facecolor((1,1,1,0))  # fully transparent
-		ax.yaxis.pane.fill = False
-		ax.xaxis.pane.set_edgecolor('w')    # white edge
-		ax.xaxis.pane.set_facecolor((1,1,1,0))  # fully transparent
-		ax.xaxis.pane.fill = False
-		ax.yaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
-		ax.xaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
-		ax.zaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
-
+			ax.yaxis.pane.set_edgecolor('w')    # white edge
+			ax.yaxis.pane.set_facecolor((1,1,1,0))  # fully transparent
+			ax.yaxis.pane.fill = False
+			ax.xaxis.pane.set_edgecolor('w')    # white edge
+			ax.xaxis.pane.set_facecolor((1,1,1,0))  # fully transparent
+			ax.xaxis.pane.fill = False
+			ax.yaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
+			ax.xaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
+			ax.zaxis._axinfo["grid"].update(color="w", linestyle="")  # set invisible
+		
 	plt.gca().set_xlabel("X",fontsize='large', fontweight='normal')
 	plt.gca().set_ylabel("Y",fontsize='large', fontweight='normal')
 	plt.gca().set_zlabel("Z",fontsize='large', fontweight='normal')
@@ -801,6 +594,7 @@ def plot3d_surf(d3d,topo=None,frames=None,z=None,x=None,y=None,dz=0.01,dx=0.01,d
 	else:
 		if close:
 			plt.close() #or plt.clear() ?
+
 				
 def framebox(x1,x2,y1,y2,c=None,lw=None):
 	'''
