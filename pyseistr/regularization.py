@@ -292,6 +292,40 @@ def rsf3to3(din,x,y,z,xx,yy,zz):
 	plt.title("CMEZ3D on an interpolated grid",fontsize='large', fontweight='normal')
 	plt.savefig('rsf3to3_1.png', dpi=300, bbox_inches='tight', pad_inches=0.3)
 	plt.show()
+	
+	#### in lon/lat coordinate
+	# Grid 1
+	nx,ny,nz=101,72,26
+	lon1,lon2=-104.7,-103.7
+	lat1,lat2=31.3,31.9
+	dlon=(lon2-lon1)/(nx-1)
+	dlat=(lat2-lat1)/(ny-1)
+	lons=np.linspace(0,nx-1,nx)*dlon+lon1
+	lats=np.linspace(0,ny-1,ny)*dlat+lat1
+	# Grid 2
+	nx,ny,nz=101,101,52
+	lons2=np.linspace(0,2*nx-1,2*nx)*dlon*0.45+lon1
+	lats2=np.linspace(0,2*ny-1,2*ny)*dlat*0.45+lat1
+	zz=np.linspace(0,nz-1,nz)*dz+z0;
+	
+	from pyseistr import rsf3to3
+	vel2=rsf3to3(vel1,lons,lats,z,lons2,lats2,zz)
+	plot3d(np.transpose(vel1,(2,0,1)),vmin=4.3,vmax=6.3,z=z,x=lons,y=lats,cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Latitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("CMEZ3D on the original grid",fontsize='large', fontweight='normal')
+	plt.savefig('rsf3to3_2.png', dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+	
+	plot3d(np.transpose(vel2,(2,0,1)),vmin=4.3,vmax=6.3,z=zz,x=lons2,y=lats2,cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Latitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("CMEZ3D on an interpolated grid",fontsize='large', fontweight='normal')
+	plt.savefig('rsf3to3_3.png', dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+	
 	'''
 	
 	from scipy.interpolate import RegularGridInterpolator
