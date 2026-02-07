@@ -240,7 +240,7 @@ def xyz2rsf(xs,ys,zs,value,xx=None,yy=None,zz=None,nx=None,ny=None,nz=None):
 	
 	
 	
-def rsf3to3(din,x,y,z,xx,yy,zz):
+def rsf3to3(din,x,y,z,xx,yy,zz,fill_value=None):
 	'''
 	rsf3to3: converting a RSF 3D data cube from grid 1 (x,y,z) to grid 2 (xx,yy,zz)
 	
@@ -334,7 +334,7 @@ def rsf3to3(din,x,y,z,xx,yy,zz):
 		din,
 		method='linear',		# or 'nearest'
 		bounds_error=False,
-		fill_value=None #np.nan
+		fill_value=fill_value #np.nan
 	)
 
 	# build query points
