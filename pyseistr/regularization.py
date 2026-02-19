@@ -259,7 +259,7 @@ def rsf3to3(din,x,y,z,xx,yy,zz,fill_value=None):
 	vel1=np.load('CMEZ3D-20260202.npy') #on 3D grid, X,Y,Z
 	# Grid 1
 	dx,dy,dz=(95.01-0)/100.0,95.01/100.0,95.01/100.0
-	z0,x0,y0=-1.5,0,0
+	x0,y0,z0=0,0,-1.5
 	nx,ny,nz=101,72,26
 	x=np.linspace(0,nx-1,nx)*dx+x0;
 	y=np.linspace(0,ny-1,ny)*dy+y0;
@@ -350,7 +350,62 @@ def rsf3to3(din,x,y,z,xx,yy,zz,fill_value=None):
 	
 	
 	
+def rsf2to2(din,x,y,xx,yy,fill_value=None):
+	'''
+	rsf2to2: converting a RSF 3D data cube from grid 1 (x,y) to grid 2 (xx,yy)
+	NOT FINISHED!
 	
+	INPUT
+	din:	3D cube on grid 1
+	x,y,z:  1D axis vector [nx,ny,nz] of grid 1
+	xx,yy,zz:  1D axis vector [nx,ny,nz] of grid 2
+	
+	OUTPUT
+	dout:	3D cube on grid 2
+	
+	EXAMPLE
+	# https://github.com/aaspip/data/blob/main/CMEZ3D-20260202.npy
+	
+
+	
+	#### in lon/lat coordinate
+	# Grid 1
+	nx,ny,nz=101,72,26
+	lon1,lon2=-104.7,-103.7
+	lat1,lat2=31.3,31.9
+	dlon=(lon2-lon1)/(nx-1)
+	dlat=(lat2-lat1)/(ny-1)
+	lons=np.linspace(0,nx-1,nx)*dlon+lon1
+	lats=np.linspace(0,ny-1,ny)*dlat+lat1
+	# Grid 2
+	nx,ny,nz=101,101,52
+	lons2=np.linspace(0,2*nx-1,2*nx)*dlon*0.45+lon1
+	lats2=np.linspace(0,2*ny-1,2*ny)*dlat*0.45+lat1
+	zz=np.linspace(0,nz-1,nz)*dz+z0;
+	
+
+	
+	'''
+	
+	from scipy.interpolate import RegularGridInterpolator
+	interp = RegularGridInterpolator(
+		(x, y),
+		din,
+		method='linear',		# or 'nearest'
+		bounds_error=False,
+		fill_value=fill_value #np.nan
+	)
+
+	# build query points
+	XX, YY = np.meshgrid(xx, yy, indexing='ij')
+	points = np.stack([XX.ravel(), YY.ravel()], axis=-1)
+
+	# interpolate
+	dout = interp(points).reshape(len(xx), len(yy))
+	
+	
+	
+	return dout
 	
 	
 	
