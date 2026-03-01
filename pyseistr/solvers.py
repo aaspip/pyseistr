@@ -1,5 +1,5 @@
 import numpy as np
-def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
+def solver(opL,solv,nx,ny,x,dat,niter,par_L,par,ifres=False):
 	'''
 	Generic linear solver. (same as Madagascar function: sf_solver)
 	
@@ -37,8 +37,26 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 	OUPUT
 	x: estimated model
 	
-	'''
 	
+	EXAMPLE
+	
+	import numpy as np
+	from pyseistr.solvers import solver,cgstep
+	from pyseistr.operators import matrix_lop
+	np.random.seed(202122)
+	M=np.random.rand(100,100);print('M.std()',M.std())
+	x=np.random.rand(100);print('x.std()',x.std());
+	x0=np.zeros_like(x);
+	par=dict();par['nm']=100;par['nd']=100;par['matrix']=M;
+	y=matrix_lop(x,par,False,False);
+	par_sol={'verb':1};
+	xx,tmp=solver(matrix_lop,cgstep,100,100,x0,y,20,par,par_sol);
+	print('Error:',(xx-x).std())
+
+	'''
+	if ifres == True:
+		ress=[]
+
 	TOLERANCE=1.e-12;
 	forget=0;
 	x=x.flatten(order='F');
@@ -143,7 +161,7 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 	else:
 		x=np.zeros(nx);
 	
-	dpr0=np.sqrt(np.sum(rr*rr));
+	dpr0=np.sum(rr*rr); #previous: dpr0=np.sqrt(np.sum(rr*rr));
 	dpg0=1.0;
 	
 	for n in range(0,niter):
@@ -181,15 +199,29 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 			forget = (0 == np.mod(n+1,nfreq));
 		
 		if n==0:
-			dpg0=np.sqrt(np.sum(g*g));
-			dpr=1.0;
-			dpg=1.0;
+			if 'ndata' in par:
+				dpg0=np.sum(g[0:par['ndata']]*g[0:par['ndata']]);#previous: dpg0=np.sqrt(np.sum(g*g));
+				dpr=1.0;
+				dpg=1.0;
+			else:
+				dpg0=np.sum(g*g);#previous: dpg0=np.sqrt(np.sum(g*g));
+				dpr=1.0;
+				dpg=1.0;
 		else:
-			dpr=np.sqrt(np.sum(rr*rr))/dpr0;
-			dpg=np.sqrt(np.sum(g*g))/dpg0;
-		
+			if 'ndata' in par:
+				dpr=np.sum(rr[0:par['ndata']]*rr[0:par['ndata']])/dpr0; #previous: dpr=np.sqrt(np.sum(rr*rr))/dpr0;
+				dpg=np.sum(g[0:par['ndata']]*g[0:par['ndata']])/dpg0;   #previous: dpg=np.sqrt(np.sum(g*g))/dpg0;
+			else:
+				dpr=np.sum(rr*rr)/dpr0; #previous: dpr=np.sqrt(np.sum(rr*rr))/dpr0;
+				dpg=np.sum(g*g)/dpg0;   #previous: dpg=np.sqrt(np.sum(g*g))/dpg0;
+				
 		if verb:
-			print('iteration %d res %f mod %f grad %f !'%(n+1, dpr,np.sqrt(np.sum(x*x)), dpg));
+			if 'ndata' in par:
+				print('iteration %d res %f mod %f grad %f for the ndata samples!'%(n+1, dpr,np.sqrt(np.sum(x*x)), dpg));
+			else:
+				print('iteration %d res %f mod %f grad %f !'%(n+1, dpr,np.sqrt(np.sum(x*x)), dpg));
+			if ifres == True:
+				ress.append(dpr)
 			
 		if dpr < TOLERANCE or dpg < TOLERANCE:
 			if verb:
@@ -237,7 +269,10 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par):
 		res=rr;
 		par['res']=res;
 		
-	return x,par
+	if ifres == False:
+		return x,par
+	else:
+		return x,par,np.array(ress)
 
 def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	'''
@@ -550,7 +585,7 @@ def solver_prec(opL,solv,opP,nnp,nx,ny,x,dat,niter,eps,par_L,par_P,par):
 	return x,par
 
 
-def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S,verb):
+def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S,verb,ifres=False):
 	'''
 	conjgrad: conjugate gradient with shaping
 	
@@ -576,6 +611,8 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 	x: estimated model
 	
 	'''
+	if ifres==True: #if output the misfits
+		res=[]
 
 	nnp=p.size;
 	nx=par_L['nm'];	#model size
@@ -658,7 +695,9 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 		beta=np.sum(sr*sr)+eps_cg*(np.sum(sp*sp)-np.sum(sx*sx));
 		
 		if verb:
-			print('iteration: %d, res: %g !'%(n,np.sum(r* r) / r0));  
+			print('iteration: %d, res: %g !'%(n,np.sum(r* r) / r0)); 
+			if ifres==True: #if output the misfits
+				res.append(np.sum(r* r) / r0)
 
 		alpha=-gn/beta;
 	
@@ -668,7 +707,10 @@ def conjgrad(opP,opL,opS, p, x, dat, eps_cg, tol_cg, N,ifhasp0,par_P,par_L,par_S
 	
 		gnp=gn;
 
-	return x
+	if ifres == False:
+		return x
+	else:
+		return x, np.array(res)
 
 
 def cgstep(forget,nx,ny,x,g,rr,gg,S=None,Ss=None,alloc=0):
@@ -718,7 +760,7 @@ def cgstep(forget,nx,ny,x,g,rr,gg,S=None,Ss=None,alloc=0):
 		alfa=np.sum(gg*gg);
 		#Solve G . ( R + G*alfa) = 0
 		if alfa<=0:
-			return x,rr
+			return x,rr, S, Ss
 		alfa=-np.sum(gg*rr)/alfa;
 	else:
 		#search plane by solving 2-by-2
@@ -728,7 +770,7 @@ def cgstep(forget,nx,ny,x,g,rr,gg,S=None,Ss=None,alloc=0):
 		sds=np.sum(Ss*Ss);
 		gds=np.sum(gg*Ss);
 		if gdg == 0 or sds==0:
-			return x,rr
+			return x,rr, S, Ss
 			
 		determ=1.0-(gds/gdg)*(gds/sds);
 		if determ > EPSILON:
