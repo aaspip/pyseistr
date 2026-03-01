@@ -160,8 +160,11 @@ def solver(opL,solv,nx,ny,x,dat,niter,par_L,par,ifres=False):
 			rr=opL(x,par_L,0,1);
 	else:
 		x=np.zeros(nx);
-	
-	dpr0=np.sum(rr*rr); #previous: dpr0=np.sqrt(np.sum(rr*rr));
+	if 'ndata' in par:
+		dpr0=np.sum(rr[0:par['ndata']]*rr[0:par['ndata']]); #previous: dpr0=np.sqrt(np.sum(rr*rr));
+	else:
+		dpr0=np.sum(rr*rr); #previous: dpr0=np.sqrt(np.sum(rr*rr));
+
 	dpg0=1.0;
 	
 	for n in range(0,niter):
