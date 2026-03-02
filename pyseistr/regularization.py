@@ -238,7 +238,200 @@ def xyz2rsf(xs,ys,zs,value,xx=None,yy=None,zz=None,nx=None,ny=None,nz=None):
 	else:
 		return dout
 	
+
+def xy2rsf(xs,ys,value,xx=None,yy=None,nx=None,ny=None):
+	'''
+	xy2rsf: data regularization from unstructured xyz (ASCII) format to regularly sampled format (RSF)
 	
+	
+	INPUT
+	xs,ys: 	lists of x,y,z coordinates
+	value:		lists of values on the unstructured grid defined by x,y,z coordinates (same length as x,y,z)
+	xx,yy:	numpy arrays (1D for each) of regular coordinates in x,y,z axes (can be None for all)
+	nx,ny:	number of samples in each axis (can be None for all)
+	
+	OUTPUT
+	dout: data on regular grids defined by xx,yy,zz (zxy)
+	or
+	dout,xx,yy,zz (if xx,yy,zz are not provided)
+	
+	By Yangkang Chen
+	Feb, 3, 2026
+	
+	EXAMPLE 1 (plot many velocity slices together for 3D and 2D)
+	#DATA SOURCE: https://github.com/chenyk1990/txed
+	
+	import os
+	import numpy as np
+	from pyseistr import plot3d,plot2d,asciiread,xy2rsf
+	import matplotlib.pyplot as plt
+	
+	nx,ny,nz=101,72,26
+	x0,y0,z0=0,0,-1.5
+	dx,dy,dz=0.9501,0.9501,0.9501
+	lon1,lon2=-104.7,-103.7
+	lat1,lat2=31.3,31.9
+	dlon=(lon2-lon1)/(nx-1)
+	dlat=(lat2-lat1)/(ny-1)
+	lons=np.linspace(0,nx-1,nx)*dlon+lon1
+	lats=np.linspace(0,ny-1,ny)*dlat+lat1
+	zz=np.linspace(0,nz-1,nz)*dz+z0;
+
+	V_welllog=np.load(os.getenv('HOME')+'/chenyk.txed/vmodel/V_welllog.npy') 
+	V_tomo=np.load(os.getenv('HOME')+'/chenyk.txed/vmodel/V_tomo.npy') #52*101*72, CMEZ3D-20260202
+	V_1D=np.load(os.getenv('HOME')+'/chenyk.txed/vmodel/V_1D.npy')
+	znew=np.load(os.getenv('HOME')+'/chenyk.txed/vmodel/z.npy')
+
+	lines=asciiread(os.getenv('HOME')+'/chenyk.txed/vmodel/basement_m_wgs84_xyz.csv')
+	lines=lines[1:]
+
+	xs=np.array([float(ii.split(",")[2]) for ii in lines])
+	ys=np.array([float(ii.split(",")[3]) for ii in lines])
+	zs=-np.array([float(ii.split(",")[1])/1000.0 for ii in lines])
+
+	Zg=xy2rsf(xs,ys,zs,lons,lats) #Zg: value on given grids
+
+	plot3d(V_welllog,vmin=3.5,vmax=6.0,z=znew,x=lons,y=lats,frames=[20,40,30],cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Latitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Well log model",fontsize='large', fontweight='normal')
+	plt.savefig('DB3D_latlon.png',dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+
+	plot3d(V_tomo,vmin=4.3,vmax=6.0,z=znew,x=lons,y=lats,frames=[20,40,30],cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Latitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("CMEZ3D",fontsize='large', fontweight='normal')
+	plt.savefig('CMEZ3D_latlon.png',dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+
+	plot3d(V_1D,vmin=4.3,vmax=6.0,z=znew,x=lons,y=lats,frames=[20,40,30],cmap=plt.cm.jet,barlabel='P-wave velocity (km/s)',showf=False,close=False);
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Latitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_zlabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Initial model",fontsize='large', fontweight='normal')
+	plt.savefig('DB1D_latlon.png',dpi=300, bbox_inches='tight', pad_inches=0.3)
+	plt.show()
+
+
+	iy=30;
+	V3=V_welllog
+	V4=V_tomo
+
+	plt.figure(figsize=(12,13))
+	plt.subplot(3,2,1)
+	plot2d(V3[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	plt.gca().get_xaxis().set_visible(False)
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'a',transform=plt.gca().transAxes,size=20,weight='normal')
+
+	plt.subplot(3,2,2)
+	plot2d(V4[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	plt.gca().get_xaxis().set_visible(False)
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'b',transform=plt.gca().transAxes,size=20,weight='normal')
+
+	iy=40;
+	plt.subplot(3,2,3)
+	plot2d(V3[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	plt.gca().get_xaxis().set_visible(False)
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'c',transform=plt.gca().transAxes,size=20,weight='normal')
+
+	plt.subplot(3,2,4)
+	plot2d(V4[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	# plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().get_xaxis().set_visible(False)
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'d',transform=plt.gca().transAxes,size=20,weight='normal')
+
+
+	iy=50;
+	plt.subplot(3,2,5)
+	C0=plot2d(V3[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'e',transform=plt.gca().transAxes,size=20,weight='normal')
+
+
+	plt.subplot(3,2,6)
+	C=plot2d(V4[:,:,iy], vmin=3.5, vmax=6.0, x=lons, z=znew, cmap=plt.cm.jet, ifnewfig=False, showf=False, close=False);
+	plt.plot(lons,Zg[iy,:],'-k',linewidth=4)
+	plt.gca().set_xlabel("Longitude (deg)",fontsize='large', fontweight='normal')
+	plt.gca().set_ylabel("Depth (km)",fontsize='large', fontweight='normal')
+	plt.title("Latitude=%g deg"%lats[iy],fontsize='large', fontweight='normal')
+	plt.legend(['Basement Depth'],loc="lower left", fontsize='large')
+	plt.gca().text(-0.10,1,'f',transform=plt.gca().transAxes,size=20,weight='normal')
+
+
+	cax = plt.gcf().add_axes([0.92, 0.25, 0.01, 0.5])
+	cbar= plt.colorbar(C, cax=cax)
+	cbar.set_label('Velocity (km/s)',fontsize='large')
+	plt.savefig('vcomp-lon.png',dpi=300, bbox_inches='tight', pad_inches=0.3)
+
+	plt.show()
+
+
+	
+	'''
+	
+	
+	from scipy.interpolate import griddata as gd
+	
+	
+	if xx is not None and yy is not None:
+		X, Y=np.meshgrid(xx,yy)
+	else:
+		print('nx,ny',nx,ny)
+		
+	# generate new grid
+		ox=min(xs)
+		mx=max(xs)
+
+
+		oy=min(ys)
+		my=max(ys)
+
+
+		oz=min(zs)
+		mz=max(zs)
+
+
+		xx=np.linspace(ox,mx,nx)
+		yy=np.linspace(oy,my,ny)
+		zz=np.linspace(oz,mz,nz)
+
+		X, Y=np.meshgrid(xx,yy)
+	
+	dout = gd(
+	points=(xs, ys),
+	values=value,
+	xi=(X, Y),
+	method='cubic'
+	)
+	
+	if nx is not None:
+		return dout, xx, yy
+	else:
+		return dout
+
 	
 def rsf3to3(din,x,y,z,xx,yy,zz,fill_value=None):
 	'''
